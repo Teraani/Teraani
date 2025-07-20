@@ -8,9 +8,10 @@ import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
 import PlayerDetailsView from '@/components/views/player-details-view';
 import PartialScoreView from '@/components/views/partial-score-view';
+import GamesView from '@/components/views/games-view';
 import BottomNav from '@/components/bottom-nav';
 
-export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score';
+export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
@@ -49,6 +50,8 @@ export default function Home() {
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} /> : <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
       case 'partial-score':
         return <PartialScoreView user={appData.user} players={appData.players} onBack={goBack} onPlayerSelect={selectPlayer} />;
+      case 'games':
+        return <GamesView onBack={goBack} />;
       default:
         return <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
     }

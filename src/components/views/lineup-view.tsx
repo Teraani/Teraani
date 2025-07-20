@@ -39,7 +39,7 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
       <header className="bg-gray-900 text-white p-4 flex flex-col items-center gap-4">
         <div className="flex justify-center items-center w-full">
             <Button variant="ghost" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2" onClick={() => onNavigate('partial-score')}>Parcial</Button>
-            <Button variant="ghost" className="text-white">Jogos</Button>
+            <Button variant="ghost" className="text-white" onClick={() => onNavigate('games')}>Jogos</Button>
             <Button variant="ghost" className="text-white">
                 <Share2 className="w-5 h-5" />
             </Button>
