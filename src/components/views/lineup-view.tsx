@@ -6,14 +6,16 @@ import { Clock, Shield, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { View } from '@/app/page';
 
 interface LineupViewProps {
   user: User;
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
+  onNavigate: (view: View) => void;
 }
 
-export default function LineupView({ user, players, onPlayerSelect }: LineupViewProps) {
+export default function LineupView({ user, players, onPlayerSelect, onNavigate }: LineupViewProps) {
   const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
   const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
 
@@ -36,7 +38,7 @@ export default function LineupView({ user, players, onPlayerSelect }: LineupView
     <div className="bg-gray-900 min-h-screen">
       <header className="bg-gray-900 text-white p-4 flex flex-col items-center gap-4">
         <div className="flex justify-center items-center w-full">
-            <Button variant="ghost" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2">Parcial</Button>
+            <Button variant="ghost" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2" onClick={() => onNavigate('partial-score')}>Parcial</Button>
             <Button variant="ghost" className="text-white">Jogos</Button>
             <Button variant="ghost" className="text-white">
                 <Share2 className="w-5 h-5" />

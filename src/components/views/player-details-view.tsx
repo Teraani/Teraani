@@ -27,11 +27,11 @@ export default function PlayerDetailsView({ player, onBack }: PlayerDetailsViewP
 
   return (
     <div className="bg-gray-100 dark:bg-zinc-900 min-h-screen">
-       <header className="bg-gray-800 dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20">
-        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-700 text-white">
+       <header className="bg-white dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20">
+        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-700">
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h2 className="text-xl font-bold text-center flex-1 text-white">Jogador</h2>
+        <h2 className="text-xl font-bold text-center flex-1 text-gray-800 dark:text-gray-100">Jogador</h2>
         <div className="w-9 h-9"></div>
       </header>
       
