@@ -6,11 +6,10 @@ import { data } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
-import MarketView from '@/components/views/market-view';
 import PlayerDetailsView from '@/components/views/player-details-view';
 import BottomNav from '@/components/bottom-nav';
 
-export type View = 'welcome' | 'dashboard' | 'lineup' | 'market' | 'player-details' | 'leagues';
+export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
@@ -30,6 +29,15 @@ export default function Home() {
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
+  const handleBackFromPlayerDetails = () => {
+    // A simple logic to go back to the previous sensible view.
+    // If we came from lineup, go back to lineup. Otherwise, dashboard is a safe bet.
+    // This could be improved with a more robust navigation history.
+    if (currentView === 'player-details') {
+       navigateTo('lineup');
+    }
+  }
+
   const renderView = () => {
     switch (currentView) {
       case 'welcome':
@@ -38,10 +46,8 @@ export default function Home() {
         return <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
       case 'lineup':
         return <LineupView user={appData.user} players={appData.players} onPlayerSelect={selectPlayer} />;
-      case 'market':
-        return <MarketView players={appData.players} onPlayerSelect={selectPlayer} />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={() => navigateTo('market')} /> : <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={() => handleBackFromPlayerDetails()} /> : <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
       default:
         return <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
     }

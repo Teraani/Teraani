@@ -21,7 +21,7 @@ export default function SummaryCard({ user }: SummaryCardProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4 text-center mt-4">
+        <div className="grid grid-cols-2 gap-4 text-center mt-4">
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">PARCIAL</p>
             <p className="text-2xl font-bold text-green-600">{user.partialScore.toFixed(2)}</p>
@@ -29,10 +29,6 @@ export default function SummaryCard({ user }: SummaryCardProps) {
           <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">TOTAL</p>
             <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{user.totalScore.toFixed(2)}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">PATRIMÔNIO</p>
-            <p className="text-2xl font-bold text-blue-600">C$ {user.valuation.toFixed(2)}</p>
           </div>
         </div>
       </CardContent>

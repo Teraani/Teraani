@@ -27,7 +27,6 @@ export default function QuickActions({ onNavigate }: QuickActionsProps) {
       <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">Acesso Rápido</h3>
       <div className="grid grid-cols-2 gap-4">
         <ActionButton icon="👕" label="Minha Escalação" onClick={() => onNavigate('lineup')} />
-        <ActionButton icon="📈" label="Mercado" onClick={() => onNavigate('market')} />
         <ActionButton icon="🏆" label="Ligas" onClick={() => onNavigate('leagues')} />
         <ActionButton icon="👥" label="Amigos" onClick={() => { /* Placeholder */ }} />
       </div>
