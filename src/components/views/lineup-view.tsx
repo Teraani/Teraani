@@ -28,7 +28,11 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
     const allPlayersByPos: { [key in Player['pos']]: ({ id: string } & Player)[] } = {
       GOL: [], ZAG: [], LAT: [], MEI: [], ATA: [],
     };
-    lineupPlayers.forEach(p => allPlayersByPos[p.pos]?.push(p));
+    lineupPlayers.forEach(p => {
+        if(allPlayersByPos[p.pos]) {
+            allPlayersByPos[p.pos].push(p)
+        }
+    });
 
     const [defCount, midCount, atkCount] = formation.split('-').map(Number);
     
