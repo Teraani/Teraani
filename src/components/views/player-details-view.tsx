@@ -1,10 +1,9 @@
 import type { Player } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Star } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { ArrowLeft } from 'lucide-react';
 import PlayerStatsChart from '@/components/player-details/player-stats-chart';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface PlayerDetailsViewProps {
   player: { id: string } & Player;
@@ -12,64 +11,58 @@ interface PlayerDetailsViewProps {
 }
 
 export default function PlayerDetailsView({ player, onBack }: PlayerDetailsViewProps) {
-  const valColor = player.last_val >= 0 ? 'text-green-600' : 'text-red-600';
-  const valSign = player.last_val >= 0 ? '▲' : '▼';
 
   return (
-    <div>
-      <header className="bg-gray-800 dark:bg-zinc-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-20">
-        <Button variant="ghost" size="icon" onClick={onBack}>
+    <div className="bg-gray-100 dark:bg-zinc-900 min-h-screen">
+      <header className="bg-primary text-primary-foreground p-4 shadow-md flex items-center sticky top-0 z-20">
+        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-primary/80">
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h2 className="text-xl font-bold">{player.name}</h2>
-        <Button variant="ghost" size="icon">
-          <Star className="h-6 w-6" />
-        </Button>
+        <h2 className="text-xl font-bold text-center flex-1">Jogador</h2>
+        <div className="w-9 h-9"></div>
       </header>
       <div className="p-4 space-y-4">
-        <Card>
-          <CardContent className="p-4 flex items-center space-x-4">
-            <Image
-              src={player.img}
-              alt={player.name}
-              width={80}
-              height={80}
-              data-ai-hint="player portrait"
-              className="rounded-full border-4 border-gray-200 dark:border-gray-700"
-            />
-            <div>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">{player.pos} · {player.team} · {player.games} JOGOS</p>
-              <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{player.points.toFixed(2)} pts</p>
-              <p className={cn("font-semibold", valColor)}>
-                VALORIZAÇÃO: {valSign} C$ {Math.abs(player.last_val).toFixed(2)}
-              </p>
+        <Card className="bg-gray-200 dark:bg-zinc-800 border-none">
+          <CardContent className="p-4 text-center text-gray-800 dark:text-gray-100">
+            <h3 className="text-2xl font-bold">{player.name}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">{player.pos} - {player.team} - {player.games} Jogos</p>
+            <div className="mt-4">
+              <p className="text-sm">Pontos</p>
+              <p className="text-2xl font-bold">{player.points.toFixed(2)}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Estatísticas da Rodada</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px]">
-              <PlayerStatsChart />
-            </div>
+        <Card className="bg-accent/20 dark:bg-accent/10 border-accent/50">
+          <CardContent className="p-4 text-center">
+            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Último Jogo</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Quinta - VI Guarani - 19:00hs</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Verde 1 x 2 Amarelo</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Próximo Jogo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-center space-x-4 text-lg font-bold text-gray-800 dark:text-gray-100">
-              <Image src="https://placehold.co/40x40" alt="Time 1" data-ai-hint="team logo" className="w-10 h-10 rounded-full" width={40} height={40}/>
-              <span>X</span>
-              <Image src="https://placehold.co/40x40" alt="Time 2" data-ai-hint="team logo" className="w-10 h-10 rounded-full" width={40} height={40}/>
-            </div>
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2">HOJE · MARACANÃ · 19:30</p>
-          </CardContent>
+        <Card className="bg-gray-200 dark:bg-zinc-800 border-none">
+           <CardContent className="p-4">
+             <h3 className="text-lg font-bold text-center text-gray-800 dark:text-gray-100">Estatística Pro</h3>
+             <Tabs defaultValue="resumo" className="w-full mt-2">
+                <TabsList className="grid w-full grid-cols-2 bg-transparent p-0">
+                    <TabsTrigger value="resumo" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Resumo</TabsTrigger>
+                    <TabsTrigger value="detalhes" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Detalhes</TabsTrigger>
+                </TabsList>
+                <TabsContent value="resumo">
+                     <div className="mt-4">
+                        <h4 className="font-bold text-gray-800 dark:text-gray-100">Índice por Rodada</h4>
+                         <Button className="mt-2 h-auto py-1 px-4 bg-blue-600 hover:bg-blue-700 text-white">Pontuação</Button>
+                        <div className="h-[200px] mt-2">
+                            <PlayerStatsChart />
+                        </div>
+                    </div>
+                </TabsContent>
+                 <TabsContent value="detalhes">
+                    <p className="text-center text-sm text-gray-600 dark:text-gray-400 py-8">Detalhes das estatísticas em breve.</p>
+                 </TabsContent>
+             </Tabs>
+           </CardContent>
         </Card>
       </div>
     </div>
