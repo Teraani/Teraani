@@ -3,6 +3,8 @@ import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
 import { Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Share2 } from 'lucide-react';
 
 interface LineupViewProps {
   user: User;
@@ -28,18 +30,20 @@ export default function LineupView({ user, players, onPlayerSelect }: LineupView
   const defenders = [...positions.ZAG, ...positions.LAT];
 
   return (
-    <div>
-      <header className="bg-gray-800 dark:bg-zinc-800 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-20">
-        <h2 className="text-xl font-bold">Minha Escalação</h2>
-        <div className="text-right">
-          <p className="text-sm">Pontos</p>
-          <p className="font-bold text-lg text-green-400">{totalScore.toFixed(2)}</p>
+    <div className="bg-gray-900 min-h-screen">
+      <header className="bg-gray-900 text-white p-4 flex flex-col items-center gap-4">
+        <div className="flex justify-center items-center w-full">
+            <Button variant="ghost" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2">Parcial</Button>
+            <Button variant="ghost" className="text-white">Jogos</Button>
+            <Button variant="ghost" className="text-white">
+                <Share2 className="w-5 h-5" />
+            </Button>
         </div>
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6">
+          Pontuação da rodada: {totalScore.toFixed(2)}
+        </Button>
       </header>
       <div className="p-4">
-        <p className="text-center text-gray-600 dark:text-gray-300 mb-4">
-          Este é o seu time para a rodada. Clique em um jogador para ver mais detalhes ou use a IA para sugestões.
-        </p>
         <Pitch>
           <div className="flex justify-around z-10 w-full">
             {positions.ATA.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
