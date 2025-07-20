@@ -1,3 +1,4 @@
+import { useState, useMemo } from 'react';
 import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
@@ -15,24 +16,32 @@ interface LineupViewProps {
   onNavigate: (view: View) => void;
 }
 
+type Formation = '4-3-3' | '4-4-2' | '3-5-2';
+
 export default function LineupView({ user, players, onPlayerSelect, onNavigate }: LineupViewProps) {
+  const [formation, setFormation] = useState<Formation>('4-3-3');
+
   const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
   const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
 
-  const positions: { [key in Player['pos']]: ({ id: string } & Player)[] } = {
-    GOL: [],
-    ZAG: [],
-    LAT: [],
-    MEI: [],
-    ATA: [],
-  };
+  const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
+    const allPlayersByPos: { [key in Player['pos']]: ({ id: string } & Player)[] } = {
+      GOL: [], ZAG: [], LAT: [], MEI: [], ATA: [],
+    };
+    lineupPlayers.forEach(p => allPlayersByPos[p.pos]?.push(p));
 
-  lineupPlayers.forEach(player => {
-    if (positions[player.pos]) {
-      positions[player.pos].push(player);
-    }
-  });
-  const defenders = [...positions.ZAG, ...positions.LAT];
+    const [defCount, midCount, atkCount] = formation.split('-').map(Number);
+    
+    const allDefenders = [...allPlayersByPos.ZAG, ...allPlayersByPos.LAT];
+
+    return {
+      attackers: allPlayersByPos.ATA.slice(0, atkCount),
+      midfielders: allPlayersByPos.MEI.slice(0, midCount),
+      defenders: allDefenders.slice(0, defCount),
+      goalkeeper: allPlayersByPos.GOL.slice(0, 1),
+    };
+  }, [lineupPlayers, formation]);
+
 
   return (
     <div className="bg-gray-900 min-h-screen">
@@ -50,18 +59,26 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
       </header>
       <div className="p-4 pb-32">
         <Pitch>
-          <div className="flex justify-around z-10 w-full">
-            {positions.ATA.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
-          </div>
-          <div className="flex justify-around z-10 w-full">
-            {positions.MEI.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
-          </div>
-          <div className="flex justify-around z-10 w-full">
-            {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
-          </div>
-          <div className="flex justify-around z-10 w-full">
-            {positions.GOL.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
-          </div>
+          {attackers.length > 0 && (
+            <div className="flex justify-around z-10 w-full">
+              {attackers.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+            </div>
+          )}
+          {midfielders.length > 0 && (
+            <div className="flex justify-around z-10 w-full">
+              {midfielders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+            </div>
+          )}
+          {defenders.length > 0 && (
+            <div className="flex justify-around z-10 w-full">
+              {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+            </div>
+          )}
+          {goalkeeper.length > 0 && (
+            <div className="flex justify-around z-10 w-full">
+              {goalkeeper.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+            </div>
+          )}
         </Pitch>
         <div className="mt-4 flex flex-col gap-2">
             <AiSuggestions user={user} players={players} />
@@ -75,7 +92,7 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
           <div className="flex justify-between items-center px-2 pb-2">
               <div className="flex flex-col items-center gap-1 text-white">
                   <span className="text-xs">Esquema Tático</span>
-                  <Select defaultValue="4-3-3">
+                  <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
                       <SelectTrigger className="w-auto bg-gray-700 border-none text-white h-8">
                           <SelectValue />
                       </SelectTrigger>
