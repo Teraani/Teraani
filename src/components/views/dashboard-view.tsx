@@ -14,7 +14,7 @@ interface DashboardViewProps {
   onPlayerSelect: (playerId: string) => void;
 }
 
-function PlayerSummary() {
+function PlayerSummary({ onNavigate }: { onNavigate: (view: View) => void }) {
     return (
         <Card className="bg-gray-200 dark:bg-zinc-800 p-4">
             <CardContent className="p-0">
@@ -38,7 +38,7 @@ function PlayerSummary() {
                         <p className="font-bold text-lg text-gray-800 dark:text-gray-100">100%</p>
                     </div>
                 </div>
-                <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white">
+                <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => onNavigate('lineup')}>
                     Ver Time
                 </Button>
             </CardContent>
@@ -93,7 +93,7 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
         </div>
       </header>
       <div className="p-4 space-y-8">
-        <PlayerSummary />
+        <PlayerSummary onNavigate={onNavigate} />
         <QuickAccess />
         <ConnectSection />
       </div>
