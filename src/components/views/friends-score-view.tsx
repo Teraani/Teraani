@@ -29,7 +29,7 @@ const TeamCrest = ({ crest, avatar, name, teamName }: { crest: string; avatar: s
       <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
       <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
     </div>
-    <Image src={crest} alt={`${teamName} crest`} width={48} height={48} className="rounded-md" data-ai-hint="team crest" />
+    <Image src={crest} alt="" width={48} height={48} className="rounded-md" data-ai-hint="team crest" />
     <Avatar className="absolute bottom-[-8px] right-[-8px] h-8 w-8 border-2 border-white dark:border-zinc-800">
       <AvatarImage src={avatar} alt={name} data-ai-hint="player avatar" />
       <AvatarFallback>{name.charAt(0)}</AvatarFallback>
