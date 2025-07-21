@@ -174,7 +174,7 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
   };
 
   return (
-    <div>
+    <div className="pb-40">
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
@@ -222,7 +222,7 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
             </Accordion>
         </ScrollArea>
       </main>
-       <div className="fixed bottom-0 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-50">
+       <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-50">
           <Button className="w-full bg-green-600 text-white hover:bg-green-700 h-12 text-lg" onClick={handleSave}>
               <Save className="mr-2 h-5 w-5"/>
               Salvar Scouts e Atualizar Pontuações
