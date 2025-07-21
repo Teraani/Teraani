@@ -3,7 +3,7 @@ import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
-import { Clock, Trash2, LogOut, Users } from 'lucide-react';
+import { Clock, Trash2, LogOut, Users, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +12,8 @@ import type { View, AddPlayerSlot } from '@/app/page';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '@/components/lineup/add-player-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 
 
 interface LineupViewProps {
@@ -25,22 +27,145 @@ interface LineupViewProps {
   setUserReserves: (reserves: (string | null)[]) => void;
   userAvatar: string | null;
   currentUser: User;
-  editorOfTheRound: string | null;
+  canEdit: boolean;
+  team1Lineup: (string | null)[];
+  setTeam1Lineup: (lineup: (string | null)[]) => void;
+  team1Reserves: (string | null)[];
+  setTeam1Reserves: (reserves: (string | null)[]) => void;
+  team2Lineup: (string | null)[];
+  setTeam2Lineup: (lineup: (string | null)[]) => void;
+  team2Reserves: (string | null)[];
+  setTeam2Reserves: (reserves: (string | null)[]) => void;
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
-export default function LineupView({ userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer, userReserves, setUserReserves, userAvatar, currentUser, editorOfTheRound }: LineupViewProps) {
+const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtColor, onColorChange: (color: ShirtColor) => void, disabled: boolean }) => {
+    const colors: { value: ShirtColor, label: string }[] = [
+        { value: 'verde', label: 'Verde' },
+        { value: 'amarelo', label: 'Amarelo' },
+        { value: 'preto', label: 'Preto' },
+        { value: 'vermelho', label: 'Vermelho' },
+        { value: 'branco', label: 'Branco' },
+    ];
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={disabled}>
+                    Cor: <span className="capitalize ml-2">{color}</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+                {colors.map(c => (
+                    <DropdownMenuItem key={c.value} onClick={() => onColorChange(c.value)}>
+                        {c.label}
+                    </DropdownMenuItem>
+                ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
+
+
+const TeamEditor = ({
+  teamName,
+  lineup,
+  reserves,
+  players,
+  formation,
+  shirtColor,
+  onPlayerSelect,
+  onAddPlayer,
+  canEdit,
+}: {
+  teamName: string;
+  lineup: (string | null)[];
+  reserves: (string | null)[];
+  players: Record<string, Player>;
+  formation: Formation;
+  shirtColor: ShirtColor;
+  onPlayerSelect: (playerId: string) => void;
+  onAddPlayer: (position: Player['pos'] | 'RES', index: number) => void;
+  canEdit: boolean;
+}) => {
+    
+  const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
+  const reservePlayers = reserves.map(id => id ? { ...players[id], id } : null);
+  const [defCount, midCount, atkCount] = useMemo(() => formation.split('-').map(Number), [formation]);
+
+  const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
+    let playerIndex = 0;
+    const assignedAttackers = lineupPlayers.slice(playerIndex, playerIndex + atkCount);
+    playerIndex += atkCount;
+    const assignedMidfielders = lineupPlayers.slice(playerIndex, playerIndex + midCount);
+    playerIndex += midCount;
+    const assignedDefenders = lineupPlayers.slice(playerIndex, playerIndex + defCount);
+    playerIndex += defCount;
+    const assignedGoalkeeper = lineupPlayers.slice(playerIndex, playerIndex + 1);
+    
+    return { attackers, midfielders, defenders, goalkeeper };
+  }, [lineupPlayers, atkCount, midCount, defCount]);
+
+  const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
+    return (
+        <div className="flex justify-around z-10 w-full">
+            {Array.from({ length: count }).map((_, i) => {
+                const player = assignedPlayers[i];
+                const slotIndex = startIndex + i;
+                if (player) {
+                    return <PlayerCard key={`${player.id}-${slotIndex}`} player={player} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />;
+                } else {
+                    return <AddPlayerButton key={`add-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
+                }
+            })}
+        </div>
+    );
+  };
+
+  const renderReserves = () => (
+    <div className="flex flex-wrap justify-center gap-4">
+        {Array.from({ length: 5 }).map((_, i) => {
+            const player = reservePlayers[i];
+            if (player) {
+                return <PlayerCard key={player.id} player={player} onPlayerSelect={onPlayerSelect} isReserve />;
+            } else {
+                return <AddPlayerButton key={`add-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
+            }
+        })}
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+        <Pitch>
+            {renderPlayerRow(atkCount, attackers, 'ATA', 0)}
+            {renderPlayerRow(midCount, midfielders, 'MEI', atkCount)}
+            {renderPlayerRow(defCount, defenders, 'ZAG', atkCount + midCount)}
+            {renderPlayerRow(1, goalkeeper, 'GOL', atkCount + midCount + defCount)}
+        </Pitch>
+        <div className="mt-8">
+            <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
+            {renderReserves()}
+        </div>
+    </div>
+  );
+};
+
+
+export default function LineupView(props: LineupViewProps) {
+  const { 
+    userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer,
+    userReserves, setUserReserves, userAvatar, currentUser, canEdit,
+    team1Lineup, setTeam1Lineup, team1Reserves, setTeam1Reserves,
+    team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves
+  } = props;
+    
   const [formation, setFormation] = useState<Formation>('4-3-3');
-  const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
+  const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('verde');
+  const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('amarelo');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
-
-  const canEdit = useMemo(() => {
-      if (!currentUser) return false;
-      return currentUser.role === 'admin' || currentUser.id === editorOfTheRound;
-  }, [currentUser, editorOfTheRound]);
-
+  
   // This will reconstruct the user object for components that need it, like AiSuggestions
   const user: User = useMemo(() => ({
       ...currentUser,
@@ -73,6 +198,16 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
     setUserLineup(Array(11).fill(null));
     setUserReserves(Array(5).fill(null));
   };
+  
+  const handleClearTeam1 = () => {
+      setTeam1Lineup(Array(11).fill(null));
+      setTeam1Reserves(Array(5).fill(null));
+  }
+
+  const handleClearTeam2 = () => {
+      setTeam2Lineup(Array(11).fill(null));
+      setTeam2Reserves(Array(5).fill(null));
+  }
 
   const handleApplyAiLineup = (lineup: string[], reserves: string[]) => {
     // Ensure the arrays have the correct length, filling with null if necessary
@@ -91,69 +226,13 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
     setUserReserves(newReserves);
   };
 
-
-  const handleAddPlayer = (position: Player['pos'] | 'RES', index: number) => {
+  const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
     if (!canEdit) return;
-    onAddPlayer({ position, index });
+    onAddPlayer({ position, index, team });
   };
   
-  const lineupPlayers = userLineup.map(id => id ? { ...players[id], id } : null);
-  const reservePlayers = userReserves.map(id => id ? { ...players[id], id } : null);
-  const totalScore = lineupPlayers.reduce((sum, player) => sum + (player?.points ?? 0), 0);
-
+  const totalScore = userLineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
   
-  const [defCount, midCount, atkCount] = useMemo(() => formation.split('-').map(Number), [formation]);
-
-  const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
-    let playerIndex = 0;
-    
-    const assignedAttackers = lineupPlayers.slice(playerIndex, playerIndex + atkCount);
-    playerIndex += atkCount;
-    
-    const assignedMidfielders = lineupPlayers.slice(playerIndex, playerIndex + midCount);
-    playerIndex += midCount;
-
-    const assignedDefenders = lineupPlayers.slice(playerIndex, playerIndex + defCount);
-    playerIndex += defCount;
-    
-    const assignedGoalkeeper = lineupPlayers.slice(playerIndex, playerIndex + 1);
-    
-    return {
-      attackers: assignedAttackers,
-      midfielders: assignedMidfielders,
-      defenders: assignedDefenders,
-      goalkeeper: assignedGoalkeeper,
-    };
-  }, [lineupPlayers, atkCount, midCount, defCount]);
-
-
-  const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
-    const elements = [];
-    for (let i = 0; i < count; i++) {
-        const player = assignedPlayers[i];
-        const slotIndex = startIndex + i;
-        if (player) {
-            elements.push(<PlayerCard key={`${player.id}-${slotIndex}`} player={player} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />);
-        } else {
-            elements.push(<AddPlayerButton key={`add-${position}-${slotIndex}`} onClick={() => handleAddPlayer(position, slotIndex)} />);
-        }
-    }
-    return <div className="flex justify-around z-10 w-full">{elements}</div>;
-  };
-
-  const renderReserves = () => {
-    const elements = [];
-    for (let i = 0; i < 5; i++) {
-        const player = reservePlayers[i];
-        if (player) {
-            elements.push(<PlayerCard key={player.id} player={player} onPlayerSelect={onPlayerSelect} isReserve />);
-        } else {
-            elements.push(<AddPlayerButton key={`add-RES-${i}`} onClick={() => handleAddPlayer('RES', i)} />);
-        }
-    }
-    return <div className="flex flex-wrap justify-center gap-4">{elements}</div>;
-  }
-
   return (
     <div>
       <header className="bg-card p-4 flex flex-col items-center gap-4">
@@ -181,7 +260,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
                 <DropdownMenuSeparator />
                 {currentUser.role === 'admin' && (
                   <DropdownMenuItem onClick={() => onNavigate('admin')}>
-                    <Users className="mr-2 h-4 w-4" />
+                    <Settings className="mr-2 h-4 w-4" />
                     <span>Admin</span>
                   </DropdownMenuItem>
                 )}
@@ -192,40 +271,90 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <div className="flex-1 flex justify-center items-center">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost">Time</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => setShirtColor('verde')}>Verde</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShirtColor('amarelo')}>Amarelo</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShirtColor('preto')}>Preto</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShirtColor('vermelho')}>Vermelho</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShirtColor('branco')}>Branco</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button variant="ghost" className="text-primary-foreground" onClick={() => onNavigate('partial-score')}>Parcial</Button>
-                <Button variant="ghost" className="text-primary-foreground" onClick={() => onNavigate('games')}>Jogos</Button>
-            </div>
+            <h2 className="text-xl font-bold">Escalação</h2>
             
             <Button variant="ghost" className="text-primary-foreground">
                 <Share2 className="w-5 h-5" />
             </Button>
         </div>
-        <Button className="bg-primary hover:bg-primary/90 rounded-lg px-6">
-          Pontuação da rodada: {totalScore.toFixed(2)}
-        </Button>
+        {!canEdit && (
+            <Button className="bg-primary hover:bg-primary/90 rounded-lg px-6">
+                Pontuação da rodada: {totalScore.toFixed(2)}
+            </Button>
+        )}
       </header>
       <div className="p-4 pb-32">
-        <Pitch>
-          {renderPlayerRow(atkCount, attackers, 'ATA', 0)}
-          {renderPlayerRow(midCount, midfielders, 'MEI', atkCount)}
-          {renderPlayerRow(defCount, defenders, 'ZAG', atkCount + midCount)}
-          {renderPlayerRow(1, goalkeeper, 'GOL', atkCount + midCount + defCount)}
-        </Pitch>
+        
+        {canEdit ? (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Editor da Rodada</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Tabs defaultValue="team1" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="team1">Time 1</TabsTrigger>
+                            <TabsTrigger value="team2">Time 2</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="team1" className="mt-4">
+                            <div className="flex justify-between items-center mb-4">
+                               <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
+                                <Button variant="destructive" size="sm" onClick={handleClearTeam1} disabled={!canEdit}>
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Limpar Time 1
+                                </Button>
+                            </div>
+                            <TeamEditor
+                                teamName="Time 1"
+                                lineup={team1Lineup}
+                                reserves={team1Reserves}
+                                players={players}
+                                formation={formation}
+                                shirtColor={team1ShirtColor}
+                                onPlayerSelect={onPlayerSelect}
+                                onAddPlayer={handleAddPlayerForTeam('team1')}
+                                canEdit={canEdit}
+                            />
+                        </TabsContent>
+                        <TabsContent value="team2" className="mt-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
+                                <Button variant="destructive" size="sm" onClick={handleClearTeam2} disabled={!canEdit}>
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Limpar Time 2
+                                </Button>
+                            </div>
+                            <TeamEditor
+                                teamName="Time 2"
+                                lineup={team2Lineup}
+                                reserves={team2Reserves}
+                                players={players}
+                                formation={formation}
+                                shirtColor={team2ShirtColor}
+                                onPlayerSelect={onPlayerSelect}
+                                onAddPlayer={handleAddPlayerForTeam('team2')}
+                                canEdit={canEdit}
+                            />
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+            </Card>
+        ) : (
+            <TeamEditor
+                teamName={currentUser.teamName}
+                lineup={userLineup}
+                reserves={userReserves}
+                players={players}
+                formation={formation}
+                shirtColor={team1ShirtColor} // Defaulting to team1 color for user's view
+                onPlayerSelect={onPlayerSelect}
+                onAddPlayer={(pos, idx) => { /* Non-editors can't add players */ }}
+                canEdit={canEdit}
+            />
+        )}
+        
         <div className="mt-4 flex flex-col gap-2">
-            <AiSuggestions user={user} players={players} onApplyLineup={handleApplyAiLineup} />
+            {!canEdit && <AiSuggestions user={user} players={players} onApplyLineup={handleApplyAiLineup} />}
             <div className={cn(
                 "p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center font-bold text-primary-foreground",
                 isMarketOpen ? "bg-green-600" : "bg-orange-500"
@@ -234,13 +363,8 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
                 <span>{isMarketOpen ? "MERCADO ABERTO" : "MERCADO FECHADO"}</span>
             </div>
         </div>
-        
-        <div className="mt-8">
-            <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
-            {renderReserves()}
-        </div>
       </div>
-       <div className="fixed bottom-0 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
+       <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
           <div className="flex justify-between items-center px-2 pb-2">
               <div className="flex flex-col items-center gap-1">
                   <span className="text-xs">Esquema Tático</span>
@@ -262,16 +386,12 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
                   </Button>
               </div>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
               <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent" disabled={!canEdit}>
                   Limpar Reservas
               </Button>
-              <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent" onClick={handleClearLineup} disabled={!canEdit}>
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Limpar Time
-              </Button>
               <Button className="bg-green-600 text-white hover:bg-green-700" disabled={!canEdit}>
-                  Salvar Time
+                  Salvar Times
               </Button>
           </div>
       </div>

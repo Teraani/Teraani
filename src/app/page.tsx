@@ -24,6 +24,7 @@ export type Position = Player['pos'] | null;
 export interface AddPlayerSlot {
   position: Player['pos'] | 'RES'; // 'RES' for reserve
   index: number;
+  team?: 'team1' | 'team2';
 }
 
 export default function Home() {
@@ -36,10 +37,23 @@ export default function Home() {
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
   const currentUser = loggedInUserId ? appData.users[loggedInUserId] : null;
 
+  // State for the logged-in user's lineup
   const [userLineup, setUserLineup] = useState<(string | null)[]>([]);
   const [userReserves, setUserReserves] = useState<(string | null)[]>([]);
+  
+  // State for the two teams the editor can manage
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(11).fill(null));
+  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(11).fill(null));
+  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
+
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  const canEdit = useMemo(() => {
+    if (!currentUser) return false;
+    return currentUser.role === 'admin' || currentUser.id === appData.editorOfTheRound;
+  }, [currentUser, appData.editorOfTheRound]);
   
   const handleLoginSuccess = (userId: string) => {
     const user = appData.users[userId];
@@ -76,20 +90,25 @@ export default function Home() {
 
   const addPlayerToLineup = (playerId: string) => {
     if (slotToAddPlayer === null) return;
+    
+    const { position, index, team } = slotToAddPlayer;
+    
+    const setLineup = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
+    const setReserves = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
 
-    if (slotToAddPlayer.position === 'RES') {
-      setUserReserves(prevReserves => {
+    if (position === 'RES') {
+      setReserves(prevReserves => {
         const newReserves = [...(prevReserves || [])];
-        if (slotToAddPlayer.index >= 0 && slotToAddPlayer.index < newReserves.length) {
-          newReserves[slotToAddPlayer.index] = playerId;
+        if (index >= 0 && index < newReserves.length) {
+          newReserves[index] = playerId;
         }
         return newReserves;
       });
     } else {
-      setUserLineup(prevLineup => {
+      setLineup(prevLineup => {
         const newLineup = [...(prevLineup || [])];
-        if (slotToAddPlayer.index >= 0 && slotToAddPlayer.index < newLineup.length) {
-          newLineup[slotToAddPlayer.index] = playerId;
+        if (index >= 0 && index < newLineup.length) {
+          newLineup[index] = playerId;
         }
         return newLineup;
       });
@@ -148,7 +167,27 @@ export default function Home() {
       case 'dashboard':
         return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
-        return <LineupView userLineup={userLineup} setUserLineup={setUserLineup} userReserves={userReserves} setUserReserves={setUserReserves} players={appData.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} userAvatar={userAvatar} currentUser={currentUser!} editorOfTheRound={appData.editorOfTheRound} />;
+        return <LineupView 
+                 userLineup={userLineup} 
+                 setUserLineup={setUserLineup} 
+                 userReserves={userReserves} 
+                 setUserReserves={setUserReserves} 
+                 players={appData.players} 
+                 onPlayerSelect={selectPlayerForDetails} 
+                 onNavigate={navigateTo} 
+                 onAddPlayer={handleOpenMarket} 
+                 userAvatar={userAvatar} 
+                 currentUser={currentUser!}
+                 canEdit={canEdit}
+                 team1Lineup={team1Lineup}
+                 setTeam1Lineup={setTeam1Lineup}
+                 team1Reserves={team1Reserves}
+                 setTeam1Reserves={setTeam1Reserves}
+                 team2Lineup={team2Lineup}
+                 setTeam2Lineup={setTeam2Lineup}
+                 team2Reserves={team2Reserves}
+                 setTeam2Reserves={setTeam2Reserves}
+               />;
       case 'player-details':
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'market':
