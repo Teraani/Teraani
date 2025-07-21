@@ -35,52 +35,42 @@ export type GenerateBalancedTeamOutput = z.infer<typeof GenerateBalancedTeamOutp
 
 
 export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Promise<GenerateBalancedTeamOutput> {
-    const { availablePlayers, teamBudget } = input;
+    const { availablePlayers } = input;
 
     const allPlayersWithId = Object.entries(availablePlayers).map(([id, player]) => ({ id, ...player }));
 
-    // Helper to shuffle array
-    const shuffle = <T>(array: T[]): T[] => {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+    // Sort players by value in descending order to get the "best" players first.
+    const sortedPlayers = allPlayersWithId.sort((a, b) => b.value - a.value);
+
+    const teamA: string[] = [];
+    const teamB: string[] = [];
+
+    // Distribute players between Team A and Team B in a snake draft pattern
+    // to ensure teams are as balanced as possible by value.
+    sortedPlayers.forEach((player, index) => {
+        if (Math.floor(index / 2) % 2 === 0) { // Snake draft logic
+            if (index % 2 === 0) {
+                teamA.push(player.id);
+            } else {
+                teamB.push(player.id);
+            }
+        } else {
+            if (index % 2 === 0) {
+                teamB.push(player.id);
+            } else {
+                teamA.push(player.id);
+            }
         }
-        return array;
-    };
-    
-    const lineup: string[] = [];
-    const reserves: string[] = [];
-    const selectedIds = new Set<string>();
-    let currentCost = 0;
+    });
 
-    const shuffledPlayers = shuffle(allPlayersWithId);
-
-    // Select 11 for lineup
-    for (const player of shuffledPlayers) {
-        if (lineup.length >= 11) break;
-        if (!selectedIds.has(player.id) && currentCost + player.value <= teamBudget) {
-            lineup.push(player.id);
-            selectedIds.add(player.id);
-            currentCost += player.value;
-        }
-    }
-
-    // Select 5 for reserves
-    for (const player of shuffledPlayers) {
-        if (reserves.length >= 5) break;
-        if (!selectedIds.has(player.id) && currentCost + player.value <= teamBudget) {
-            reserves.push(player.id);
-            selectedIds.add(player.id);
-            currentCost += player.value;
-        }
-    }
-
-    // If we couldn't fill the teams due to budget, we stop. 
-    // The UI should handle cases with fewer than 11 or 5 players.
+    // The first team generated (Team A) will be returned. The caller will handle generating the second team.
+    // We split the generated team into lineup and reserves.
+    const lineup = teamA.slice(0, 11);
+    const reserves = teamA.slice(11, 16); // Up to 5 reserves
 
     return {
         lineup,
         reserves,
-        reasoning: 'Este time foi gerado de forma aleatória, aproveitando o orçamento disponível sem restrição de posição.'
+        reasoning: 'Este time foi gerado de forma balanceada, distribuindo os melhores jogadores disponíveis para criar confrontos equilibrados.'
     };
 }
