@@ -3,7 +3,7 @@ import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
-import { Clock, Shield, Star, Trash2 } from 'lucide-react';
+import { Clock, Palette, Shield, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,9 +17,11 @@ interface LineupViewProps {
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
+type JerseyColor = 'green' | 'yellow';
 
 export default function LineupView({ user, players, onPlayerSelect, onNavigate }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
+  const [jerseyColor, setJerseyColor] = useState<JerseyColor>('green');
 
   const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
   const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
@@ -65,22 +67,22 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
         <Pitch>
           {attackers.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {attackers.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+              {attackers.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} jerseyColor={jerseyColor} />)}
             </div>
           )}
           {midfielders.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {midfielders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+              {midfielders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} jerseyColor={jerseyColor} />)}
             </div>
           )}
           {defenders.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+              {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} jerseyColor={jerseyColor} />)}
             </div>
           )}
           {goalkeeper.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {goalkeeper.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+              {goalkeeper.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} jerseyColor={jerseyColor} />)}
             </div>
           )}
         </Pitch>
@@ -104,6 +106,18 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
                           <SelectItem value="4-3-3">4-3-3</SelectItem>
                           <SelectItem value="4-4-2">4-4-2</SelectItem>
                           <SelectItem value="3-5-2">3-5-2</SelectItem>
+                      </SelectContent>
+                  </Select>
+              </div>
+               <div className="flex flex-col items-center gap-1 text-white">
+                  <span className="text-xs">Cor da Camisa</span>
+                  <Select value={jerseyColor} onValueChange={(value: JerseyColor) => setJerseyColor(value)}>
+                      <SelectTrigger className="w-auto bg-gray-700 border-none text-white h-8">
+                          <SelectValue placeholder={<Palette className="h-5 w-5" />} />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="green">Verde</SelectItem>
+                          <SelectItem value="yellow">Amarelo</SelectItem>
                       </SelectContent>
                   </Select>
               </div>
