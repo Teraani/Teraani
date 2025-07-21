@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { View } from '@/app/page';
@@ -5,7 +6,8 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Circle } from 'lucide-react';
+import { Circle, Upload } from 'lucide-react';
+import React, { useState, useRef } from 'react';
 
 interface DashboardViewProps {
   user: User;
@@ -15,14 +17,44 @@ interface DashboardViewProps {
 }
 
 function PlayerSummary({ onNavigate }: { onNavigate: (view: View) => void }) {
+    const [playerImage, setPlayerImage] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setPlayerImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
     return (
         <Card className="bg-gray-200 dark:bg-zinc-800 p-4">
             <CardContent className="p-0">
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20 bg-yellow-300">
-                        <AvatarFallback className="text-3xl text-gray-700">J</AvatarFallback>
-                    </Avatar>
-                    <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Jogador</h3>
+                    <div className="relative">
+                        <Avatar className="h-20 w-20 bg-yellow-300" onClick={handleAvatarClick}>
+                            <AvatarImage src={playerImage ?? undefined} alt="Foto do Jogador" />
+                            <AvatarFallback className="text-3xl text-gray-700 cursor-pointer">
+                                <Upload className="h-8 w-8"/>
+                            </AvatarFallback>
+                        </Avatar>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImageChange}
+                            className="hidden"
+                            accept="image/*"
+                        />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Felipe</h3>
                 </div>
                 <div className="grid grid-cols-3 text-center mt-4">
                     <div>
