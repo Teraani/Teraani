@@ -155,7 +155,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
   }
 
   return (
-    <div className="dark">
+    <div>
       <header className="bg-card p-4 flex flex-col items-center gap-4">
         <div className="flex justify-between items-center w-full">
             <DropdownMenu>
@@ -172,7 +172,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
               <DropdownMenuContent className="w-56" align="start" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-white">{currentUser.name}</p>
+                    <p className="text-sm font-medium leading-none">{currentUser.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {currentUser.email}
                     </p>
@@ -195,7 +195,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
             <div className="flex-1 flex justify-center items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-white">Time</Button>
+                    <Button variant="ghost">Time</Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => setShirtColor('verde')}>Verde</DropdownMenuItem>
@@ -243,9 +243,9 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
        <div className="fixed bottom-0 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
           <div className="flex justify-between items-center px-2 pb-2">
               <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs text-white">Esquema Tático</span>
+                  <span className="text-xs">Esquema Tático</span>
                   <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={!canEdit}>
-                      <SelectTrigger className="w-auto bg-muted border-none h-8 text-white">
+                      <SelectTrigger className="w-auto bg-muted border-none h-8">
                           <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -256,7 +256,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
                   </Select>
               </div>
               <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs text-white">Desfazer Time</span>
+                  <span className="text-xs">Desfazer Time</span>
                   <Button variant="ghost" size="icon" className="h-8 w-8 bg-muted hover:bg-accent rounded-full" onClick={handleClearLineup} disabled={!canEdit}>
                       <Trash2 className="h-5 w-5 text-red-400" />
                   </Button>

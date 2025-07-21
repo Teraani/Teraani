@@ -159,7 +159,7 @@ function ConnectSection() {
 
 export default function DashboardView({ user, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange }: DashboardViewProps) {
   return (
-    <div className="dark">
+    <div>
       <header className="bg-card p-4 shadow-sm flex items-center justify-between">
          <DropdownMenu>
           <DropdownMenuTrigger asChild>

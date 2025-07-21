@@ -61,7 +61,7 @@ export default function GamesView({ onBack }: GamesViewProps) {
   const [activeTab, setActiveTab] = useState<Round>('1');
 
   return (
-    <div className="dark">
+    <div>
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6 text-foreground" />

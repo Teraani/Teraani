@@ -46,10 +46,10 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
   }, [users, searchTerm]);
 
   return (
-    <div className="dark">
+    <div>
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
-          <ArrowLeft className="h-6 w-6 text-white" />
+          <ArrowLeft className="h-6 w-6" />
         </Button>
         <h2 className="text-xl font-bold text-center flex-1 text-foreground">Painel do Administrador</h2>
         <div className="w-9 h-9" />

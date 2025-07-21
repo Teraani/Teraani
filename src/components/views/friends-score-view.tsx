@@ -26,7 +26,7 @@ interface FriendsScoreViewProps {
 const TeamCrest = ({ crest, avatar, name, teamName }: { crest: string; avatar: string; name: string; teamName: string; }) => (
   <div className="relative">
     <Image src={crest} alt="" width={48} height={48} className="rounded-md" data-ai-hint="team crest" />
-    <Avatar className="absolute bottom-[-8px] right-[-8px] h-8 w-8 border-2 border-white dark:border-zinc-800">
+    <Avatar className="absolute bottom-[-8px] right-[-8px] h-8 w-8 border-2 border-background">
       <AvatarImage src={avatar} alt={name} data-ai-hint="player avatar" />
       <AvatarFallback>{name.charAt(0)}</AvatarFallback>
     </Avatar>
@@ -141,7 +141,7 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
 
 
   return (
-    <div className="dark">
+    <div>
       <header className="bg-card p-4 shadow-sm flex items-center justify-between sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6 text-foreground" />

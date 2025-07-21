@@ -162,7 +162,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div>
       <main className="pb-20">
         {renderView()}
       </main>

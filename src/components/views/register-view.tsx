@@ -12,10 +12,10 @@ interface RegisterViewProps {
 
 export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: RegisterViewProps) {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-zinc-900">
-       <header className="bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center">
-         <Button variant="ghost" size="icon" onClick={onNavigateToLogin} className="hover:bg-gray-200 dark:hover:bg-zinc-800">
-          <ArrowLeft className="h-6 w-6 text-foreground" />
+    <div className="flex flex-col min-h-screen">
+       <header className="bg-card p-4 shadow-sm flex items-center">
+         <Button variant="ghost" size="icon" onClick={onNavigateToLogin} className="hover:bg-accent">
+          <ArrowLeft className="h-6 w-6" />
         </Button>
         <h1 className="text-xl font-bold text-center flex-1 pr-10">Cadastro</h1>
       </header>
@@ -26,14 +26,14 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
                  <div>
                     <Label htmlFor="name">Nome</Label>
                      <div className="relative mt-1">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input id="name" type="text" placeholder="Seu nome" className="pl-10" />
                     </div>
                 </div>
                 <div>
                     <Label htmlFor="email">E-mail</Label>
                     <div className="relative mt-1">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input id="email" type="email" placeholder="seuemail@exemplo.com" className="pl-10" />
                     </div>
                 </div>
@@ -51,7 +51,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
             </div>
             
             <div className="mt-8 text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-muted-foreground">
                     Já tem uma conta?{' '}
                     <button onClick={onNavigateToLogin} className="font-medium text-primary hover:underline">
                         Faça login
