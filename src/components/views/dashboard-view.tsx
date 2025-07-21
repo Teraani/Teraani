@@ -6,7 +6,7 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio } from 'lucide-react';
 import React, { useState, useRef, useMemo } from 'react';
 import {
   DropdownMenu,
@@ -124,15 +124,16 @@ function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
         { label: "Parciais gerais", view: 'partial-score' as View, icon: BarChart3 },
         { label: "Parcial dos amigos", view: 'friends-score' as View, icon: Users },
         { label: "Resultado dos jogos", view: 'games' as View, icon: Trophy },
+        { label: "Partida ao vivo", view: 'live' as View, icon: Radio },
     ];
     return (
         <div>
             <h3 className="text-xl font-bold mb-4">Acesso Rápido</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-2">
                 {items.map(item => (
-                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center justify-center gap-3 p-3 rounded-lg bg-card hover:bg-muted transition-colors aspect-square">
+                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center justify-center gap-2 p-2 rounded-lg bg-card hover:bg-muted transition-colors aspect-square">
                         <div className="text-primary">
-                            <item.icon className="w-10 h-10" />
+                            <item.icon className="w-8 h-8" />
                         </div>
                         <p className="text-xs font-semibold text-center text-foreground">{item.label}</p>
                     </button>
