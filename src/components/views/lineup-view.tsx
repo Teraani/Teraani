@@ -3,14 +3,15 @@ import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
-import { Clock, Trash2 } from 'lucide-react';
+import { Clock, Trash2, LogOut, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { View, AddPlayerSlot } from '@/app/page';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '@/components/lineup/add-player-button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 interface LineupViewProps {
@@ -22,12 +23,13 @@ interface LineupViewProps {
   onAddPlayer: (slot: AddPlayerSlot) => void;
   userReserves: (string | null)[];
   setUserReserves: (reserves: (string | null)[]) => void;
+  userAvatar: string | null;
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
-export default function LineupView({ userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer, userReserves, setUserReserves }: LineupViewProps) {
+export default function LineupView({ userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer, userReserves, setUserReserves, userAvatar }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
   const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
@@ -129,21 +131,52 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
   return (
     <div className="bg-gray-900 min-h-screen">
       <header className="bg-gray-900 text-white p-4 flex flex-col items-center gap-4">
-        <div className="flex justify-center items-center w-full">
+        <div className="flex justify-between items-center w-full">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-white">Time</Button>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={userAvatar ?? undefined} alt="Avatar do Usuário" />
+                    <AvatarFallback>
+                      <Users />
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => setShirtColor('verde')}>Verde</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShirtColor('amarelo')}>Amarelo</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShirtColor('preto')}>Preto</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShirtColor('vermelho')}>Vermelho</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShirtColor('branco')}>Branco</DropdownMenuItem>
+              <DropdownMenuContent className="w-56" align="start" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Felipe</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      felipe@exemplo.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onNavigate('welcome')}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="ghost" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2" onClick={() => onNavigate('partial-score')}>Parcial</Button>
-            <Button variant="ghost" className="text-white" onClick={() => onNavigate('games')}>Jogos</Button>
+
+            <div className="flex-1 flex justify-center items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-white">Time</Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setShirtColor('verde')}>Verde</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShirtColor('amarelo')}>Amarelo</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShirtColor('preto')}>Preto</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShirtColor('vermelho')}>Vermelho</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShirtColor('branco')}>Branco</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="ghost" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2" onClick={() => onNavigate('partial-score')}>Parcial</Button>
+                <Button variant="ghost" className="text-white" onClick={() => onNavigate('games')}>Jogos</Button>
+            </div>
+            
             <Button variant="ghost" className="text-white">
                 <Share2 className="w-5 h-5" />
             </Button>

@@ -3,17 +3,17 @@
 
 import type { Player } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowUpRight, Shield, TrendingUp } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Card, CardContent } from '../ui/card';
+import { Card } from '../ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { cn } from '@/lib/utils';
-import { Badge } from '../ui/badge';
 
 interface StatisticsViewProps {
   players: Record<string, Player>;
   onBack: () => void;
+  onPlayerSelect: (playerId: string) => void;
 }
 
 const StatItem = ({ label, value }: { label: string; value: string | number | undefined }) => (
@@ -23,10 +23,10 @@ const StatItem = ({ label, value }: { label: string; value: string | number | un
     </div>
 );
 
-const PlayerStatsCard = ({ player, rank }: { player: Player, rank: number }) => (
+const PlayerStatsCard = ({ player, rank, onPlayerSelect }: { player: {id: string} & Player, rank: number, onPlayerSelect: (playerId: string) => void }) => (
   <Card className="bg-card shadow-sm">
       <AccordionItem value={`item-${rank}`} className="border-b-0">
-          <AccordionTrigger className="p-4 hover:no-underline">
+          <AccordionTrigger className="p-4 hover:no-underline" onClick={() => onPlayerSelect(player.id)}>
               <div className="flex items-center gap-4 w-full">
                   <span className={cn(
                       "font-bold text-lg w-6 text-center",
@@ -68,9 +68,10 @@ const PlayerStatsCard = ({ player, rank }: { player: Player, rank: number }) => 
   </Card>
 );
 
-export default function StatisticsView({ players, onBack }: StatisticsViewProps) {
+export default function StatisticsView({ players, onBack, onPlayerSelect }: StatisticsViewProps) {
   const sortedPlayers = useMemo(() => {
-    return Object.values(players)
+    return Object.entries(players)
+      .map(([id, player]) => ({...player, id}))
       .sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
   }, [players]);
 
@@ -87,7 +88,7 @@ export default function StatisticsView({ players, onBack }: StatisticsViewProps)
       <main className="p-4 space-y-3">
           <Accordion type="single" collapsible className="w-full space-y-2">
             {sortedPlayers.map((player, index) => (
-                <PlayerStatsCard key={player.name} player={player} rank={index + 1} />
+                <PlayerStatsCard key={player.id} player={player} rank={index + 1} onPlayerSelect={onPlayerSelect} />
             ))}
           </Accordion>
       </main>

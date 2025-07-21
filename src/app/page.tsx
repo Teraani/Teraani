@@ -34,7 +34,7 @@ export default function Home() {
   const [userLineup, setUserLineup] = useState<(string | null)[]>(appData.user.lineup || Array(11).fill(null));
   const [userReserves, setUserReserves] = useState<(string | null)[]>(appData.user.reserves || Array(5).fill(null));
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>('https://placehold.co/32x32');
+  const [userAvatar, setUserAvatar] = useState<string | null>('https://placehold.co/128x128.png');
 
 
   const navigateTo = (view: View) => {
@@ -114,7 +114,7 @@ export default function Home() {
       case 'dashboard':
         return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
-        return <LineupView userLineup={userLineup} setUserLineup={setUserLineup} userReserves={userReserves} setUserReserves={setUserReserves} players={appData.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} />;
+        return <LineupView userLineup={userLineup} setUserLineup={setUserLineup} userReserves={userReserves} setUserReserves={setUserReserves} players={appData.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} userAvatar={userAvatar} />;
       case 'player-details':
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'market':
@@ -126,7 +126,7 @@ export default function Home() {
       case 'friends-score':
         return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userWithCurrentLineup} players={appData.players} userAvatar={userAvatar} />;
       case 'statistics':
-        return <StatisticsView players={appData.players} onBack={goBack} />;
+        return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       default:
         return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }
