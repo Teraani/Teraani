@@ -13,11 +13,15 @@ import MarketView from '@/components/views/market-view';
 import BottomNav from '@/components/bottom-nav';
 
 export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market';
+export type Position = Player['pos'] | null;
+
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('dashboard');
+  const [userLineup, setUserLineup] = useState<string[]>(data.user.lineup);
+  const [positionToAdd, setPositionToAdd] = useState<Position>(null);
 
 
   const appData: { user: User; players: Record<string, Player> } = useMemo(() => data, []);
@@ -28,35 +32,52 @@ export default function Home() {
     window.scrollTo(0, 0);
   };
 
-  const selectPlayer = (playerId: string) => {
+  const selectPlayerForDetails = (playerId: string) => {
     setSelectedPlayerId(playerId);
     navigateTo('player-details');
+  };
+
+  const addPlayerToLineup = (playerId: string) => {
+    if (!positionToAdd) return;
+    setUserLineup(prevLineup => [...prevLineup, playerId]);
+    setPositionToAdd(null);
+    navigateTo('lineup');
   };
 
   const goBack = () => {
     navigateTo(previousView);
   }
 
+  const handleOpenMarket = (position: Position) => {
+    setPositionToAdd(position);
+    navigateTo('market');
+  }
+
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
+
+  const userWithCurrentLineup = useMemo(() => ({
+    ...appData.user,
+    lineup: userLineup,
+  }), [appData.user, userLineup]);
 
   const renderView = () => {
     switch (currentView) {
       case 'welcome':
         return <WelcomeView onEnter={() => navigateTo('dashboard')} />;
       case 'dashboard':
-        return <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
+        return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
       case 'lineup':
-        return <LineupView user={appData.user} players={appData.players} onPlayerSelect={selectPlayer} onNavigate={navigateTo} />;
+        return <LineupView user={userWithCurrentLineup} setUserLineup={setUserLineup} players={appData.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} /> : <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} /> : <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
       case 'market':
-        return <MarketView players={appData.players} onPlayerSelect={selectPlayer} onBack={goBack} />;
+        return <MarketView players={appData.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={positionToAdd} />;
       case 'partial-score':
-        return <PartialScoreView user={appData.user} players={appData.players} onBack={goBack} onPlayerSelect={selectPlayer} />;
+        return <PartialScoreView user={userWithCurrentLineup} players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'games':
         return <GamesView onBack={goBack} />;
       default:
-        return <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
+        return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
     }
   };
 

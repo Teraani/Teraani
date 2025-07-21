@@ -6,22 +6,35 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, ArrowLeft } from 'lucide-react';
 import PlayerListItem from '@/components/market/player-list-item';
+import type { Position } from '@/app/page';
 
 interface MarketViewProps {
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
   onBack: () => void;
+  position: Position;
 }
 
-export default function MarketView({ players, onPlayerSelect, onBack }: MarketViewProps) {
+export default function MarketView({ players, onPlayerSelect, onBack, position }: MarketViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredPlayers = useMemo(() => {
     const lowerCaseSearch = searchTerm.toLowerCase();
-    return Object.entries(players)
+    
+    let positionPlayers = Object.entries(players);
+
+    if (position) {
+      if (position === 'ZAG') {
+        positionPlayers = positionPlayers.filter(([_, player]) => player.pos === 'ZAG' || player.pos === 'LAT');
+      } else {
+        positionPlayers = positionPlayers.filter(([_, player]) => player.pos === position);
+      }
+    }
+
+    return positionPlayers
       .filter(([_, player]) => player.name.toLowerCase().includes(lowerCaseSearch))
       .sort((a, b) => b[1].value - a[1].value); // Sort by value desc
-  }, [searchTerm, players]);
+  }, [searchTerm, players, position]);
 
   return (
     <div>

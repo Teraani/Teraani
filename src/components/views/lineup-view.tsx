@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { View } from '@/app/page';
+import type { View, Position } from '@/app/page';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '@/components/lineup/add-player-button';
 
@@ -18,16 +18,17 @@ interface LineupViewProps {
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
   onNavigate: (view: View) => void;
+  setUserLineup: (lineup: string[]) => void;
+  onAddPlayer: (position: Position) => void;
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
-export default function LineupView({ user, players, onPlayerSelect, onNavigate }: LineupViewProps) {
+export default function LineupView({ user, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
   const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
-  const [currentLineup, setCurrentLineup] = useState<string[]>(user.lineup);
 
   useEffect(() => {
     const checkMarketStatus = () => {
@@ -50,23 +51,23 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
   }, []);
   
   const handleClearLineup = () => {
-    setCurrentLineup([]);
+    setUserLineup([]);
   };
 
   const handleAddPlayer = (position: Player['pos']) => {
-    onNavigate('market');
+    onAddPlayer(position);
   };
 
-  const lineupPlayers = currentLineup.map(id => ({ ...players[id], id }));
+  const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
   const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
 
   const reservePlayers = useMemo(() => {
-    const lineupIds = new Set(currentLineup);
+    const lineupIds = new Set(user.lineup);
     return Object.entries(players)
       .filter(([id]) => !lineupIds.has(id))
       .slice(0, 5)
       .map(([id, player]) => ({ ...player, id }));
-  }, [currentLineup, players]);
+  }, [user.lineup, players]);
 
   const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
     const allPlayersByPos: { [key in Player['pos']]: ({ id: string } & Player)[] } = {
