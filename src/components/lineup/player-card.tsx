@@ -11,14 +11,12 @@ export default function PlayerCard({ player, onPlayerSelect, jerseyColor }: Play
   return (
     <button className="flex flex-col items-center text-center w-20 group" onClick={() => onPlayerSelect(player.id)}>
       <div className="relative w-14 h-14 group-hover:scale-110 transition-transform duration-200">
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" 
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
           className={cn(
             'w-full h-full',
             jerseyColor === 'green' ? 'fill-lime-500' : 'fill-yellow-400'
           )}>
-          <path d="M25,10 L75,10 L78,20 L95,25 L85,35 L80,30 L80,90 L20,90 L20,30 L15,35 L5,25 L22,20 Z" />
-          <path d="M40,10 Q50,5,60,10 L50,20 Z" fillOpacity="0.3"/>
-          <path d="M20,35 L80,35 L80,45 L20,45 Z" fillOpacity="0.2"/>
+            <path d="M12 2C9.243 2 7 4.243 7 7v7.586l-1.707-1.707-1.414 1.414L12 22.414l8.121-8.121-1.414-1.414L17 14.586V7c0-2.757-2.243-5-5-5zM9 7c0-1.654 1.346-3 3-3s3 1.346 3 3v7h-6V7z" />
         </svg>
       </div>
       <p className="text-white font-semibold text-sm bg-black/50 px-2 py-0.5 rounded mt-1 whitespace-nowrap">
