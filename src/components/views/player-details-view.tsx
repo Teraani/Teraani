@@ -114,7 +114,7 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                 <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
                     <TabsTrigger value="resumo" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Resumo</TabsTrigger>
                     <TabsTrigger value="detalhes" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Detalhes</TabsTrigger>
-                    <TabsTrigger value="heatmap" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Mapa de Calor</TabsTrigger>
+                    <TabsTrigger value="heatmap" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Mapa de Calor (em breve)</TabsTrigger>
                 </TabsList>
                 <TabsContent value="resumo">
                      <div className="mt-4 p-4">
@@ -175,7 +175,7 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                     </div>
                  </TabsContent>
                  <TabsContent value="heatmap" className="p-4 space-y-4">
-                    <h4 className="font-bold text-foreground">Mapa de Calor</h4>
+                    <h4 className="font-bold text-foreground">Mapa de Calor (em breve)</h4>
                     <div className="text-center text-muted-foreground p-4 bg-muted/50 dark:bg-muted/20 rounded-lg">
                         <p className="mb-4">Conecte sua conta Strava, Garmin ou Samsung para visualizar o mapa de calor de suas atividades em campo.</p>
                         <div className="flex justify-center gap-4 mb-4">
