@@ -33,7 +33,6 @@ export default function PlayerCard({ player, onPlayerSelect, isReserve = false, 
                 <path d="M36 7L44 12V22L36 19V7Z" fill={secondaryColor} stroke="#1F2937" strokeWidth="1"/>
                 <path d="M12 19L24 24L36 19V36L24 41L12 36V19Z" fill={primaryColor} stroke="#1F2937" strokeWidth="1"/>
                 <path d="M12 7H36V19L24 24L12 19V7Z" fill={primaryColor} stroke="#1F2937" strokeWidth="1" />
-                <text x="24" y="16" fontFamily="sans-serif" fontSize="6" fill={secondaryColor} textAnchor="middle" fontWeight="bold">{player.team}</text>
             </g>
         </svg>
       </div>
