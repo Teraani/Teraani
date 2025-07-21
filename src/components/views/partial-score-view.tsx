@@ -64,7 +64,7 @@ export default function PartialScoreView({ players, onBack, onPlayerSelect }: Pa
                     </Avatar>
                     <div>
                     <p className="font-bold">{player.name}</p>
-                    <p className="text-sm text-muted-foreground">{player.pos} - {player.team}</p>
+                    <p className="text-sm text-muted-foreground">{player.pos}</p>
                     </div>
                 </div>
                 <div className="text-right">

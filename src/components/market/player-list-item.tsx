@@ -30,7 +30,7 @@ export default function PlayerListItem({ player, onPlayerSelect, isScaled }: Pla
             <p className="font-bold text-gray-800 dark:text-gray-100">{player.name}</p>
             {isScaled && <Badge variant="secondary" className="text-xs">Escalado</Badge>}
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{player.pos} - {player.team}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{player.pos}</p>
         </div>
       </div>
       <div className="text-right">
