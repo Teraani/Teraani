@@ -7,6 +7,7 @@ import { Clock, Palette, Shield, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { View } from '@/app/page';
 
 interface LineupViewProps {
@@ -61,6 +62,18 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
     <div className="bg-gray-900 min-h-screen">
       <header className="bg-gray-900 text-white p-4 flex flex-col items-center gap-4">
         <div className="flex justify-center items-center w-full">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="text-white">Time</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => setShirtColor('verde')}>Verde</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShirtColor('amarelo')}>Amarelo</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShirtColor('preto')}>Preto</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShirtColor('vermelho')}>Vermelho</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShirtColor('branco')}>Branco</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2" onClick={() => onNavigate('partial-score')}>Parcial</Button>
             <Button variant="ghost" className="text-white" onClick={() => onNavigate('games')}>Jogos</Button>
             <Button variant="ghost" className="text-white">
@@ -123,21 +136,6 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
                           <SelectItem value="4-3-3">4-3-3</SelectItem>
                           <SelectItem value="4-4-2">4-4-2</SelectItem>
                           <SelectItem value="3-5-2">3-5-2</SelectItem>
-                      </SelectContent>
-                  </Select>
-              </div>
-              <div className="flex flex-col items-center gap-1 text-white">
-                  <span className="text-xs">Cor da Camisa</span>
-                   <Select value={shirtColor} onValueChange={(value: ShirtColor) => setShirtColor(value)}>
-                      <SelectTrigger className="w-auto bg-gray-700 border-none text-white h-8">
-                           <Palette className="h-5 w-5" />
-                      </SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="verde">Verde</SelectItem>
-                          <SelectItem value="amarelo">Amarelo</SelectItem>
-                          <SelectItem value="preto">Preto</SelectItem>
-                          <SelectItem value="vermelho">Vermelho</SelectItem>
-                          <SelectItem value="branco">Branco</SelectItem>
                       </SelectContent>
                   </Select>
               </div>
