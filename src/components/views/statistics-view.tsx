@@ -3,22 +3,70 @@
 
 import type { Player } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/ui/table';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ArrowLeft, ArrowUpRight, Shield, TrendingUp } from 'lucide-react';
 import { useMemo } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Card, CardContent } from '../ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { cn } from '@/lib/utils';
+import { Badge } from '../ui/badge';
 
 interface StatisticsViewProps {
   players: Record<string, Player>;
   onBack: () => void;
 }
+
+const StatItem = ({ label, value }: { label: string; value: string | number | undefined }) => (
+    <div className="flex flex-col items-center">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="font-bold text-lg text-foreground">{value ?? '–'}</p>
+    </div>
+);
+
+const PlayerStatsCard = ({ player, rank }: { player: Player, rank: number }) => (
+  <Card className="bg-card shadow-sm">
+      <AccordionItem value={`item-${rank}`} className="border-b-0">
+          <AccordionTrigger className="p-4 hover:no-underline">
+              <div className="flex items-center gap-4 w-full">
+                  <span className={cn(
+                      "font-bold text-lg w-6 text-center",
+                      rank === 1 && "text-amber-400",
+                      rank === 2 && "text-slate-400",
+                      rank === 3 && "text-amber-600"
+                  )}>
+                      {rank}
+                  </span>
+                  <Avatar>
+                      <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" />
+                      <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                      <p className="font-bold text-base text-foreground">{player.name}</p>
+                      <p className="text-sm text-muted-foreground">{player.team} - {player.pos}</p>
+                  </div>
+                  <div className="text-right">
+                      <p className="font-extrabold text-xl text-primary">{player.points?.toFixed(1) ?? 'N/A'}</p>
+                      <p className="text-xs text-muted-foreground">Pontos</p>
+                  </div>
+              </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-4 pb-4">
+              <div className="bg-muted/50 dark:bg-muted/20 p-4 rounded-lg grid grid-cols-3 sm:grid-cols-4 gap-y-4 text-center">
+                  <StatItem label="Jogos" value={player.games} />
+                  <StatItem label="Vitórias" value={player.stats?.wins} />
+                  <StatItem label="Derrotas" value={player.stats?.losses} />
+                  <StatItem label="Empates" value={player.stats?.draws} />
+                  <StatItem label="Gols" value={player.stats?.goals} />
+                  <StatItem label="Assist." value={player.stats?.assists} />
+                  <StatItem label="SG" value={player.stats?.goalDifference} />
+                  <StatItem label="Aprov." value={`${player.stats?.performance?.toFixed(0) ?? '0'}%`} />
+                  <StatItem label="CA" value={player.stats?.yellowCards} />
+                  <StatItem label="CV" value={player.stats?.redCards} />
+              </div>
+          </AccordionContent>
+      </AccordionItem>
+  </Card>
+);
 
 export default function StatisticsView({ players, onBack }: StatisticsViewProps) {
   const sortedPlayers = useMemo(() => {
@@ -27,64 +75,22 @@ export default function StatisticsView({ players, onBack }: StatisticsViewProps)
   }, [players]);
 
   return (
-    <div className="bg-gray-50 dark:bg-zinc-900 min-h-screen flex flex-col">
-      <header className="bg-white dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20 shrink-0">
-        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-700">
+    <div className="bg-background min-h-screen">
+      <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
+        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h2 className="text-xl font-bold text-center flex-1 text-gray-800 dark:text-gray-100">Estatísticas Gerais</h2>
+        <h2 className="text-xl font-bold text-center flex-1 text-foreground">Estatísticas</h2>
         <div className="w-9 h-9" />
       </header>
 
-      <main className="p-4 flex-grow overflow-hidden">
-        <ScrollArea className="h-full">
-          <Table>
-            <TableHeader className="sticky top-0 bg-gray-100 dark:bg-zinc-800">
-              <TableRow>
-                <TableHead className="w-[40px]">#</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Pos</TableHead>
-                <TableHead>J</TableHead>
-                <TableHead>V</TableHead>
-                <TableHead>D</TableHead>
-                <TableHead>E</TableHead>
-                <TableHead>GP</TableHead>
-                <TableHead>GC</TableHead>
-                <TableHead>SG</TableHead>
-                <TableHead>Pts</TableHead>
-                <TableHead>Aprov.</TableHead>
-                <TableHead>Gols</TableHead>
-                <TableHead>Assis.</TableHead>
-                <TableHead>CA</TableHead>
-                <TableHead>CV</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedPlayers.map((player, index) => (
-                <TableRow key={player.name}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell className="font-medium">{player.name}</TableCell>
-                  <TableCell>{player.pos}</TableCell>
-                  <TableCell>{player.games}</TableCell>
-                  <TableCell>{player.stats?.wins ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.losses ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.draws ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.goalsFor ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.goalsAgainst ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.goalDifference ?? 'N/A'}</TableCell>
-                  <TableCell className="font-bold">{player.points?.toFixed(1) ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.performance ? `${player.stats.performance.toFixed(2)}%` : 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.goals ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.assists ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.yellowCards ?? 'N/A'}</TableCell>
-                  <TableCell>{player.stats?.redCards ?? 'N/A'}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+      <main className="p-4 space-y-3">
+          <Accordion type="single" collapsible className="w-full space-y-2">
+            {sortedPlayers.map((player, index) => (
+                <PlayerStatsCard key={player.name} player={player} rank={index + 1} />
+            ))}
+          </Accordion>
       </main>
     </div>
   );
 }
-
