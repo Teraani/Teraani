@@ -127,14 +127,14 @@ function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
     ];
     return (
         <div>
-            <h3 className="text-xl font-bold text-center mb-4">Acesso Rápido</h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <h3 className="text-xl font-bold mb-4">Acesso Rápido</h3>
+            <div className="grid grid-cols-3 gap-4">
                 {items.map(item => (
-                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors">
-                        <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center text-primary">
+                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center justify-center gap-3 p-3 rounded-lg bg-card hover:bg-muted transition-colors aspect-square">
+                        <div className="text-primary">
                             <item.icon className="w-10 h-10" />
                         </div>
-                        <p className="text-sm text-muted-foreground">{item.label}</p>
+                        <p className="text-xs font-semibold text-center text-foreground">{item.label}</p>
                     </button>
                 ))}
             </div>
