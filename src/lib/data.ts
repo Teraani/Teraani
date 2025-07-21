@@ -18,9 +18,22 @@ export interface User {
   reserves: string[];
 }
 
+export interface Friend {
+  id: string;
+  name: string;
+  teamName: string;
+  score: number | null;
+  playersPlayed: number;
+  totalPlayers: number;
+  isPro: boolean;
+  crest: string;
+  avatar: string;
+}
+
 interface AppData {
   user: User;
   players: Record<string, Player>;
+  friends: Friend[];
 }
 
 export const data: AppData = {
@@ -79,5 +92,29 @@ export const data: AppData = {
         'p44': { name: 'Giovani', team: 'GOI', pos: 'LAT', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
         'p45': { name: 'Lucca', team: 'JUV', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
         'p46': { name: 'Pedro Roberto', team: 'SAN', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' }
-    }
+    },
+    friends: [
+      {
+        id: 'friend1',
+        name: 'Jason',
+        teamName: 'Vinganza FC',
+        score: 58.49,
+        playersPlayed: 7,
+        totalPlayers: 12,
+        isPro: true,
+        crest: 'https://placehold.co/40x40/003f87/ffdf00',
+        avatar: 'https://placehold.co/32x32',
+      },
+      {
+        id: 'friend2',
+        name: 'Felipe',
+        teamName: 'corinthianss timãoooo',
+        score: null,
+        playersPlayed: 0,
+        totalPlayers: 12,
+        isPro: false,
+        crest: 'https://placehold.co/40x40/d42128/000000',
+        avatar: 'https://placehold.co/32x32',
+      }
+    ]
 };

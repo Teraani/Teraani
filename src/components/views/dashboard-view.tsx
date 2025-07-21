@@ -105,7 +105,7 @@ function PlayerSummary({ user, players, onNavigate }: { user: User, players: Rec
 function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
     const items = [
         { label: "Parciais gerais", view: 'partial-score' as View, icon: BarChart3 },
-        { label: "Parcial dos amigos", view: 'dashboard' as View, icon: Users },
+        { label: "Parcial dos amigos", view: 'friends-score' as View, icon: Users },
         { label: "Resultado dos jogos", view: 'games' as View, icon: Trophy },
     ];
     return (
