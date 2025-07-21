@@ -7,7 +7,7 @@ import PlayerStatsChart from '@/components/player-details/player-stats-chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 
 interface PlayerDetailsViewProps {
   player: { id: string } & Player;
@@ -39,6 +39,39 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
+
+  const chartData = useMemo(() => {
+    if (!player.games) return [];
+    
+    // Simulate per-game scores
+    const data = [];
+    let remainingPoints = player.points;
+    const basePointsPerGame = player.points / player.games;
+
+    for (let i = 1; i <= player.games; i++) {
+        // Add some randomness, but keep it around the average
+        const fluctuation = (Math.random() - 0.5) * basePointsPerGame * 0.8;
+        let gamePoints = basePointsPerGame + fluctuation;
+
+        if (i === player.games) {
+            // Ensure total points match
+            gamePoints = remainingPoints;
+        }
+
+        data.push({
+            round: `${i}`,
+            points: parseFloat(gamePoints.toFixed(2)),
+        });
+        remainingPoints -= gamePoints;
+    }
+    
+    // Fallback in case of no games
+    if (data.length === 0) {
+        return [{ round: '1', points: player.points }];
+    }
+
+    return data;
+  }, [player.games, player.points]);
 
 
   return (
@@ -92,7 +125,7 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                         <h4 className="font-bold text-gray-800 dark:text-gray-100 mt-4">Índice por Rodada</h4>
                         <Button className="mt-2 h-auto py-1 px-4 bg-blue-600 hover:bg-blue-700 text-white">Pontuação</Button>
                         <div className="h-[200px] mt-2">
-                            <PlayerStatsChart />
+                            <PlayerStatsChart data={chartData} />
                         </div>
                     </div>
                 </TabsContent>
