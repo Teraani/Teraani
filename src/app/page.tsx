@@ -12,9 +12,10 @@ import PartialScoreView from '@/components/views/partial-score-view';
 import GamesView from '@/components/views/games-view';
 import MarketView from '@/components/views/market-view';
 import FriendsScoreView from '@/components/views/friends-score-view';
+import StatisticsView from '@/components/views/statistics-view';
 import BottomNav from '@/components/bottom-nav';
 
-export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score';
+export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -118,6 +119,8 @@ export default function Home() {
         return <GamesView onBack={goBack} />;
       case 'friends-score':
         return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userWithCurrentLineup} players={appData.players} userAvatar={userAvatar} />;
+      case 'statistics':
+        return <StatisticsView players={appData.players} onBack={goBack} />;
       default:
         return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }

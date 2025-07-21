@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Shirt, Trophy } from 'lucide-react';
+import { Home, Shirt, Trophy, BarChart2 } from 'lucide-react';
 import type { View } from '@/app/page';
 import { cn } from '@/lib/utils';
 
@@ -12,6 +12,7 @@ interface BottomNavProps {
 const navItems = [
   { view: 'dashboard' as View, icon: Home, label: 'Início' },
   { view: 'lineup' as View, icon: Shirt, label: 'Escalação' },
+  { view: 'statistics' as View, icon: BarChart2, label: 'Estatísticas' },
   { view: 'leagues' as View, icon: Trophy, label: 'Ligas' },
 ];
 
