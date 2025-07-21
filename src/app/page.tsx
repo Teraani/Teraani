@@ -18,8 +18,11 @@ import BottomNav from '@/components/bottom-nav';
 import LoginView from '@/components/views/login-view';
 import RegisterView from '@/components/views/register-view';
 import ScoutEditorView from '@/components/views/scout-editor-view';
+import { useToast } from '@/hooks/use-toast';
+import LiveView from '@/components/views/live-view';
 
-export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'scout-editor';
+
+export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'scout-editor' | 'live';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -33,6 +36,7 @@ export default function Home() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('welcome');
   const [appData, setAppData] = useState(data);
+  const { toast } = useToast();
 
   // Simulate a logged-in user. By default, it's the admin.
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
@@ -155,6 +159,18 @@ export default function Home() {
     navigateTo('dashboard');
   };
 
+  const handleSaveLineups = () => {
+    // In a real app, this would be an API call.
+    // Here, we just log it and show a toast.
+    console.log("Saving lineups...");
+    console.log("Team 1:", team1Lineup, team1Reserves);
+    console.log("Team 2:", team2Lineup, team2Reserves);
+    toast({
+        title: "Times Salvos!",
+        description: "As escalações da rodada foram salvas com sucesso.",
+    });
+  };
+
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
@@ -210,6 +226,7 @@ export default function Home() {
                  setTeam2Lineup={setTeam2Lineup}
                  team2Reserves={team2Reserves}
                  setTeam2Reserves={setTeam2Reserves}
+                 onSaveLineups={handleSaveLineups}
                />;
       case 'player-details':
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} canEditScouts={canEditScouts} />;
@@ -233,6 +250,8 @@ export default function Home() {
         return <AdminView onBack={goBack} users={Object.values(appData.users)} editorOfTheRound={appData.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={appData.scoutEditor} onSetScoutEditor={handleSetScoutEditor} />;
       case 'scout-editor':
         return <ScoutEditorView onBack={goBack} players={appData.players} onSave={handleUpdatePlayerStats} team1Lineup={team1Lineup} team2Lineup={team2Lineup}/>;
+       case 'live':
+        return <LiveView onBack={goBack} user={userWithCurrentLineup!} players={appData.players} />;
       default:
         return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} canEditScouts={canEditScouts} />;
     }
