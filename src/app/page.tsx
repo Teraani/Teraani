@@ -204,11 +204,11 @@ export default function Home() {
 
   const allScaledPlayerIds = useMemo(() => {
     const scaledIds = new Set<string>();
-    [...team1Lineup, ...team1Reserves, ...team2Lineup, ...team2Reserves, ...userLineup, ...userReserves].forEach(id => {
+    [...team1Lineup, ...team1Reserves, ...team2Lineup, ...team2Reserves].forEach(id => {
       if (id) scaledIds.add(id);
     });
     return Array.from(scaledIds);
-  }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves, userLineup, userReserves]);
+  }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
   const renderView = () => {
     if (!userWithCurrentLineup && currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register') {
