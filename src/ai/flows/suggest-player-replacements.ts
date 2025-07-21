@@ -39,15 +39,19 @@ export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Pr
 
     const allPlayersWithId = Object.entries(availablePlayers).map(([id, player]) => ({ id, ...player }));
 
-    // Sort players by value in descending order to get the "best" players first.
-    const sortedPlayers = allPlayersWithId.sort((a, b) => b.value - a.value);
+    // Separate goalkeepers and field players
+    const goalkeepers = allPlayersWithId.filter(p => p.pos === 'GOL').sort((a, b) => b.value - a.value);
+    const fieldPlayers = allPlayersWithId.filter(p => p.pos !== 'GOL').sort((a, b) => b.value - a.value);
 
     const teamA: string[] = [];
     const teamB: string[] = [];
+    
+    // Assign goalkeepers first
+    const teamA_GK = goalkeepers.shift()?.id;
+    const teamB_GK = goalkeepers.shift()?.id;
 
-    // Distribute the top 22 players between Team A and Team B in a snake draft pattern
-    // to ensure teams are as balanced as possible by value.
-    sortedPlayers.slice(0, 22).forEach((player, index) => {
+    // Distribute the top 20 field players between Team A and Team B in a snake draft pattern
+    fieldPlayers.slice(0, 20).forEach((player, index) => {
         if (Math.floor(index / 2) % 2 === 0) { // Snake draft logic
             if (index % 2 === 0) {
                 teamA.push(player.id);
@@ -63,6 +67,9 @@ export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Pr
         }
     });
 
+    // Add the goalkeeper to each team
+    if (teamA_GK) teamA.push(teamA_GK);
+    
     // The first team generated (Team A) will be returned as the main lineup.
     // Reserves will be empty for manual selection.
     return {
