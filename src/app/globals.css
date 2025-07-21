@@ -64,6 +64,22 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: hsl(var(--background));
+  }
+  .dark body {
+    background-image: linear-gradient(to bottom, rgba(16, 22, 33, 0.9), rgba(16, 22, 33, 0.9)), 
+                      radial-gradient(ellipse at top, #012811, #011408), 
+                      radial-gradient(ellipse at bottom, #011408, #012811);
+    background-size: cover;
+    background-attachment: fixed;
+  }
+  .dark .bg-card {
+      background-color: rgba(26, 33, 46, 0.7);
+      backdrop-filter: blur(2px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .dark .bg-background {
+      background-color: transparent;
   }
 }
