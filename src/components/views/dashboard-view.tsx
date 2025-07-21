@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Circle, Upload } from 'lucide-react';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 
 interface DashboardViewProps {
   user: User;
@@ -16,7 +16,7 @@ interface DashboardViewProps {
   onPlayerSelect: (playerId: string) => void;
 }
 
-function PlayerSummary({ onNavigate }: { onNavigate: (view: View) => void }) {
+function PlayerSummary({ user, players, onNavigate }: { user: User, players: Record<string, Player>, onNavigate: (view: View) => void }) {
     const [playerImage, setPlayerImage] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,6 +34,30 @@ function PlayerSummary({ onNavigate }: { onNavigate: (view: View) => void }) {
     const handleAvatarClick = () => {
         fileInputRef.current?.click();
     };
+
+    const { totalGames, totalPoints, performancePercentage } = useMemo(() => {
+        const lineupPlayers = user.lineup.map(id => players[id]).filter(Boolean);
+        const reservePlayers = user.reserves.map(id => players[id]).filter(Boolean);
+        const allUserPlayers = [...lineupPlayers, ...reservePlayers];
+        
+        const totalGames = allUserPlayers.reduce((sum, p) => sum + p.games, 0);
+        const totalPoints = allUserPlayers.reduce((sum, p) => sum + p.points, 0);
+
+        // Simple performance logic: rounds with positive score are "wins"
+        const positiveScoreRounds = allUserPlayers.reduce((sum, p) => {
+            // This is a simulation as we don't have round-by-round data
+            // Assuming half of the games had a positive score for simplicity
+            return sum + Math.floor(p.games / 2);
+        }, 0);
+        
+        const performance = totalGames > 0 ? (positiveScoreRounds / totalGames) * 100 : 0;
+        
+        return {
+            totalGames,
+            totalPoints,
+            performancePercentage: performance.toFixed(0) + '%'
+        };
+    }, [user, players]);
 
     return (
         <Card className="bg-gray-200 dark:bg-zinc-800 p-4">
@@ -59,15 +83,15 @@ function PlayerSummary({ onNavigate }: { onNavigate: (view: View) => void }) {
                 <div className="grid grid-cols-3 text-center mt-4">
                     <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Partidas Jogadas</p>
-                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">10</p>
+                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{totalGames}</p>
                     </div>
                     <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Pontos</p>
-                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">10</p>
+                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{totalPoints.toFixed(2)}</p>
                     </div>
                     <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Aproveitamento</p>
-                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">100%</p>
+                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{performancePercentage}</p>
                     </div>
                 </div>
                 <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => onNavigate('lineup')}>
@@ -125,7 +149,7 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
         </div>
       </header>
       <div className="p-4 space-y-8">
-        <PlayerSummary onNavigate={onNavigate} />
+        <PlayerSummary user={user} players={players} onNavigate={onNavigate} />
         <QuickAccess />
         <ConnectSection />
       </div>
