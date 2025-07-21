@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -29,7 +30,8 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
     const user = Object.values(users).find(u => u.email === email);
     // NOTE: In a real app, password would be hashed and checked on a server.
     if (user) {
@@ -49,21 +51,37 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack
       </header>
       
       <main className="flex-1 p-8 flex flex-col justify-center">
-        <div className="w-full max-w-sm mx-auto">
+        <form onSubmit={handleLogin} className="w-full max-w-sm mx-auto">
             <div className="space-y-4">
                 <div>
                     <Label htmlFor="email">E-mail</Label>
                     <div className="relative mt-1">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input id="email" type="email" placeholder="seuemail@exemplo.com" className="pl-10" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <Input 
+                          id="email" 
+                          type="email" 
+                          placeholder="seuemail@exemplo.com" 
+                          className="pl-10" 
+                          value={email} 
+                          onChange={(e) => setEmail(e.target.value)} 
+                          required 
+                        />
                     </div>
                 </div>
                 <div>
                     <Label htmlFor="password">Senha</Label>
-                    <Input id="password" type="password" placeholder="Sua senha" className="mt-1" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <Input 
+                      id="password" 
+                      type="password" 
+                      placeholder="Sua senha" 
+                      className="mt-1" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      required
+                    />
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
-                <Button onClick={handleLogin} className="w-full bg-primary h-12 text-lg">
+                <Button type="submit" className="w-full bg-primary h-12 text-lg">
                     Entrar
                 </Button>
             </div>
@@ -79,7 +97,7 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack
                 </div>
             </div>
 
-            <Button onClick={() => onLoginSuccess('user1')} variant="outline" className="w-full h-12 text-lg">
+            <Button onClick={() => onLoginSuccess('user1')} type="button" variant="outline" className="w-full h-12 text-lg">
                 <GoogleIcon className="mr-2" />
                 Google
             </Button>
@@ -87,12 +105,12 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack
             <div className="mt-8 text-center">
                 <p className="text-sm text-muted-foreground">
                     Não tem uma conta?{' '}
-                    <button onClick={onNavigateToRegister} className="font-medium text-primary hover:underline">
+                    <button onClick={onNavigateToRegister} type="button" className="font-medium text-primary hover:underline">
                         Cadastre-se
                     </button>
                 </p>
             </div>
-        </div>
+        </form>
       </main>
     </div>
   );

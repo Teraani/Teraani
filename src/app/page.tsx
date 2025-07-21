@@ -66,12 +66,31 @@ export default function Home() {
   
   const handleLoginSuccess = (userId: string) => {
     const user = appData.users[userId];
+    if (!user) {
+      console.error("Login failed: User not found");
+      // Optionally show a toast error
+      toast({
+        title: "Erro de Login",
+        description: "Usuário não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
     setLoggedInUserId(userId);
     setUserLineup(user.lineup || Array(11).fill(null));
     setUserReserves(user.reserves || Array(5).fill(null));
     setUserAvatar(user.avatar || null);
     navigateTo('dashboard');
   };
+
+  const handleRegisterSuccess = () => {
+    // In a real app, you'd create a new user. Here, we'll just log in as the default user.
+    handleLoginSuccess('user1');
+    toast({
+      title: "Cadastro realizado com sucesso!",
+      description: "Você foi logado automaticamente.",
+    });
+  }
 
   const navigateTo = (view: View) => {
     setPreviousView(currentView);
@@ -159,13 +178,9 @@ export default function Home() {
       title: "Estatísticas Salvas!",
       description: "Os dados dos jogadores foram atualizados.",
     });
-    // Optional: stay on the same page or navigate away
-    // navigateTo('dashboard'); 
   };
 
   const handleSaveLineups = () => {
-    // In a real app, this would be an API call.
-    // Here, we just log it and show a toast.
     console.log("Saving lineups...");
     console.log("Team 1:", team1Lineup, team1Reserves);
     console.log("Team 2:", team2Lineup, team2Reserves);
@@ -206,7 +221,7 @@ export default function Home() {
       case 'login':
         return <LoginView onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => navigateTo('register')} onBack={() => navigateTo('welcome')} users={appData.users} />;
       case 'register':
-        return <RegisterView onRegisterSuccess={() => navigateTo('dashboard')} onNavigateToLogin={() => navigateTo('login')} />;
+        return <RegisterView onRegisterSuccess={handleRegisterSuccess} onNavigateToLogin={() => navigateTo('login')} />;
       case 'dashboard':
         return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
