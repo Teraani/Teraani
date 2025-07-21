@@ -31,6 +31,7 @@ export default function Home() {
   const [userLineup, setUserLineup] = useState<(string | null)[]>(appData.user.lineup || Array(11).fill(null));
   const [userReserves, setUserReserves] = useState<(string | null)[]>(appData.user.reserves || Array(5).fill(null));
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>('https://placehold.co/32x32');
 
 
   const navigateTo = (view: View) => {
@@ -59,7 +60,7 @@ export default function Home() {
 
   const addPlayerToLineup = (playerId: string) => {
     if (slotToAddPlayer === null) return;
-  
+
     if (slotToAddPlayer.position === 'RES') {
       setUserReserves(prevReserves => {
         const newReserves = [...(prevReserves || [])];
@@ -77,7 +78,7 @@ export default function Home() {
         return newLineup;
       });
     }
-  
+
     setSlotToAddPlayer(null);
     navigateTo('lineup');
   };
@@ -104,11 +105,11 @@ export default function Home() {
       case 'welcome':
         return <WelcomeView onEnter={() => navigateTo('dashboard')} />;
       case 'dashboard':
-        return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
+        return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
         return <LineupView userLineup={userLineup} setUserLineup={setUserLineup} userReserves={userReserves} setUserReserves={setUserReserves} players={appData.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'market':
         return <MarketView players={appData.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} />;
       case 'partial-score':
@@ -116,9 +117,9 @@ export default function Home() {
       case 'games':
         return <GamesView onBack={goBack} />;
       case 'friends-score':
-        return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userWithCurrentLineup} players={appData.players} />;
+        return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userWithCurrentLineup} players={appData.players} userAvatar={userAvatar} />;
       default:
-        return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
+        return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }
   };
 

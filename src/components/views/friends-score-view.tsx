@@ -20,6 +20,7 @@ interface FriendsScoreViewProps {
   friends: Friend[];
   user: User;
   players: Record<string, Player>;
+  userAvatar: string | null;
 }
 
 const TeamCrest = ({ crest, avatar, name, teamName }: { crest: string; avatar: string; name: string; teamName: string; }) => (
@@ -113,7 +114,7 @@ const AddFriendDialog = ({ players, onSelect }: { players: Record<string, Player
 };
 
 
-export default function FriendsScoreView({ onBack, friends, user, players }: FriendsScoreViewProps) {
+export default function FriendsScoreView({ onBack, friends, user, players, userAvatar }: FriendsScoreViewProps) {
   const userScore = useMemo(() => {
     return user.lineup.reduce((sum, playerId) => {
       const player = players[playerId];
@@ -130,7 +131,7 @@ export default function FriendsScoreView({ onBack, friends, user, players }: Fri
     totalPlayers: 11,
     isPro: true,
     crest: 'https://placehold.co/40x40/4ade80/000000', // Different crest for user
-    avatar: 'https://placehold.co/32x32',
+    avatar: userAvatar || 'https://placehold.co/32x32',
   };
 
   const [competitors, setCompetitors] = useState<Friend[]>([userAsFriend, ...friends]);

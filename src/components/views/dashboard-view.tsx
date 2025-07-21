@@ -14,10 +14,11 @@ interface DashboardViewProps {
   players: Record<string, Player>;
   onNavigate: (view: View) => void;
   onPlayerSelect: (playerId: string) => void;
+  userAvatar: string | null;
+  onAvatarChange: (image: string) => void;
 }
 
-function PlayerSummary({ user, players, onNavigate }: { user: User, players: Record<string, Player>, onNavigate: (view: View) => void }) {
-    const [playerImage, setPlayerImage] = useState<string | null>(null);
+function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }: { user: User, players: Record<string, Player>, onNavigate: (view: View) => void, userAvatar: string | null, onAvatarChange: (image: string) => void }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,7 +26,7 @@ function PlayerSummary({ user, players, onNavigate }: { user: User, players: Rec
             const file = event.target.files[0];
             const reader = new FileReader();
             reader.onloadend = () => {
-                setPlayerImage(reader.result as string);
+                onAvatarChange(reader.result as string);
             };
             reader.readAsDataURL(file);
         }
@@ -65,7 +66,7 @@ function PlayerSummary({ user, players, onNavigate }: { user: User, players: Rec
                 <div className="flex items-center gap-4">
                     <div className="relative">
                         <Avatar className="h-20 w-20 bg-yellow-300" onClick={handleAvatarClick}>
-                            <AvatarImage src={playerImage ?? undefined} alt="Foto do Jogador" />
+                            <AvatarImage src={userAvatar ?? undefined} alt="Foto do Jogador" />
                             <AvatarFallback className="text-3xl text-gray-700 cursor-pointer">
                                 <Upload className="h-8 w-8"/>
                             </AvatarFallback>
@@ -140,7 +141,7 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, players, onNavigate, onPlayerSelect }: DashboardViewProps) {
+export default function DashboardView({ user, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange }: DashboardViewProps) {
   return (
     <div>
       <header className="bg-white dark:bg-zinc-900 p-4 shadow-sm">
@@ -150,7 +151,7 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
         </div>
       </header>
       <div className="p-4 space-y-8">
-        <PlayerSummary user={user} players={players} onNavigate={onNavigate} />
+        <PlayerSummary user={user} players={players} onNavigate={onNavigate} userAvatar={userAvatar} onAvatarChange={onAvatarChange} />
         <QuickAccess onNavigate={onNavigate} />
         <ConnectSection />
       </div>
