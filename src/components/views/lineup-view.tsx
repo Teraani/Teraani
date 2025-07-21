@@ -17,9 +17,11 @@ interface LineupViewProps {
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
+export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
 export default function LineupView({ user, players, onPlayerSelect, onNavigate }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
+  const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
 
   const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
   const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
@@ -73,22 +75,22 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
         <Pitch>
           {attackers.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {attackers.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+              {attackers.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />)}
             </div>
           )}
           {midfielders.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {midfielders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+              {midfielders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />)}
             </div>
           )}
           {defenders.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+              {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />)}
             </div>
           )}
           {goalkeeper.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {goalkeeper.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
+              {goalkeeper.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />)}
             </div>
           )}
         </Pitch>
@@ -126,7 +128,7 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
               </div>
               <div className="flex flex-col items-center gap-1 text-white">
                   <span className="text-xs">Cor da Camisa</span>
-                  <Select defaultValue="verde">
+                   <Select value={shirtColor} onValueChange={(value: ShirtColor) => setShirtColor(value)}>
                       <SelectTrigger className="w-auto bg-gray-700 border-none text-white h-8">
                            <Palette className="h-5 w-5" />
                       </SelectTrigger>
