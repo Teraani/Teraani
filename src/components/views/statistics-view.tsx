@@ -128,12 +128,16 @@ const PlayerStatsCard = ({ player, rank, onPlayerSelect, canEditScouts, onStatCh
 
 export default function StatisticsView({ players, onBack, onPlayerSelect, canEditScouts, onSave }: StatisticsViewProps) {
     const [editablePlayers, setEditablePlayers] = useState<Record<string, Player>>({});
+    const [hasChanges, setHasChanges] = useState(false);
 
     useEffect(() => {
+        // Deep copy to avoid mutating the original state directly
         setEditablePlayers(JSON.parse(JSON.stringify(players)));
+        setHasChanges(false);
     }, [players]);
 
     const handleStatChange = (playerId: string, field: keyof (PlayerStats & {games: number, points: number}), value: number) => {
+        setHasChanges(true);
         setEditablePlayers(prev => {
             const playerToUpdate = prev[playerId];
             if (!playerToUpdate) return prev;
@@ -158,6 +162,7 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
 
     const handleSaveClick = () => {
         onSave(editablePlayers);
+        setHasChanges(false);
     };
 
     const sortedPlayers = useMemo(() => {
@@ -192,7 +197,7 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
                 </Accordion>
             </main>
 
-            {canEditScouts && (
+            {canEditScouts && hasChanges && (
                 <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-30">
                     <Button className="w-full bg-green-600 text-white hover:bg-green-700 h-12 text-lg" onClick={handleSaveClick}>
                         <Save className="mr-2 h-5 w-5"/>
