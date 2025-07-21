@@ -17,12 +17,11 @@ import AdminView from '@/components/views/admin-view';
 import BottomNav from '@/components/bottom-nav';
 import LoginView from '@/components/views/login-view';
 import RegisterView from '@/components/views/register-view';
-import ScoutEditorView from '@/components/views/scout-editor-view';
 import { useToast } from '@/hooks/use-toast';
 import LiveView from '@/components/views/live-view';
 
 
-export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'scout-editor' | 'live';
+export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -156,7 +155,12 @@ export default function Home() {
       ...prevData,
       players: updatedPlayers
     }));
-    navigateTo('dashboard');
+    toast({
+      title: "Estatísticas Salvas!",
+      description: "Os dados dos jogadores foram atualizados.",
+    });
+    // Optional: stay on the same page or navigate away
+    // navigateTo('dashboard'); 
   };
 
   const handleSaveLineups = () => {
@@ -204,7 +208,7 @@ export default function Home() {
       case 'register':
         return <RegisterView onRegisterSuccess={() => navigateTo('dashboard')} onNavigateToLogin={() => navigateTo('login')} />;
       case 'dashboard':
-        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} canEditScouts={canEditScouts} />;
+        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
         return <LineupView 
                  userLineup={userLineup} 
@@ -229,7 +233,7 @@ export default function Home() {
                  onSaveLineups={handleSaveLineups}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} canEditScouts={canEditScouts} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'market':
         return <MarketView 
                  players={appData.players} 
@@ -245,15 +249,13 @@ export default function Home() {
       case 'friends-score':
         return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userWithCurrentLineup!} players={appData.players} userAvatar={userAvatar} />;
       case 'statistics':
-        return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
+        return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdatePlayerStats} />;
       case 'admin':
         return <AdminView onBack={goBack} users={Object.values(appData.users)} editorOfTheRound={appData.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={appData.scoutEditor} onSetScoutEditor={handleSetScoutEditor} />;
-      case 'scout-editor':
-        return <ScoutEditorView onBack={goBack} players={appData.players} onSave={handleUpdatePlayerStats} team1Lineup={team1Lineup} team2Lineup={team2Lineup}/>;
        case 'live':
         return <LiveView onBack={goBack} user={userWithCurrentLineup!} players={appData.players} />;
       default:
-        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} canEditScouts={canEditScouts} />;
+        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }
   };
 
