@@ -104,7 +104,7 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
         
         <div className="mt-8">
             <h3 className="text-white text-lg font-bold mb-4 text-center">Reservas</h3>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
                 {reservePlayers.map(p => (
                     <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} isReserve />
                 ))}
