@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -18,22 +19,59 @@ interface MarketViewProps {
 export default function MarketView({ players, onPlayerSelect, onBack, position }: MarketViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredPlayers = useMemo(() => {
+  const groupedPlayers = useMemo(() => {
     const lowerCaseSearch = searchTerm.toLowerCase();
-    
-    let positionPlayers = Object.entries(players);
 
-    if (position) {
-      if (position === 'ZAG') {
-        positionPlayers = positionPlayers.filter(([_, player]) => player.pos === 'ZAG' || player.pos === 'LAT');
-      } else {
-        positionPlayers = positionPlayers.filter(([_, player]) => player.pos === position);
+    const allPlayers = Object.entries(players)
+      .filter(([_, player]) => player.name.toLowerCase().includes(lowerCaseSearch))
+      .sort((a, b) => b[1].value - a[1].value);
+
+    if (lowerCaseSearch) {
+      return { 'Resultados da Busca': allPlayers };
+    }
+    
+    const groups: Record<string, ({id: string} & Player)[]> = {
+      'ATA': [],
+      'MEI': [],
+      'LAT': [],
+      'ZAG': [],
+      'GOL': [],
+    };
+
+    allPlayers.forEach(([id, player]) => {
+      const p = { ...player, id };
+      if (groups[p.pos]) {
+        groups[p.pos].push(p);
       }
+    });
+
+    // Order groups logically
+    const orderedGroups: Record<string, ({id: string} & Player)[]> = {};
+    const order: (keyof typeof groups)[] = ['ATA', 'MEI', 'LAT', 'ZAG', 'GOL'];
+    
+    // If a specific position is requested, bring it to the top
+    if (position) {
+        const posPriority = position === 'ZAG' ? ['ZAG', 'LAT'] : [position];
+        posPriority.forEach(pos => {
+            if(groups[pos]) {
+                orderedGroups[pos] = groups[pos];
+            }
+        });
+        order.forEach(pos => {
+            if (!posPriority.includes(pos) && groups[pos]) {
+                 orderedGroups[pos] = groups[pos];
+            }
+        })
+    } else {
+       order.forEach(pos => {
+           if (groups[pos]) {
+               orderedGroups[pos] = groups[pos];
+           }
+       });
     }
 
-    return positionPlayers
-      .filter(([_, player]) => player.name.toLowerCase().includes(lowerCaseSearch))
-      .sort((a, b) => b[1].value - a[1].value); // Sort by value desc
+    return orderedGroups;
+
   }, [searchTerm, players, position]);
 
   return (
@@ -60,10 +98,20 @@ export default function MarketView({ players, onPlayerSelect, onBack, position }
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="space-y-2">
-          {filteredPlayers.map(([id, player]) => (
-            <PlayerListItem key={id} player={{...player, id}} onPlayerSelect={onPlayerSelect} />
-          ))}
+        <div className="space-y-4">
+          {Object.entries(groupedPlayers).map(([pos, playerList]) => {
+            if (playerList.length === 0) return null;
+            return (
+              <div key={pos}>
+                <h3 className="font-bold text-lg mb-2 text-gray-800 dark:text-gray-100">{pos}</h3>
+                <div className="space-y-2">
+                  {playerList.map((player) => (
+                    <PlayerListItem key={player.id} player={player} onPlayerSelect={() => onPlayerSelect(player.id)} />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
