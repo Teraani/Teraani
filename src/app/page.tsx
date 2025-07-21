@@ -26,12 +26,11 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('dashboard');
-  const [userLineup, setUserLineup] = useState<(string | null)[]>(data.user.lineup || Array(11).fill(null));
-  const [userReserves, setUserReserves] = useState<(string | null)[]>(data.user.reserves || Array(5).fill(null));
+  const [appData, setAppData] = useState(data);
+  const [userLineup, setUserLineup] = useState<(string | null)[]>(appData.user.lineup || Array(11).fill(null));
+  const [userReserves, setUserReserves] = useState<(string | null)[]>(appData.user.reserves || Array(5).fill(null));
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
-
-  const appData: { user: User; players: Record<string, Player> } = useMemo(() => data, []);
 
   const navigateTo = (view: View) => {
     setPreviousView(currentView);
@@ -42,6 +41,19 @@ export default function Home() {
   const selectPlayerForDetails = (playerId: string) => {
     setSelectedPlayerId(playerId);
     navigateTo('player-details');
+  };
+
+  const handlePlayerImageChange = (playerId: string, image: string) => {
+    setAppData(prevData => ({
+      ...prevData,
+      players: {
+        ...prevData.players,
+        [playerId]: {
+          ...prevData.players[playerId],
+          img: image,
+        }
+      }
+    }));
   };
 
   const addPlayerToLineup = (playerId: string) => {
@@ -95,7 +107,7 @@ export default function Home() {
       case 'lineup':
         return <LineupView userLineup={userLineup} setUserLineup={setUserLineup} userReserves={userReserves} setUserReserves={setUserReserves} players={appData.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} /> : <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
       case 'market':
         return <MarketView players={appData.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} />;
       case 'partial-score':

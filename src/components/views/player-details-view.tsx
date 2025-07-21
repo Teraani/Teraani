@@ -1,18 +1,23 @@
+
 import type { Player } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Upload } from 'lucide-react';
 import PlayerStatsChart from '@/components/player-details/player-stats-chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
+import { useRef } from 'react';
 
 interface PlayerDetailsViewProps {
   player: { id: string } & Player;
   onBack: () => void;
+  onImageChange: (playerId: string, image: string) => void;
 }
 
-export default function PlayerDetailsView({ player, onBack }: PlayerDetailsViewProps) {
+export default function PlayerDetailsView({ player, onBack, onImageChange }: PlayerDetailsViewProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const stats = [
     { label: 'Geral', value: 10 },
     { label: 'Verde', value: 10 },
@@ -25,6 +30,22 @@ export default function PlayerDetailsView({ player, onBack }: PlayerDetailsViewP
     { round: 3, teams: 'Verde 0 x 0 Amarelo', points: 2 },
   ];
 
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onImageChange(player.id, reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+
   return (
     <div className="bg-gray-100 dark:bg-zinc-900 min-h-screen">
        <header className="bg-white dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20">
@@ -36,10 +57,22 @@ export default function PlayerDetailsView({ player, onBack }: PlayerDetailsViewP
       </header>
       
       <div className="bg-green-500 p-4 flex items-center gap-4">
-        <Avatar className="w-20 h-20 border-4 border-white">
-          <Image src={player.img} alt={player.name} width={80} height={80} data-ai-hint="player portrait" className="object-cover" />
-          <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
-        </Avatar>
+        <div className="relative">
+          <Avatar className="w-20 h-20 border-4 border-white cursor-pointer" onClick={handleAvatarClick}>
+            <AvatarImage src={player.img} alt={player.name} className="object-cover" />
+            <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1 cursor-pointer" onClick={handleAvatarClick}>
+            <Upload className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+            className="hidden"
+            accept="image/*"
+          />
+        </div>
         <div>
           <h3 className="text-2xl font-bold text-white">{player.name}</h3>
           <p className="text-white">{player.pos}</p>
