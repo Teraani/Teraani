@@ -79,9 +79,10 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
         <Card className="bg-gray-200 dark:bg-zinc-800 border-none">
            <CardContent className="p-0">
              <Tabs defaultValue="resumo" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 bg-transparent p-0">
+                <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
                     <TabsTrigger value="resumo" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Resumo</TabsTrigger>
                     <TabsTrigger value="detalhes" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Detalhes</TabsTrigger>
+                    <TabsTrigger value="heatmap" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Mapa de Calor</TabsTrigger>
                 </TabsList>
                 <TabsContent value="resumo">
                      <div className="mt-4 p-4">
@@ -141,6 +142,17 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                       </div>
                     </div>
                  </TabsContent>
+                 <TabsContent value="heatmap" className="p-4 space-y-4">
+                    <h4 className="font-bold text-gray-800 dark:text-gray-100">Mapa de Calor</h4>
+                    <div className="text-center text-muted-foreground p-4 bg-muted/50 dark:bg-muted/20 rounded-lg">
+                        <p className="mb-4">Conecte sua conta Strava, Garmin ou Samsung para visualizar o mapa de calor de suas atividades em campo.</p>
+                        <div className="flex justify-center gap-4 mb-4">
+                            <Button variant="outline">Conectar Strava</Button>
+                            <Button variant="outline">Conectar Garmin</Button>
+                        </div>
+                        <Image src="https://placehold.co/600x400.png" alt="Mapa de Calor" width={600} height={400} data-ai-hint="heatmap soccer" className="rounded-lg mx-auto" />
+                    </div>
+                </TabsContent>
              </Tabs>
            </CardContent>
         </Card>
