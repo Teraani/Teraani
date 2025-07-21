@@ -97,7 +97,7 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack
                 </div>
             </div>
 
-            <Button onClick={() => onLoginSuccess('user1')} type="button" variant="outline" className="w-full h-12 text-lg">
+            <Button onClick={() => onLoginSuccess('user27')} type="button" variant="outline" className="w-full h-12 text-lg">
                 <GoogleIcon className="mr-2" />
                 Google
             </Button>
