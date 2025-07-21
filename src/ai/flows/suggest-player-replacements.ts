@@ -45,9 +45,9 @@ export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Pr
     const teamA: string[] = [];
     const teamB: string[] = [];
 
-    // Distribute players between Team A and Team B in a snake draft pattern
+    // Distribute the top 22 players between Team A and Team B in a snake draft pattern
     // to ensure teams are as balanced as possible by value.
-    sortedPlayers.forEach((player, index) => {
+    sortedPlayers.slice(0, 22).forEach((player, index) => {
         if (Math.floor(index / 2) % 2 === 0) { // Snake draft logic
             if (index % 2 === 0) {
                 teamA.push(player.id);
@@ -63,14 +63,11 @@ export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Pr
         }
     });
 
-    // The first team generated (Team A) will be returned. The caller will handle generating the second team.
-    // We split the generated team into lineup and reserves.
-    const lineup = teamA.slice(0, 11);
-    const reserves = teamA.slice(11, 16); // Up to 5 reserves
-
+    // The first team generated (Team A) will be returned as the main lineup.
+    // Reserves will be empty for manual selection.
     return {
-        lineup,
-        reserves,
-        reasoning: 'Este time foi gerado de forma balanceada, distribuindo os melhores jogadores disponíveis para criar confrontos equilibrados.'
+        lineup: teamA,
+        reserves: [],
+        reasoning: 'Este time foi gerado de forma balanceada, distribuindo os melhores jogadores disponíveis para criar confrontos equilibrados. Os reservas devem ser adicionados manualmente.'
     };
 }
