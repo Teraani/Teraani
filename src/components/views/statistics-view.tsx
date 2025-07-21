@@ -76,7 +76,7 @@ export default function StatisticsView({ players, onBack, onPlayerSelect }: Stat
   }, [players]);
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="dark">
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />

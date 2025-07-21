@@ -129,8 +129,8 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
   }
 
   return (
-    <div className="bg-gray-900 min-h-screen">
-      <header className="bg-gray-900 text-white p-4 flex flex-col items-center gap-4">
+    <div className="dark">
+      <header className="bg-card p-4 flex flex-col items-center gap-4">
         <div className="flex justify-between items-center w-full">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -163,7 +163,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
             <div className="flex-1 flex justify-center items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-white">Time</Button>
+                    <Button variant="ghost">Time</Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => setShirtColor('verde')}>Verde</DropdownMenuItem>
@@ -173,15 +173,15 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
                     <DropdownMenuItem onClick={() => setShirtColor('branco')}>Branco</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="ghost" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2" onClick={() => onNavigate('partial-score')}>Parcial</Button>
-                <Button variant="ghost" className="text-white" onClick={() => onNavigate('games')}>Jogos</Button>
+                <Button variant="ghost" className="text-primary-foreground" onClick={() => onNavigate('partial-score')}>Parcial</Button>
+                <Button variant="ghost" className="text-primary-foreground" onClick={() => onNavigate('games')}>Jogos</Button>
             </div>
             
-            <Button variant="ghost" className="text-white">
+            <Button variant="ghost" className="text-primary-foreground">
                 <Share2 className="w-5 h-5" />
             </Button>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-6">
+        <Button className="bg-primary hover:bg-primary/90 rounded-lg px-6">
           Pontuação da rodada: {totalScore.toFixed(2)}
         </Button>
       </header>
@@ -195,25 +195,25 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
         <div className="mt-4 flex flex-col gap-2">
             <AiSuggestions user={user} players={players} />
             <div className={cn(
-                "text-white p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center",
+                "p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center font-bold text-primary-foreground",
                 isMarketOpen ? "bg-green-600" : "bg-orange-500"
             )}>
                 <Clock className="w-5 h-5" />
-                <span className="font-bold">{isMarketOpen ? "MERCADO ABERTO" : "MERCADO FECHADO"}</span>
+                <span>{isMarketOpen ? "MERCADO ABERTO" : "MERCADO FECHADO"}</span>
             </div>
         </div>
         
         <div className="mt-8">
-            <h3 className="text-white text-lg font-bold mb-4 text-center">Reservas</h3>
+            <h3 className="text-lg font-bold mb-4 text-center">Reservas</h3>
             {renderReserves()}
         </div>
       </div>
-       <div className="fixed bottom-0 left-0 right-0 bg-gray-800 p-2 border-t border-gray-700 shadow-lg z-50">
+       <div className="fixed bottom-0 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
           <div className="flex justify-between items-center px-2 pb-2">
-              <div className="flex flex-col items-center gap-1 text-white">
+              <div className="flex flex-col items-center gap-1">
                   <span className="text-xs">Esquema Tático</span>
                   <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
-                      <SelectTrigger className="w-auto bg-gray-700 border-none text-white h-8">
+                      <SelectTrigger className="w-auto bg-muted border-none h-8">
                           <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -223,18 +223,18 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
                       </SelectContent>
                   </Select>
               </div>
-              <div className="flex flex-col items-center gap-1 text-white">
+              <div className="flex flex-col items-center gap-1">
                   <span className="text-xs">Desfazer Time</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-gray-700 hover:bg-gray-600 rounded-full" onClick={handleClearLineup}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-muted hover:bg-accent rounded-full" onClick={handleClearLineup}>
                       <Trash2 className="h-5 w-5 text-red-400" />
                   </Button>
               </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
-              <Button variant="secondary" className="bg-gray-700 text-white hover:bg-gray-600">
+              <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent">
                   Limpar Reservas
               </Button>
-              <Button variant="secondary" className="bg-gray-700 text-white hover:bg-gray-600" onClick={handleClearLineup}>
+              <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent" onClick={handleClearLineup}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Limpar Time
               </Button>
