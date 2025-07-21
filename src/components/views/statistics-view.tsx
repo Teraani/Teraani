@@ -23,12 +23,12 @@ interface StatisticsViewProps {
 export default function StatisticsView({ players, onBack }: StatisticsViewProps) {
   const sortedPlayers = useMemo(() => {
     return Object.values(players)
-      .sort((a, b) => (b.stats?.points ?? 0) - (a.stats?.points ?? 0));
+      .sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
   }, [players]);
 
   return (
-    <div className="bg-gray-50 dark:bg-zinc-900 min-h-screen">
-      <header className="bg-white dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20">
+    <div className="bg-gray-50 dark:bg-zinc-900 min-h-screen flex flex-col">
+      <header className="bg-white dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20 shrink-0">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-700">
           <ArrowLeft className="h-6 w-6" />
         </Button>
@@ -36,8 +36,8 @@ export default function StatisticsView({ players, onBack }: StatisticsViewProps)
         <div className="w-9 h-9" />
       </header>
 
-      <main className="p-4">
-        <ScrollArea className="h-[calc(100vh-150px)]">
+      <main className="p-4 flex-grow overflow-hidden">
+        <ScrollArea className="h-full">
           <Table>
             <TableHeader className="sticky top-0 bg-gray-100 dark:bg-zinc-800">
               <TableRow>
@@ -72,7 +72,7 @@ export default function StatisticsView({ players, onBack }: StatisticsViewProps)
                   <TableCell>{player.stats?.goalsFor ?? 'N/A'}</TableCell>
                   <TableCell>{player.stats?.goalsAgainst ?? 'N/A'}</TableCell>
                   <TableCell>{player.stats?.goalDifference ?? 'N/A'}</TableCell>
-                  <TableCell className="font-bold">{player.stats?.points?.toFixed(1) ?? 'N/A'}</TableCell>
+                  <TableCell className="font-bold">{player.points?.toFixed(1) ?? 'N/A'}</TableCell>
                   <TableCell>{player.stats?.performance ? `${player.stats.performance.toFixed(2)}%` : 'N/A'}</TableCell>
                   <TableCell>{player.stats?.goals ?? 'N/A'}</TableCell>
                   <TableCell>{player.stats?.assists ?? 'N/A'}</TableCell>
@@ -87,3 +87,4 @@ export default function StatisticsView({ players, onBack }: StatisticsViewProps)
     </div>
   );
 }
+
