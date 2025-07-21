@@ -108,7 +108,7 @@ export default function Home() {
     navigateTo('market');
   }
   
-  const handleSetEditor = (userId: string) => {
+  const handleSetEditor = (userId: string | null) => {
     setAppData(prevData => ({
         ...prevData,
         editorOfTheRound: userId,
