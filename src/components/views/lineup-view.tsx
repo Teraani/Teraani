@@ -54,9 +54,7 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
   };
 
   const handleAddPlayer = (position: Player['pos']) => {
-    // For now, let's navigate to the market view.
-    // In a real scenario, you might open a filtered modal or a specific view.
-    onNavigate('dashboard'); // Placeholder, should navigate to a market/player list
+    onNavigate('market');
   };
 
   const lineupPlayers = currentLineup.map(id => ({ ...players[id], id }));

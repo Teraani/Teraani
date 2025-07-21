@@ -3,15 +3,17 @@
 import { useState, useMemo } from 'react';
 import type { Player } from '@/lib/data';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, ArrowLeft } from 'lucide-react';
 import PlayerListItem from '@/components/market/player-list-item';
 
 interface MarketViewProps {
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
+  onBack: () => void;
 }
 
-export default function MarketView({ players, onPlayerSelect }: MarketViewProps) {
+export default function MarketView({ players, onPlayerSelect, onBack }: MarketViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredPlayers = useMemo(() => {
@@ -23,8 +25,12 @@ export default function MarketView({ players, onPlayerSelect }: MarketViewProps)
 
   return (
     <div>
-      <header className="bg-gray-800 dark:bg-zinc-800 text-white p-4 shadow-md sticky top-0 z-20">
-        <h2 className="text-xl font-bold text-center">Mercado de Atletas</h2>
+      <header className="bg-white dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20">
+         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-700">
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <h2 className="text-xl font-bold text-center flex-1 text-gray-800 dark:text-gray-100">Mercado de Atletas</h2>
+        <div className="w-9 h-9" />
       </header>
       <div className="p-4">
         <p className="text-center text-gray-600 dark:text-gray-300 mb-4">
@@ -36,7 +42,7 @@ export default function MarketView({ players, onPlayerSelect }: MarketViewProps)
             type="text"
             id="market-search"
             placeholder="Buscar por nome do atleta..."
-            className="w-full p-3 pl-10 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full p-3 pl-10 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-zinc-800"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

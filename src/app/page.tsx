@@ -9,9 +9,10 @@ import LineupView from '@/components/views/lineup-view';
 import PlayerDetailsView from '@/components/views/player-details-view';
 import PartialScoreView from '@/components/views/partial-score-view';
 import GamesView from '@/components/views/games-view';
+import MarketView from '@/components/views/market-view';
 import BottomNav from '@/components/bottom-nav';
 
-export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games';
+export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
@@ -48,6 +49,8 @@ export default function Home() {
         return <LineupView user={appData.user} players={appData.players} onPlayerSelect={selectPlayer} onNavigate={navigateTo} />;
       case 'player-details':
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} /> : <DashboardView user={appData.user} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayer} />;
+      case 'market':
+        return <MarketView players={appData.players} onPlayerSelect={selectPlayer} onBack={goBack} />;
       case 'partial-score':
         return <PartialScoreView user={appData.user} players={appData.players} onBack={goBack} onPlayerSelect={selectPlayer} />;
       case 'games':
