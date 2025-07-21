@@ -65,7 +65,7 @@ const AddFriendDialog = ({ players, onSelect }: { players: Record<string, Player
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="hover:bg-gray-200 dark:hover:bg-zinc-800">
-          <UserPlus className="h-6 w-6" />
+          <UserPlus className="h-6 w-6 text-foreground" />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -144,7 +144,7 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
     <div className="bg-gray-100 dark:bg-zinc-950 min-h-screen">
       <header className="bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center justify-between sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-800">
-          <ArrowLeft className="h-6 w-6" />
+          <ArrowLeft className="h-6 w-6 text-foreground" />
         </Button>
         <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Amigos</h2>
         <AddFriendDialog players={players} onSelect={handleAddCompetitor} />

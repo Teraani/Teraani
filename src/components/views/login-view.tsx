@@ -26,7 +26,7 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-zinc-900">
        <header className="bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center">
          <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-800">
-          <ArrowLeft className="h-6 w-6" />
+          <ArrowLeft className="h-6 w-6 text-foreground" />
         </Button>
         <h1 className="text-xl font-bold text-center flex-1 pr-10">Login</h1>
       </header>

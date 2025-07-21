@@ -33,7 +33,7 @@ export default function PartialScoreView({ user, players, onBack, onPlayerSelect
     <div className="bg-gray-50 dark:bg-zinc-900 min-h-screen">
       <header className="bg-white dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-700">
-          <ArrowLeft className="h-6 w-6" />
+          <ArrowLeft className="h-6 w-6 text-foreground" />
         </Button>
         <h2 className="text-xl font-bold text-center flex-1 text-gray-800 dark:text-gray-100">Parcial dos Jogadores</h2>
         <div className="w-9 h-9" />
