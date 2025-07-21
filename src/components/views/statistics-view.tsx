@@ -23,7 +23,6 @@ interface StatisticsViewProps {
 export default function StatisticsView({ players, onBack }: StatisticsViewProps) {
   const sortedPlayers = useMemo(() => {
     return Object.values(players)
-      .filter(p => p.stats)
       .sort((a, b) => (b.stats?.points ?? 0) - (a.stats?.points ?? 0));
   }, [players]);
 
@@ -67,18 +66,18 @@ export default function StatisticsView({ players, onBack }: StatisticsViewProps)
                   <TableCell className="font-medium">{player.name}</TableCell>
                   <TableCell>{player.pos}</TableCell>
                   <TableCell>{player.games}</TableCell>
-                  <TableCell>{player.stats?.wins}</TableCell>
-                  <TableCell>{player.stats?.losses}</TableCell>
-                  <TableCell>{player.stats?.draws}</TableCell>
-                  <TableCell>{player.stats?.goalsFor}</TableCell>
-                  <TableCell>{player.stats?.goalsAgainst}</TableCell>
-                  <TableCell>{player.stats?.goalDifference}</TableCell>
-                  <TableCell className="font-bold">{player.stats?.points.toFixed(1)}</TableCell>
-                  <TableCell>{player.stats?.performance.toFixed(2)}%</TableCell>
-                  <TableCell>{player.stats?.goals}</TableCell>
-                  <TableCell>{player.stats?.assists}</TableCell>
-                  <TableCell>{player.stats?.yellowCards}</TableCell>
-                  <TableCell>{player.stats?.redCards}</TableCell>
+                  <TableCell>{player.stats?.wins ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.losses ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.draws ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.goalsFor ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.goalsAgainst ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.goalDifference ?? 'N/A'}</TableCell>
+                  <TableCell className="font-bold">{player.stats?.points?.toFixed(1) ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.performance ? `${player.stats.performance.toFixed(2)}%` : 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.goals ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.assists ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.yellowCards ?? 'N/A'}</TableCell>
+                  <TableCell>{player.stats?.redCards ?? 'N/A'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
