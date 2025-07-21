@@ -28,7 +28,7 @@ export type Position = Player['pos'] | null;
 export interface AddPlayerSlot {
   position: Player['pos'] | 'RES'; // 'RES' for reserve
   index: number;
-  team?: 'team1' | 'team2';
+  team: 'team1' | 'team2';
 }
 
 export default function Home() {
@@ -43,10 +43,6 @@ export default function Home() {
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
   const currentUser = loggedInUserId ? appData.users[loggedInUserId] : null;
 
-  // State for the logged-in user's lineup
-  const [userLineup, setUserLineup] = useState<(string | null)[]>([]);
-  const [userReserves, setUserReserves] = useState<(string | null)[]>([]);
-  
   // State for the two teams the editor can manage
   const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(11).fill(null));
   const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
@@ -79,8 +75,7 @@ export default function Home() {
       return;
     }
     setLoggedInUserId(userId);
-    setUserLineup(user.lineup || Array(11).fill(null));
-    setUserReserves(user.reserves || Array(5).fill(null));
+    // User lineup is now derived from the global teams, not individual state
     setUserAvatar(user.avatar || null);
     navigateTo('dashboard');
   };
@@ -203,14 +198,15 @@ export default function Home() {
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
-  const userWithCurrentLineup = useMemo(() => {
+  const userForViews = useMemo(() => {
     if (!currentUser) return null;
     return {
       ...currentUser,
-      lineup: (userLineup || []).filter(id => id !== null) as string[],
-      reserves: (userReserves || []).filter(id => id !== null) as string[],
+      // The concept of a personal lineup is removed for display, using team lineups instead
+      lineup: [],
+      reserves: [],
     }
-  }, [currentUser, userLineup, userReserves]);
+  }, [currentUser]);
 
   const allScaledPlayerIds = useMemo(() => {
     const scaledIds = new Set<string>();
@@ -221,7 +217,7 @@ export default function Home() {
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
   const renderView = () => {
-    if (!userWithCurrentLineup && currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register') {
+    if (!userForViews && currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register') {
       return <LoginView onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => navigateTo('register')} onBack={() => navigateTo('welcome')} users={appData.users} />;
     }
 
@@ -233,13 +229,9 @@ export default function Home() {
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegisterSuccess} onNavigateToLogin={() => navigateTo('login')} />;
       case 'dashboard':
-        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
         return <LineupView 
-                 userLineup={userLineup} 
-                 setUserLineup={setUserLineup} 
-                 userReserves={userReserves} 
-                 setUserReserves={setUserReserves} 
                  players={appData.players} 
                  onPlayerSelect={selectPlayerForDetails} 
                  onNavigate={navigateTo} 
@@ -258,7 +250,7 @@ export default function Home() {
                  onSaveLineups={handleSaveLineups}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'market':
         return <MarketView 
                  players={appData.players} 
@@ -272,7 +264,7 @@ export default function Home() {
       case 'games':
         return <GamesView onBack={goBack} />;
       case 'friends-score':
-        return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userWithCurrentLineup!} players={appData.players} userAvatar={userAvatar} />;
+        return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userForViews!} players={appData.players} userAvatar={userAvatar} />;
       case 'statistics':
         return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdatePlayerStats} />;
       case 'admin':
@@ -280,7 +272,7 @@ export default function Home() {
        case 'live':
         return <LiveView 
                   onBack={goBack} 
-                  user={userWithCurrentLineup!} 
+                  user={userForViews!} 
                   players={appData.players} 
                   canEditScouts={canEditScouts}
                   liveEvents={liveEvents}
@@ -288,7 +280,7 @@ export default function Home() {
                   allPlayers={Object.values(appData.players).map(p => ({...p, id: Object.keys(appData.players).find(key => appData.players[key] === p)!}))}
                 />;
       default:
-        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }
   };
 

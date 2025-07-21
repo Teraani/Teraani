@@ -1,8 +1,8 @@
+
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
-import AiSuggestions from '@/components/lineup/ai-suggestions';
 import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,14 +28,10 @@ import {
 
 
 interface LineupViewProps {
-  userLineup: (string | null)[];
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
   onNavigate: (view: View) => void;
-  setUserLineup: (lineup: (string | null)[]) => void;
   onAddPlayer: (slot: AddPlayerSlot) => void;
-  userReserves: (string | null)[];
-  setUserReserves: (reserves: (string | null)[]) => void;
   userAvatar: string | null;
   currentUser: User;
   canEdit: boolean;
@@ -57,7 +53,7 @@ interface PlayerActionState {
   playerId: string;
   isReserve: boolean;
   index: number;
-  team: 'team1' | 'team2' | 'user';
+  team: 'team1' | 'team2';
 }
 
 const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtColor, onColorChange: (color: ShirtColor) => void, disabled: boolean }) => {
@@ -87,8 +83,7 @@ const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtCo
 };
 
 
-const TeamEditor = ({
-  teamName,
+const TeamDisplay = ({
   lineup,
   reserves,
   players,
@@ -97,10 +92,8 @@ const TeamEditor = ({
   onPlayerCardClick,
   onAddPlayer,
   canEdit,
-  isOwnTeam,
   teamIdentifier
 }: {
-  teamName: string;
   lineup: (string | null)[];
   reserves: (string | null)[];
   players: Record<string, Player>;
@@ -109,8 +102,7 @@ const TeamEditor = ({
   onPlayerCardClick: (state: PlayerActionState) => void;
   onAddPlayer: (position: Player['pos'] | 'RES', index: number) => void;
   canEdit: boolean;
-  isOwnTeam: boolean;
-  teamIdentifier: 'team1' | 'team2' | 'user';
+  teamIdentifier: 'team1' | 'team2';
 }) => {
     
   const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
@@ -139,7 +131,6 @@ const TeamEditor = ({
     };
   }, [lineupPlayers, formation]);
 
-  const showAddButton = canEdit || isOwnTeam;
 
   const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
     return (
@@ -149,7 +140,7 @@ const TeamEditor = ({
                 const slotIndex = startIndex + i;
                 if (player) {
                     return <PlayerCard key={`${teamIdentifier}-${player.id}-${slotIndex}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: slotIndex, team: teamIdentifier })} shirtColor={shirtColor} />;
-                } else if (showAddButton) {
+                } else if (canEdit) {
                     return <AddPlayerButton key={`add-${teamIdentifier}-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
                 } else {
                     return <div key={`empty-${teamIdentifier}-${position}-${slotIndex}`} className="w-20 h-28" />;
@@ -164,8 +155,8 @@ const TeamEditor = ({
         {Array.from({ length: 5 }).map((_, i) => {
             const player = reservePlayers[i];
             if (player) {
-                return <PlayerCard key={`${teamIdentifier}-${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
-            } else if (showAddButton) {
+                return <PlayerCard key={`${teamIdentifier}-res-${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
+            } else if (canEdit) {
                 return <AddPlayerButton key={`add-${teamIdentifier}-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
             } else {
                 return <div key={`empty-${teamIdentifier}-RES-${i}`} className="w-20 h-28" />;
@@ -193,8 +184,8 @@ const TeamEditor = ({
 
 export default function LineupView(props: LineupViewProps) {
   const { 
-    userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer,
-    userReserves, setUserReserves, userAvatar, currentUser, canEdit,
+    players, onPlayerSelect, onNavigate, onAddPlayer,
+    userAvatar, currentUser, canEdit,
     team1Lineup, setTeam1Lineup, team1Reserves, setTeam1Reserves,
     team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves,
     onSaveLineups,
@@ -208,13 +199,6 @@ export default function LineupView(props: LineupViewProps) {
   const [isBalancing, setIsBalancing] = useState(false);
   const { toast } = useToast();
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
-  
-  const user: User = useMemo(() => ({
-      ...currentUser,
-      lineup: userLineup.filter(id => id !== null) as string[],
-      reserves: userReserves.filter(id => id !== null) as string[]
-  }), [currentUser, userLineup, userReserves]);
-
 
   useEffect(() => {
     const checkMarketStatus = () => {
@@ -230,8 +214,7 @@ export default function LineupView(props: LineupViewProps) {
   }, []);
 
   const handlePlayerCardClick = (state: PlayerActionState) => {
-    // Regular players can only manage their own team
-    if (!canEdit && state.team !== 'user') {
+    if (!canEdit) {
       onPlayerSelect(state.playerId);
       return;
     }
@@ -244,13 +227,11 @@ export default function LineupView(props: LineupViewProps) {
     const { team, isReserve, index } = playerActionState;
 
     const lineupSetters = {
-      user: { lineup: setUserLineup, reserves: setUserReserves },
       team1: { lineup: setTeam1Lineup, reserves: setTeam1Reserves },
       team2: { lineup: setTeam2Lineup, reserves: setTeam2Reserves },
     };
     
     const lineups = {
-        user: { lineup: userLineup, reserves: userReserves },
         team1: { lineup: team1Lineup, reserves: team1Reserves },
         team2: { lineup: team2Lineup, reserves: team2Reserves },
     }
@@ -271,36 +252,22 @@ export default function LineupView(props: LineupViewProps) {
     setPlayerActionState(null);
   };
   
-  const handleClearLineup = (team: 'team1' | 'team2' | 'user') => {
+  const handleClearLineup = (team: 'team1' | 'team2') => {
     if (team === 'team1') {
         setTeam1Lineup(Array(11).fill(null));
         setTeam1Reserves(Array(5).fill(null));
-    } else if (team === 'team2') {
+    } else {
         setTeam2Lineup(Array(11).fill(null));
         setTeam2Reserves(Array(5).fill(null));
-    } else {
-        setUserLineup(Array(11).fill(null));
-        setUserReserves(Array(5).fill(null));
     }
   };
   
-  const handleClearReserves = (team: 'team1' | 'team2' | 'user') => {
+  const handleClearReserves = (team: 'team1' | 'team2') => {
     if (team === 'team1') {
       setTeam1Reserves(Array(5).fill(null));
-    } else if (team === 'team2') {
-      setTeam2Reserves(Array(5).fill(null));
     } else {
-      setUserReserves(Array(5).fill(null));
+      setTeam2Reserves(Array(5).fill(null));
     }
-  };
-
-  const handleApplyAiLineup = (lineup: string[], reserves: string[]) => {
-    const newLineup = Array(11).fill(null);
-    const newReserves = Array(5).fill(null);
-    lineup.slice(0, 11).forEach((id, i) => { newLineup[i] = id; });
-    reserves.slice(0, 5).forEach((id, i) => { newReserves[i] = id; });
-    setUserLineup(newLineup);
-    setUserReserves(newReserves);
   };
 
   const handleBalanceTeams = async () => {
@@ -355,13 +322,80 @@ export default function LineupView(props: LineupViewProps) {
   const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
     onAddPlayer({ position, index, team });
   };
+  
+  const team1Score = team1Lineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
+  const team2Score = team2Lineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
+  
+  const editorView = (
+     <>
+        <Card>
+            <CardHeader>
+                <CardTitle>{canEdit ? "Editor da Rodada" : "Times da Rodada"}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="team1">Time 1</TabsTrigger>
+                        <TabsTrigger value="team2">Time 2</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="team1" className="mt-4">
+                        {canEdit && (
+                            <div className="flex justify-between items-center mb-4">
+                               <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
+                                <Button variant="destructive" size="sm" onClick={() => handleClearLineup('team1')} disabled={!canEdit}>
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Limpar Time 1
+                                </Button>
+                            </div>
+                        )}
+                        <TeamDisplay
+                            teamIdentifier="team1"
+                            lineup={team1Lineup}
+                            reserves={team1Reserves}
+                            players={players}
+                            formation={formation}
+                            shirtColor={team1ShirtColor}
+                            onPlayerCardClick={handlePlayerCardClick}
+                            onAddPlayer={handleAddPlayerForTeam('team1')}
+                            canEdit={canEdit}
+                        />
+                    </TabsContent>
+                    <TabsContent value="team2" className="mt-4">
+                        {canEdit && (
+                            <div className="flex justify-between items-center mb-4">
+                                <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
+                                <Button variant="destructive" size="sm" onClick={() => handleClearLineup('team2')} disabled={!canEdit}>
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Limpar Time 2
+                                </Button>
+                            </div>
+                        )}
+                        <TeamDisplay
+                            teamIdentifier="team2"
+                            lineup={team2Lineup}
+                            reserves={team2Reserves}
+                            players={players}
+                            formation={formation}
+                            shirtColor={team2ShirtColor}
+                            onPlayerCardClick={handlePlayerCardClick}
+                            onAddPlayer={handleAddPlayerForTeam('team2')}
+                            canEdit={canEdit}
+                        />
+                    </TabsContent>
+                </Tabs>
+            </CardContent>
+        </Card>
+        {canEdit && (
+            <div className="mt-4 flex flex-col gap-2">
+                <Button onClick={handleBalanceTeams} className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={isBalancing}>
+                    {isBalancing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                    {isBalancing ? 'Balanceando...' : 'Balancear Times'}
+                </Button>
+            </div>
+        )}
+     </>
+  );
 
-  const handleAddPlayerForUser = (position: Player['pos'] | 'RES', index: number) => {
-    onAddPlayer({ position, index });
-  };
-  
-  const totalScore = userLineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
-  
   return (
     <div>
       <AlertDialog open={!!playerActionState} onOpenChange={(open) => !open && setPlayerActionState(null)}>
@@ -428,104 +462,22 @@ export default function LineupView(props: LineupViewProps) {
                 <Share2 className="w-5 h-5" />
             </Button>
         </div>
-        {!canEdit && (
-            <Button className="bg-primary hover:bg-primary/90 rounded-lg px-6">
-                Pontuação da rodada: {totalScore.toFixed(2)}
-            </Button>
-        )}
+        <div className="grid grid-cols-3 items-center w-full max-w-sm">
+           <div className="text-center">
+              <p className="font-bold text-lg">{team1Score.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Time 1</p>
+           </div>
+           <div className="text-center font-bold text-muted-foreground">VS</div>
+            <div className="text-center">
+                <p className="font-bold text-lg">{team2Score.toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground">Time 2</p>
+            </div>
+        </div>
       </header>
       <div className="p-4 pb-32">
-        
-        {canEdit ? (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Editor da Rodada</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="team1">Time 1</TabsTrigger>
-                            <TabsTrigger value="team2">Time 2</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="team1" className="mt-4">
-                            <div className="flex justify-between items-center mb-4">
-                               <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
-                                <Button variant="destructive" size="sm" onClick={() => handleClearLineup('team1')} disabled={!canEdit}>
-                                    <Trash2 className="mr-2 h-4 w-4"/>
-                                    Limpar Time 1
-                                </Button>
-                            </div>
-                            <TeamEditor
-                                teamIdentifier="team1"
-                                teamName="Time 1"
-                                lineup={team1Lineup}
-                                reserves={team1Reserves}
-                                players={players}
-                                formation={formation}
-                                shirtColor={team1ShirtColor}
-                                onPlayerCardClick={handlePlayerCardClick}
-                                onAddPlayer={handleAddPlayerForTeam('team1')}
-                                canEdit={canEdit}
-                                isOwnTeam={false}
-                            />
-                        </TabsContent>
-                        <TabsContent value="team2" className="mt-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
-                                <Button variant="destructive" size="sm" onClick={() => handleClearLineup('team2')} disabled={!canEdit}>
-                                    <Trash2 className="mr-2 h-4 w-4"/>
-                                    Limpar Time 2
-                                </Button>
-                            </div>
-                            <TeamEditor
-                                teamIdentifier="team2"
-                                teamName="Time 2"
-                                lineup={team2Lineup}
-                                reserves={team2Reserves}
-                                players={players}
-                                formation={formation}
-                                shirtColor={team2ShirtColor}
-                                onPlayerCardClick={handlePlayerCardClick}
-                                onAddPlayer={handleAddPlayerForTeam('team2')}
-                                canEdit={canEdit}
-                                isOwnTeam={false}
-                            />
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
-            </Card>
-        ) : (
-            <>
-              <div className="flex justify-end items-center mb-4">
-                  <Button variant="destructive" size="sm" onClick={() => handleClearLineup('user')}>
-                      <Trash2 className="mr-2 h-4 w-4"/>
-                      Limpar Time
-                  </Button>
-              </div>
-              <TeamEditor
-                  teamIdentifier="user"
-                  teamName={currentUser.teamName}
-                  lineup={userLineup}
-                  reserves={userReserves}
-                  players={players}
-                  formation={formation}
-                  shirtColor={'verde'} 
-                  onAddPlayer={handleAddPlayerForUser}
-                  canEdit={false}
-                  isOwnTeam={true}
-                  onPlayerCardClick={handlePlayerCardClick}
-              />
-            </>
-        )}
+        {editorView}
         
         <div className="mt-4 flex flex-col gap-2">
-            {!canEdit && <AiSuggestions user={user} players={players} onApplyLineup={handleApplyAiLineup} />}
-             {canEdit && (
-                <Button onClick={handleBalanceTeams} className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={isBalancing}>
-                    {isBalancing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                    {isBalancing ? 'Balanceando...' : 'Balancear Times'}
-                </Button>
-            )}
             <div className={cn(
                 "p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center font-bold text-primary-foreground",
                 isMarketOpen ? "bg-green-600" : "bg-orange-500"
@@ -535,43 +487,39 @@ export default function LineupView(props: LineupViewProps) {
             </div>
         </div>
       </div>
-       <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
-          <div className="flex justify-around items-center px-2 pb-2">
-              <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs">Esquema Tático</span>
-                  <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
-                      <SelectTrigger className="w-auto bg-muted border-none h-8">
-                          <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="4-3-3">4-3-3</SelectItem>
-                          <SelectItem value="4-4-2">4-4-2</SelectItem>
-                          <SelectItem value="3-5-2">3-5-2</SelectItem>
-                      </SelectContent>
-                  </Select>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs">Limpar Reservas</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
-                    onClick={() => handleClearReserves(canEdit ? (activeTab as 'team1' | 'team2') : 'user')} 
-                  >
-                      <Trash2 className="h-5 w-5 text-red-400" />
-                  </Button>
-              </div>
-          </div>
-          {canEdit ? (
+      {canEdit && (
+         <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
+            <div className="flex justify-around items-center px-2 pb-2">
+                <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs">Esquema Tático</span>
+                    <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
+                        <SelectTrigger className="w-auto bg-muted border-none h-8">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="4-3-3">4-3-3</SelectItem>
+                            <SelectItem value="4-4-2">4-4-2</SelectItem>
+                            <SelectItem value="3-5-2">3-5-2</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs">Limpar Reservas</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
+                      onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')} 
+                    >
+                        <Trash2 className="h-5 w-5 text-red-400" />
+                    </Button>
+                </div>
+            </div>
             <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={onSaveLineups}>
                 Salvar Times da Rodada
             </Button>
-          ) : (
-            <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={() => {toast({title: "Time Salvo!", description: "Sua escalação foi salva com sucesso."})}}>
-                Salvar Minha Escalação
-            </Button>
-          )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
