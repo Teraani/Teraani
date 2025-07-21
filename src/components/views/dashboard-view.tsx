@@ -69,16 +69,24 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
     }, [user, players]);
 
     return (
-        <Card className="bg-gray-200 dark:bg-zinc-800 p-4">
+        <Card className="bg-card p-4">
             <CardContent className="p-0">
                 <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <Avatar className="h-20 w-20 bg-yellow-300 cursor-pointer" onClick={handleAvatarClick}>
+                     <div className="relative">
+                        <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
                             <AvatarImage src={userAvatar ?? undefined} alt="Foto do Jogador" />
-                            <AvatarFallback className="text-3xl text-gray-700">
+                            <AvatarFallback className="text-3xl">
                                 <Upload className="h-8 w-8"/>
                             </AvatarFallback>
                         </Avatar>
+                        {userAvatar && (
+                          <div
+                            className="absolute bottom-0 right-0 bg-primary rounded-full p-1 cursor-pointer"
+                            onClick={handleAvatarClick}
+                          >
+                            <Upload className="h-4 w-4 text-primary-foreground" />
+                          </div>
+                        )}
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -87,23 +95,23 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
                             accept="image/*"
                         />
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Felipe</h3>
+                    <h3 className="text-2xl font-bold">Felipe</h3>
                 </div>
                 <div className="grid grid-cols-3 text-center mt-4">
                     <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Partidas Jogadas</p>
-                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{totalGames}</p>
+                        <p className="text-sm text-muted-foreground">Partidas Jogadas</p>
+                        <p className="font-bold text-lg">{totalGames}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Pontos</p>
-                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{totalPoints.toFixed(2)}</p>
+                        <p className="text-sm text-muted-foreground">Pontos</p>
+                        <p className="font-bold text-lg">{totalPoints.toFixed(2)}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Aproveitamento</p>
-                        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{performancePercentage}</p>
+                        <p className="text-sm text-muted-foreground">Aproveitamento</p>
+                        <p className="font-bold text-lg">{performancePercentage}</p>
                     </div>
                 </div>
-                <Button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => onNavigate('lineup')}>
+                <Button className="w-full mt-4" onClick={() => onNavigate('lineup')}>
                     Ver Time
                 </Button>
             </CardContent>
@@ -119,14 +127,14 @@ function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
     ];
     return (
         <div>
-            <h3 className="text-xl font-bold text-center mb-4 text-gray-800 dark:text-gray-100">Acesso Rápido</h3>
+            <h3 className="text-xl font-bold text-center mb-4">Acesso Rápido</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
                 {items.map(item => (
-                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors">
-                        <div className="w-20 h-20 bg-gray-300 dark:bg-zinc-700 rounded-full flex items-center justify-center text-primary dark:text-primary">
+                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors">
+                        <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center text-primary">
                             <item.icon className="w-10 h-10" />
                         </div>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{item.label}</p>
+                        <p className="text-sm text-muted-foreground">{item.label}</p>
                     </button>
                 ))}
             </div>
@@ -136,12 +144,12 @@ function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
 
 function ConnectSection() {
     return (
-        <Card className="bg-yellow-200 dark:bg-yellow-800/50 border-none">
+        <Card className="bg-secondary border-none">
             <CardContent className="p-4 text-center">
                 <ul className="space-y-2">
-                    <li><a href="#" className="font-semibold text-gray-800 dark:text-yellow-100 hover:underline">Conecte-se com strava</a></li>
-                    <li><a href="#" className="font-semibold text-gray-800 dark:text-yellow-100 hover:underline">Conecte-se com garmim</a></li>
-                    <li><a href="#" className="font-semibold text-gray-800 dark:text-yellow-100 hover:underline">Conecte-se com a Samsung</a></li>
+                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com strava</a></li>
+                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com garmim</a></li>
+                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com a Samsung</a></li>
                 </ul>
             </CardContent>
         </Card>
@@ -151,8 +159,8 @@ function ConnectSection() {
 
 export default function DashboardView({ user, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange }: DashboardViewProps) {
   return (
-    <div>
-      <header className="bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center justify-between">
+    <div className="dark">
+      <header className="bg-card p-4 shadow-sm flex items-center justify-between">
          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -182,8 +190,8 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
         </DropdownMenu>
 
         <div className="flex justify-center gap-4">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-8">Início</Button>
-            <Button variant="ghost" className="text-blue-600 font-semibold rounded-lg px-8">Amigos</Button>
+            <Button className="rounded-lg px-8">Início</Button>
+            <Button variant="ghost" className="text-primary-foreground font-semibold rounded-lg px-8">Amigos</Button>
         </div>
         <div className="w-10 h-10" />
       </header>
