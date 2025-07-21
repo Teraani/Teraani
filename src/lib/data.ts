@@ -1,7 +1,7 @@
 export interface Player {
   name: string;
   team: string;
-  pos: 'GOL' | 'ZAG' | 'LAT' | 'MEI' | 'ATA';
+  pos: 'GOL' | 'ZAG' | 'LAT' | 'MEI' | 'ATA' | 'VOL';
   value: number;
   points: number;
   last_val: number;
@@ -49,6 +49,35 @@ export const data: AppData = {
         'p14': { name: 'FERRARESI', team: 'SAO', pos: 'ZAG', value: 14.20, points: 14.20, last_val: 1.26, games: 15, img: 'https://placehold.co/60x60' },
         'p15': { name: 'ARBOLEDA', team: 'SAO', pos: 'ZAG', value: 12.30, points: 12.30, last_val: 1.24, games: 15, img: 'https://placehold.co/60x60' },
         'p16': { name: 'LUCAS FREITAS', team: 'VAS', pos: 'LAT', value: 11.50, points: 11.50, last_val: 1.98, games: 13, img: 'https://placehold.co/60x60' },
-        'p17': { name: 'Rafael', team: 'SAO', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' }
+        'p17': { name: 'Rafael', team: 'SAO', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p18': { name: 'Rafael Ohy', team: 'AVA', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p19': { name: 'Renan Ropeiro', team: 'BOT', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p20': { name: 'André Corsini', team: 'CAM', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p21': { name: 'Rossi', team: 'CFC', pos: 'VOL', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p22': { name: 'Gustavo Rodrigues', team: 'CRI', pos: 'VOL', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p23': { name: 'Vinícius Simão', team: 'FLU', pos: 'LAT', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p24': { name: 'Adriano Carvalho', team: 'FOR', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p25': { name: 'Deyvid Gontarczik (Deca)', team: 'GOI', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p26': { name: 'Felipe Ropeiro (Cabanhas)', team: 'JUV', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p27': { name: 'Vinícius Abreu', team: 'SAN', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p28': { name: 'Bruno Costa (Bruneca)', team: 'VIT', pos: 'ZAG', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p29': { name: 'Felipe Correa', team: 'FLA', pos: 'VOL', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p30': { name: 'Alexandre Santos', team: 'CRU', pos: 'ZAG', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p31': { name: 'Vicente Gagliardi (Pizza)', team: 'PAL', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p32': { name: 'Gustavo Reis (Titânio)', team: 'COR', pos: 'LAT', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p33': { name: 'Isaias Souza', team: 'INT', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p34': { name: 'Beto', team: 'GRE', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p35': { name: 'Diego Nunes', team: 'SAO', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p36': { name: 'Thiago Santos', team: 'VAS', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p37': { name: 'Carlos Souza', team: 'AVA', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p38': { name: 'Heitor (Totti)', team: 'BOT', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p39': { name: 'Juliano Vello', team: 'CAM', pos: 'LAT', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p40': { name: 'Paulo Fogaça', team: 'CFC', pos: 'MEI', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p41': { name: 'Érico', team: 'CRI', pos: 'VOL', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p42': { name: 'Lucas Limone', team: 'FLU', pos: 'LAT', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p43': { name: 'Lupo', team: 'FOR', pos: 'VOL', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p44': { name: 'Giovani', team: 'GOI', pos: 'LAT', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p45': { name: 'Lucca', team: 'JUV', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' },
+        'p46': { name: 'Pedro Roberto', team: 'SAN', pos: 'ATA', value: 10.0, points: 5.0, last_val: 0.5, games: 10, img: 'https://placehold.co/60x60' }
     }
 };
