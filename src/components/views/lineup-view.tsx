@@ -149,7 +149,7 @@ const TeamEditor = ({
                 } else if (canEdit) {
                     return <AddPlayerButton key={`add-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
                 } else {
-                    return <div className="w-20 h-28" />;
+                    return <div key={`empty-${position}-${slotIndex}`} className="w-20 h-28" />;
                 }
             })}
         </div>
@@ -165,7 +165,7 @@ const TeamEditor = ({
             } else if (canEdit) {
                 return <AddPlayerButton key={`add-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
             } else {
-                return <div className="w-20 h-28" />;
+                return <div key={`empty-RES-${i}`} className="w-20 h-28" />;
             }
         })}
     </div>
