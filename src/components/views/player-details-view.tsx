@@ -18,12 +18,11 @@ interface PlayerDetailsViewProps {
 export default function PlayerDetailsView({ player, onBack, onImageChange }: PlayerDetailsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const averagePoints = player.games > 0 ? (player.points / player.games) : 0;
+  const averagePoints = player.games > 0 && player.points ? (player.points / player.games) : 0;
 
   const matchesByTeam = [
     { team: 'Verde', points: 120.5, games: 10, average: 12.05 },
     { team: 'Amarelo', points: 80.2, games: 8, average: 10.03 },
-    { team: 'Azul', points: 50, games: 5, average: 10 },
   ];
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,11 +105,11 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                         <div className="flex justify-around text-center">
                             <div>
                                 <p className="text-sm text-muted-foreground">Jogos</p>
-                                <p className="font-bold text-lg">{player.games}</p>
+                                <p className="font-bold text-lg">{player.games ?? 0}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Total Pontos</p>
-                                <p className="font-bold text-lg">{player.points.toFixed(2)}</p>
+                                <p className="font-bold text-lg">{player.points?.toFixed(2) ?? '0.00'}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Média</p>
