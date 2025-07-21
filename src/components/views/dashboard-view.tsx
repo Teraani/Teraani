@@ -65,9 +65,9 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
             <CardContent className="p-0">
                 <div className="flex items-center gap-4">
                     <div className="relative">
-                        <Avatar className="h-20 w-20 bg-yellow-300" onClick={handleAvatarClick}>
+                        <Avatar className="h-20 w-20 bg-yellow-300 cursor-pointer" onClick={handleAvatarClick}>
                             <AvatarImage src={userAvatar ?? undefined} alt="Foto do Jogador" />
-                            <AvatarFallback className="text-3xl text-gray-700 cursor-pointer">
+                            <AvatarFallback className="text-3xl text-gray-700">
                                 <Upload className="h-8 w-8"/>
                             </AvatarFallback>
                         </Avatar>
