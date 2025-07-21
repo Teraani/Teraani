@@ -18,16 +18,12 @@ interface PlayerDetailsViewProps {
 export default function PlayerDetailsView({ player, onBack, onImageChange }: PlayerDetailsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const stats = [
-    { label: 'Geral', value: 10 },
-    { label: 'Verde', value: 10 },
-    { label: 'Amarelo', value: 10 },
-  ];
+  const averagePoints = player.games > 0 ? (player.points / player.games) : 0;
 
-  const matches = [
-    { round: 1, teams: 'Verde 1 x 2 Amarelo', points: 10 },
-    { round: 2, teams: 'Azul 3 x 0 Vermelho', points: 8 },
-    { round: 3, teams: 'Verde 0 x 0 Amarelo', points: 2 },
+  const matchesByTeam = [
+    { team: 'Verde', points: 120.5, games: 10, average: 12.05 },
+    { team: 'Amarelo', points: 80.2, games: 8, average: 10.03 },
+    { team: 'Azul', points: 50, games: 5, average: 10 },
   ];
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,46 +96,48 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                         </div>
                     </div>
                 </TabsContent>
-                 <TabsContent value="detalhes" className="p-4">
+                 <TabsContent value="detalhes" className="p-4 space-y-4">
                     <Card className="bg-gray-200 dark:bg-zinc-700">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-bold">Médias de pontos</CardTitle>
+                        <CardTitle className="text-lg font-bold">Médias de Pontos</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="flex justify-around text-center">
-                          {stats.map((stat) => (
-                            <div key={stat.label}>
-                              <p className="text-sm text-muted-foreground">{stat.label}</p>
-                              <p className="font-bold text-lg">{stat.value}</p>
+                            <div>
+                                <p className="text-sm text-muted-foreground">Jogos</p>
+                                <p className="font-bold text-lg">{player.games}</p>
                             </div>
-                          ))}
+                            <div>
+                                <p className="text-sm text-muted-foreground">Total Pontos</p>
+                                <p className="font-bold text-lg">{player.points.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-muted-foreground">Média</p>
+                                <p className="font-bold text-lg">{averagePoints.toFixed(2)}</p>
+                            </div>
                         </div>
                       </CardContent>
                     </Card>
 
-                    <div className="mt-6">
-                      <h3 className="text-lg font-bold mb-3">Pontuação por partida</h3>
-                      <div className="flex gap-2 mb-4">
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">Tudo</Button>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">Verde</Button>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white">Amarelo</Button>
-                      </div>
-                      <div>
+                    <div>
+                      <h3 className="text-lg font-bold mb-3">Pontuação por time</h3>
+                      <div className="space-y-2">
                         <div className="flex justify-between text-sm font-semibold text-muted-foreground mb-2 px-2">
-                          <span>Rod. Confronto</span>
-                          <span>Pontos da rodada</span>
-                        </div>
-                        <div className="space-y-2">
-                          {matches.map((match) => (
-                             <div key={match.round} className="flex justify-between items-center bg-white dark:bg-zinc-800 p-3 rounded-lg">
-                                <div>
-                                    <span className="font-bold">{match.round}</span>
-                                    <span className="text-muted-foreground ml-2">{match.teams}</span>
-                                </div>
-                                <span className="font-bold text-lg">{match.points}</span>
+                            <span>Time</span>
+                            <div className="flex gap-8">
+                              <span>Média</span>
+                              <span>Total</span>
                             </div>
-                          ))}
                         </div>
+                        {matchesByTeam.map((match) => (
+                            <div key={match.team} className="flex justify-between items-center bg-white dark:bg-zinc-800 p-3 rounded-lg">
+                            <span className="font-bold">{match.team}</span>
+                            <div className="flex gap-8 text-right">
+                                <span className="font-bold text-md w-10">{match.average.toFixed(2)}</span>
+                                <span className="font-bold text-md w-10">{match.points.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        ))}
                       </div>
                     </div>
                  </TabsContent>
