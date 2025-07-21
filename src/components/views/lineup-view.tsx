@@ -104,7 +104,12 @@ const TeamEditor = ({
     playerIndex += defCount;
     const assignedGoalkeeper = lineupPlayers.slice(playerIndex, playerIndex + 1);
     
-    return { attackers, midfielders, defenders, goalkeeper };
+    return { 
+        attackers: assignedAttackers, 
+        midfielders: assignedMidfielders, 
+        defenders: assignedDefenders, 
+        goalkeeper: assignedGoalkeeper 
+    };
   }, [lineupPlayers, atkCount, midCount, defCount]);
 
   const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
@@ -347,9 +352,9 @@ export default function LineupView(props: LineupViewProps) {
                 players={players}
                 formation={formation}
                 shirtColor={team1ShirtColor} // Defaulting to team1 color for user's view
-                onPlayerSelect={onPlayerSelect}
                 onAddPlayer={(pos, idx) => { /* Non-editors can't add players */ }}
                 canEdit={canEdit}
+                onPlayerSelect={onPlayerSelect}
             />
         )}
         
