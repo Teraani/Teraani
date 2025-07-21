@@ -17,9 +17,9 @@ import AdminView from '@/components/views/admin-view';
 import BottomNav from '@/components/bottom-nav';
 import LoginView from '@/components/views/login-view';
 import RegisterView from '@/components/views/register-view';
-import LiveView from '@/components/views/live-view';
+import ScoutEditorView from '@/components/views/scout-editor-view';
 
-export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live';
+export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'scout-editor';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -51,10 +51,15 @@ export default function Home() {
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
-  const canEdit = useMemo(() => {
+  const canEditLineup = useMemo(() => {
     if (!currentUser) return false;
     return currentUser.role === 'admin' || currentUser.id === appData.editorOfTheRound;
   }, [currentUser, appData.editorOfTheRound]);
+  
+  const canEditScouts = useMemo(() => {
+    if (!currentUser) return false;
+    return currentUser.role === 'admin' || currentUser.id === appData.scoutEditor;
+  }, [currentUser, appData.scoutEditor]);
   
   const handleLoginSuccess = (userId: string) => {
     const user = appData.users[userId];
@@ -142,6 +147,15 @@ export default function Home() {
     }));
   };
 
+  const handleUpdatePlayerStats = (updatedPlayers: Record<string, Player>) => {
+    setAppData(prevData => ({
+      ...prevData,
+      players: updatedPlayers
+    }));
+    navigateTo('dashboard');
+  };
+
+
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
   const userWithCurrentLineup = useMemo(() => {
@@ -174,7 +188,7 @@ export default function Home() {
       case 'register':
         return <RegisterView onRegisterSuccess={() => navigateTo('dashboard')} onNavigateToLogin={() => navigateTo('login')} />;
       case 'dashboard':
-        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} canEditScouts={canEditScouts} />;
       case 'lineup':
         return <LineupView 
                  userLineup={userLineup} 
@@ -187,7 +201,7 @@ export default function Home() {
                  onAddPlayer={handleOpenMarket} 
                  userAvatar={userAvatar} 
                  currentUser={currentUser!}
-                 canEdit={canEdit}
+                 canEdit={canEditLineup}
                  team1Lineup={team1Lineup}
                  setTeam1Lineup={setTeam1Lineup}
                  team1Reserves={team1Reserves}
@@ -198,7 +212,7 @@ export default function Home() {
                  setTeam2Reserves={setTeam2Reserves}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} canEditScouts={canEditScouts} />;
       case 'market':
         return <MarketView 
                  players={appData.players} 
@@ -217,10 +231,10 @@ export default function Home() {
         return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'admin':
         return <AdminView onBack={goBack} users={Object.values(appData.users)} editorOfTheRound={appData.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={appData.scoutEditor} onSetScoutEditor={handleSetScoutEditor} />;
-      case 'live':
-        return <LiveView onBack={() => navigateTo('dashboard')} user={userWithCurrentLineup!} players={appData.players} />;
+      case 'scout-editor':
+        return <ScoutEditorView onBack={goBack} players={appData.players} onSave={handleUpdatePlayerStats} team1Lineup={team1Lineup} team2Lineup={team2Lineup}/>;
       default:
-        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} canEditScouts={canEditScouts} />;
     }
   };
 

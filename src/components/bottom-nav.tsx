@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Shirt, Trophy, BarChart2, Radio } from 'lucide-react';
+import { Home, Shirt, Trophy, BarChart2 } from 'lucide-react';
 import type { View } from '@/app/page';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +12,6 @@ interface BottomNavProps {
 const navItems = [
   { view: 'dashboard' as View, icon: Home, label: 'Início' },
   { view: 'lineup' as View, icon: Shirt, label: 'Escalação' },
-  { view: 'live' as View, icon: Radio, label: 'Ao Vivo' },
   { view: 'statistics' as View, icon: BarChart2, label: 'Estatísticas' },
   { view: 'leagues' as View, icon: Trophy, label: 'Ligas' },
 ];
@@ -30,12 +29,6 @@ export default function BottomNav({ currentView, onNavigate }: BottomNavProps) {
           )}
           aria-current={currentView === item.view ? 'page' : undefined}
         >
-          {item.view === 'live' && (
-            <span className="absolute top-0 right-3 flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-            </span>
-          )}
           <item.icon className="h-6 w-6" />
           <span className="text-xs font-medium">{item.label}</span>
         </button>

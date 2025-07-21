@@ -6,7 +6,7 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine } from 'lucide-react';
 import React, { useState, useRef, useMemo } from 'react';
 import {
   DropdownMenu,
@@ -24,6 +24,7 @@ interface DashboardViewProps {
   onPlayerSelect: (playerId: string) => void;
   userAvatar: string | null;
   onAvatarChange: (image: string) => void;
+  canEditScouts: boolean;
 }
 
 function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }: { user: User, players: Record<string, Player>, onNavigate: (view: View) => void, userAvatar: string | null, onAvatarChange: (image: string) => void }) {
@@ -119,7 +120,7 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
     );
 }
 
-function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
+function QuickAccess({ onNavigate, canEditScouts }: { onNavigate: (view: View) => void, canEditScouts: boolean }) {
     const items = [
         { label: "Parciais gerais", view: 'partial-score' as View, icon: BarChart3 },
         { label: "Parcial dos amigos", view: 'friends-score' as View, icon: Users },
@@ -138,6 +139,12 @@ function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
                     </button>
                 ))}
             </div>
+            {canEditScouts && (
+                <Button className="w-full mt-4" variant="outline" onClick={() => onNavigate('scout-editor')}>
+                    <FilePenLine className="mr-2 h-4 w-4" />
+                    Editar Scouts da Rodada
+                </Button>
+            )}
         </div>
     );
 }
@@ -157,7 +164,7 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange }: DashboardViewProps) {
+export default function DashboardView({ user, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange, canEditScouts }: DashboardViewProps) {
   return (
     <div>
       <header className="bg-card p-4 shadow-sm flex items-center justify-between">
@@ -201,7 +208,7 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
       </header>
       <div className="p-4 space-y-8">
         <PlayerSummary user={user} players={players} onNavigate={onNavigate} userAvatar={userAvatar} onAvatarChange={onAvatarChange} />
-        <QuickAccess onNavigate={onNavigate} />
+        <QuickAccess onNavigate={onNavigate} canEditScouts={canEditScouts} />
         <ConnectSection />
       </div>
     </div>
