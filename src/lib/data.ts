@@ -66,7 +66,7 @@ export const data: AppData = {
             id: 'user1',
             name: 'Felipe',
             email: 'felipe@exemplo.com',
-            teamName: "AmistososAI FC",
+            teamName: "Amistosos FC",
             partialScore: 58.49,
             totalScore: 1154.89,
             valuation: 125.88,
