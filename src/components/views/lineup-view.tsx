@@ -3,9 +3,8 @@ import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
-import { Clock, Trash2, LogOut, Users, Settings } from 'lucide-react';
+import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { View, AddPlayerSlot } from '@/app/page';
@@ -92,10 +91,11 @@ const TeamEditor = ({
     
   const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
   const reservePlayers = reserves.map(id => id ? { ...players[id], id } : null);
-  const [defCount, midCount, atkCount] = useMemo(() => formation.split('-').map(Number), [formation]);
-
+  
   const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
+    const [defCount, midCount, atkCount] = formation.split('-').map(Number).reverse();
     let playerIndex = 0;
+    
     const assignedAttackers = lineupPlayers.slice(playerIndex, playerIndex + atkCount);
     playerIndex += atkCount;
     const assignedMidfielders = lineupPlayers.slice(playerIndex, playerIndex + midCount);
@@ -108,9 +108,18 @@ const TeamEditor = ({
         attackers: assignedAttackers, 
         midfielders: assignedMidfielders, 
         defenders: assignedDefenders, 
-        goalkeeper: assignedGoalkeeper 
+        goalkeeper: assignedGoalkeeper,
+        atkCount,
+        midCount,
+        defCount,
     };
-  }, [lineupPlayers, atkCount, midCount, defCount]);
+  }, [lineupPlayers, formation]);
+
+  const { atkCount, midCount, defCount } = useMemo(() => {
+     const [def, mid, atk] = formation.split('-').map(Number);
+     return { atkCount: atk, midCount: mid, defCount: def };
+  }, [formation]);
+
 
   const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
     return (
@@ -120,8 +129,10 @@ const TeamEditor = ({
                 const slotIndex = startIndex + i;
                 if (player) {
                     return <PlayerCard key={`${player.id}-${slotIndex}`} player={player} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />;
-                } else {
+                } else if (canEdit) {
                     return <AddPlayerButton key={`add-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
+                } else {
+                    return <div className="w-20 h-28" />;
                 }
             })}
         </div>
@@ -134,8 +145,10 @@ const TeamEditor = ({
             const player = reservePlayers[i];
             if (player) {
                 return <PlayerCard key={player.id} player={player} onPlayerSelect={onPlayerSelect} isReserve />;
-            } else {
+            } else if (canEdit) {
                 return <AddPlayerButton key={`add-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
+            } else {
+                return <div className="w-20 h-28" />;
             }
         })}
     </div>
@@ -170,6 +183,7 @@ export default function LineupView(props: LineupViewProps) {
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('verde');
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('amarelo');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('team1');
   
   // This will reconstruct the user object for components that need it, like AiSuggestions
   const user: User = useMemo(() => ({
@@ -199,36 +213,80 @@ export default function LineupView(props: LineupViewProps) {
     return () => clearInterval(interval);
   }, []);
   
-  const handleClearLineup = () => {
-    setUserLineup(Array(11).fill(null));
-    setUserReserves(Array(5).fill(null));
+  const handleClearLineup = (team: 'team1' | 'team2') => {
+    if (team === 'team1') {
+        setTeam1Lineup(Array(11).fill(null));
+        setTeam1Reserves(Array(5).fill(null));
+    } else {
+        setTeam2Lineup(Array(11).fill(null));
+        setTeam2Reserves(Array(5).fill(null));
+    }
   };
   
-  const handleClearTeam1 = () => {
-      setTeam1Lineup(Array(11).fill(null));
+  const handleClearReserves = (team: 'team1' | 'team2') => {
+    if (team === 'team1') {
       setTeam1Reserves(Array(5).fill(null));
-  }
-
-  const handleClearTeam2 = () => {
-      setTeam2Lineup(Array(11).fill(null));
+    } else {
       setTeam2Reserves(Array(5).fill(null));
-  }
+    }
+  };
 
   const handleApplyAiLineup = (lineup: string[], reserves: string[]) => {
-    // Ensure the arrays have the correct length, filling with null if necessary
     const newLineup = Array(11).fill(null);
     const newReserves = Array(5).fill(null);
-
-    lineup.slice(0, 11).forEach((id, i) => {
-        newLineup[i] = id;
-    });
-
-    reserves.slice(0, 5).forEach((id, i) => {
-        newReserves[i] = id;
-    });
-
+    lineup.slice(0, 11).forEach((id, i) => { newLineup[i] = id; });
+    reserves.slice(0, 5).forEach((id, i) => { newReserves[i] = id; });
     setUserLineup(newLineup);
     setUserReserves(newReserves);
+  };
+
+  const handleBalanceTeams = () => {
+    const allPlayerIds = [...team1Lineup, ...team2Lineup].filter((id): id is string => id !== null);
+    const allReserveIds = [...team1Reserves, ...team2Reserves].filter((id): id is string => id !== null);
+    
+    const allPlayers = [...allPlayerIds, ...allReserveIds]
+        .map(id => players[id] ? { ...players[id], id } : null)
+        .filter((p): p is { id: string } & Player => p !== null)
+        .sort((a, b) => b.points - a.points);
+
+    const newTeam1Lineup: (string | null)[] = Array(11).fill(null);
+    const newTeam2Lineup: (string | null)[] = Array(11).fill(null);
+    const newTeam1Reserves: (string | null)[] = Array(5).fill(null);
+    const newTeam2Reserves: (string | null)[] = Array(5).fill(null);
+    let team1Score = 0;
+    let team2Score = 0;
+    
+    // Distribute lineup players
+    const lineupPlayersToDistribute = allPlayers.slice(0, 22);
+    let t1Idx = 0, t2Idx = 0;
+    lineupPlayersToDistribute.forEach(player => {
+        if (team1Score <= team2Score && t1Idx < 11) {
+            newTeam1Lineup[t1Idx++] = player.id;
+            team1Score += player.points;
+        } else if (t2Idx < 11) {
+            newTeam2Lineup[t2Idx++] = player.id;
+            team2Score += player.points;
+        } else if (t1Idx < 11) { // Fill remaining slots if any
+            newTeam1Lineup[t1Idx++] = player.id;
+            team1Score += player.points;
+        }
+    });
+
+    // Distribute reserve players
+    const reservePlayersToDistribute = allPlayers.slice(22);
+    let r1Idx = 0, r2Idx = 0;
+    reservePlayersToDistribute.forEach(player => {
+        if (r1Idx < 5) {
+            newTeam1Reserves[r1Idx++] = player.id;
+        } else if (r2Idx < 5) {
+            newTeam2Reserves[r2Idx++] = player.id;
+        }
+    });
+
+    setTeam1Lineup(newTeam1Lineup);
+    setTeam2Lineup(newTeam2Lineup);
+    setTeam1Reserves(newTeam1Reserves);
+    setTeam2Reserves(newTeam2Reserves);
   };
 
   const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
@@ -296,7 +354,7 @@ export default function LineupView(props: LineupViewProps) {
                     <CardTitle>Editor da Rodada</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Tabs defaultValue="team1" className="w-full">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="team1">Time 1</TabsTrigger>
                             <TabsTrigger value="team2">Time 2</TabsTrigger>
@@ -304,7 +362,7 @@ export default function LineupView(props: LineupViewProps) {
                         <TabsContent value="team1" className="mt-4">
                             <div className="flex justify-between items-center mb-4">
                                <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
-                                <Button variant="destructive" size="sm" onClick={handleClearTeam1} disabled={!canEdit}>
+                                <Button variant="destructive" size="sm" onClick={() => handleClearLineup('team1')} disabled={!canEdit}>
                                     <Trash2 className="mr-2 h-4 w-4"/>
                                     Limpar Time 1
                                 </Button>
@@ -324,7 +382,7 @@ export default function LineupView(props: LineupViewProps) {
                         <TabsContent value="team2" className="mt-4">
                             <div className="flex justify-between items-center mb-4">
                                 <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
-                                <Button variant="destructive" size="sm" onClick={handleClearTeam2} disabled={!canEdit}>
+                                <Button variant="destructive" size="sm" onClick={() => handleClearLineup('team2')} disabled={!canEdit}>
                                     <Trash2 className="mr-2 h-4 w-4"/>
                                     Limpar Time 2
                                 </Button>
@@ -352,7 +410,7 @@ export default function LineupView(props: LineupViewProps) {
                 players={players}
                 formation={formation}
                 shirtColor={team1ShirtColor} // Defaulting to team1 color for user's view
-                onAddPlayer={(pos, idx) => { /* Non-editors can't add players */ }}
+                onAddPlayer={(pos, idx) => onAddPlayer({ position: pos, index: idx })}
                 canEdit={canEdit}
                 onPlayerSelect={onPlayerSelect}
             />
@@ -360,6 +418,12 @@ export default function LineupView(props: LineupViewProps) {
         
         <div className="mt-4 flex flex-col gap-2">
             {!canEdit && <AiSuggestions user={user} players={players} onApplyLineup={handleApplyAiLineup} />}
+             {canEdit && (
+                <Button onClick={handleBalanceTeams} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Balancear Times
+                </Button>
+            )}
             <div className={cn(
                 "p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center font-bold text-primary-foreground",
                 isMarketOpen ? "bg-green-600" : "bg-orange-500"
@@ -370,7 +434,7 @@ export default function LineupView(props: LineupViewProps) {
         </div>
       </div>
        <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
-          <div className="flex justify-between items-center px-2 pb-2">
+          <div className="flex justify-around items-center px-2 pb-2">
               <div className="flex flex-col items-center gap-1">
                   <span className="text-xs">Esquema Tático</span>
                   <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={!canEdit}>
@@ -385,20 +449,21 @@ export default function LineupView(props: LineupViewProps) {
                   </Select>
               </div>
               <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs">Desfazer Time</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-muted hover:bg-accent rounded-full" onClick={handleClearLineup} disabled={!canEdit}>
+                  <span className="text-xs">Limpar Reservas</span>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
+                    onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')} 
+                    disabled={!canEdit}
+                  >
                       <Trash2 className="h-5 w-5 text-red-400" />
                   </Button>
               </div>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent" disabled={!canEdit}>
-                  Limpar Reservas
-              </Button>
-              <Button className="bg-green-600 text-white hover:bg-green-700" disabled={!canEdit}>
-                  Salvar Times
-              </Button>
-          </div>
+          <Button className="w-full bg-green-600 text-white hover:bg-green-700" disabled={!canEdit}>
+              Salvar Times
+          </Button>
       </div>
     </div>
   );
