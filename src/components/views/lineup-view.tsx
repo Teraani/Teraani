@@ -495,19 +495,27 @@ export default function LineupView(props: LineupViewProps) {
                 </CardContent>
             </Card>
         ) : (
-            <TeamEditor
-                teamIdentifier="user"
-                teamName={currentUser.teamName}
-                lineup={userLineup}
-                reserves={userReserves}
-                players={players}
-                formation={formation}
-                shirtColor={'verde'} 
-                onAddPlayer={handleAddPlayerForUser}
-                canEdit={false}
-                isOwnTeam={true}
-                onPlayerCardClick={handlePlayerCardClick}
-            />
+            <>
+              <div className="flex justify-end items-center mb-4">
+                  <Button variant="destructive" size="sm" onClick={() => handleClearLineup('user')}>
+                      <Trash2 className="mr-2 h-4 w-4"/>
+                      Limpar Time
+                  </Button>
+              </div>
+              <TeamEditor
+                  teamIdentifier="user"
+                  teamName={currentUser.teamName}
+                  lineup={userLineup}
+                  reserves={userReserves}
+                  players={players}
+                  formation={formation}
+                  shirtColor={'verde'} 
+                  onAddPlayer={handleAddPlayerForUser}
+                  canEdit={false}
+                  isOwnTeam={true}
+                  onPlayerCardClick={handlePlayerCardClick}
+              />
+            </>
         )}
         
         <div className="mt-4 flex flex-col gap-2">
@@ -531,7 +539,7 @@ export default function LineupView(props: LineupViewProps) {
           <div className="flex justify-around items-center px-2 pb-2">
               <div className="flex flex-col items-center gap-1">
                   <span className="text-xs">Esquema Tático</span>
-                  <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={canEdit}>
+                  <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
                       <SelectTrigger className="w-auto bg-muted border-none h-8">
                           <SelectValue />
                       </SelectTrigger>
