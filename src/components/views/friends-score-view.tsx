@@ -4,14 +4,31 @@
 import { useState, useMemo } from 'react';
 import type { Friend, Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, UserPlus, Search } from 'lucide-react';
+import { ArrowLeft, UserPlus, Search, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogTrigger 
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -131,17 +148,46 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
   };
 
   const [competitors, setCompetitors] = useState<Friend[]>([userAsFriend, ...friends]);
+  const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
   
   const handleAddCompetitor = (newFriend: Friend) => {
-    // Avoid adding duplicates
     if (!competitors.find(c => c.id === newFriend.id)) {
       setCompetitors(prev => [...prev, newFriend]);
     }
   }
 
+  const handleRemoveCompetitor = () => {
+    if (!friendToRemove) return;
+    setCompetitors(prev => prev.filter(c => c.id !== friendToRemove.id));
+    setFriendToRemove(null);
+  }
+
+  const handleCardClick = (competitor: Friend) => {
+    if (competitor.id !== 'user') {
+      setFriendToRemove(competitor);
+    }
+  }
 
   return (
     <div>
+      <AlertDialog open={!!friendToRemove} onOpenChange={(open) => !open && setFriendToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover Amigo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem certeza que deseja remover "{friendToRemove?.teamName}" da sua lista de comparação?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setFriendToRemove(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveCompetitor} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="bg-card p-4 shadow-sm flex items-center justify-between sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6 text-foreground" />
@@ -153,10 +199,14 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
       <main className="p-4">
         <div className="space-y-3">
           {competitors.map((competitor) => (
-            <Card key={competitor.id} className={cn(
+            <Card 
+              key={competitor.id} 
+              className={cn(
                 "bg-card shadow-none border-b border-border/50 rounded-lg",
-                competitor.id === 'user' && "border-2 border-primary"
-              )}>
+                competitor.id === 'user' ? "border-2 border-primary" : "cursor-pointer hover:bg-muted/50"
+              )}
+              onClick={() => handleCardClick(competitor)}
+            >
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <TeamCrest
