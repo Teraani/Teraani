@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Player lineup generation.
@@ -47,8 +48,9 @@ export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Pr
     const teamB: string[] = [];
     
     // Assign goalkeepers first
-    const teamA_GK = goalkeepers.shift()?.id;
-    const teamB_GK = goalkeepers.shift()?.id;
+    if (goalkeepers.length > 0) teamA.push(goalkeepers.shift()!.id);
+    if (goalkeepers.length > 0) teamB.push(goalkeepers.shift()!.id);
+    
 
     // Distribute the top 20 field players between Team A and Team B in a snake draft pattern
     fieldPlayers.slice(0, 20).forEach((player, index) => {
@@ -66,15 +68,12 @@ export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Pr
             }
         }
     });
-
-    // Add the goalkeeper to each team
-    if (teamA_GK) teamA.push(teamA_GK);
     
     // The first team generated (Team A) will be returned as the main lineup.
-    // Reserves will be empty for manual selection.
+    // The second team (Team B) will be used for reserves to simulate a full squad suggestion.
     return {
-        lineup: teamA,
-        reserves: [],
-        reasoning: 'Este time foi gerado de forma balanceada, distribuindo os melhores jogadores disponíveis para criar confrontos equilibrados. Os reservas devem ser adicionados manualmente.'
+        lineup: teamA.slice(0, 11),
+        reserves: teamB.slice(0, 5),
+        reasoning: 'Este time foi gerado de forma balanceada, distribuindo os melhores jogadores disponíveis para criar confrontos equilibrados. Os reservas foram selecionados a partir do segundo time sugerido.'
     };
 }
