@@ -10,6 +10,7 @@ import { Card } from '../ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 interface StatisticsViewProps {
   players: Record<string, Player>;
@@ -20,19 +21,23 @@ interface StatisticsViewProps {
 }
 
 const StatItem = ({ label, value }: { label: string; value: string | number | undefined }) => (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center p-1">
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="font-bold text-lg text-foreground">{value ?? '–'}</p>
     </div>
 );
 
-const EditableStatInput = ({ value, onChange }: { value: number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-  <Input
-    type="number"
-    value={value}
-    onChange={onChange}
-    className="h-8 w-16 text-center bg-background border-border"
-  />
+const EditableStatInput = ({ label, value, onChange }: { label: string, value: number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
+  <div className="flex flex-col items-center text-center p-1">
+    <Label className="text-xs text-muted-foreground mb-1">{label}</Label>
+    <Input
+      type="number"
+      value={value}
+      onChange={onChange}
+      className="h-9 w-20 text-center bg-background border-border"
+      onClick={(e) => e.stopPropagation()}
+    />
+  </div>
 );
 
 const PlayerStatsCard = ({ player, rank, onPlayerSelect, canEditScouts, onStatChange }: { 
@@ -40,7 +45,7 @@ const PlayerStatsCard = ({ player, rank, onPlayerSelect, canEditScouts, onStatCh
     rank: number, 
     onPlayerSelect: (playerId: string) => void,
     canEditScouts: boolean,
-    onStatChange: (playerId: string, field: keyof PlayerStats, value: number) => void
+    onStatChange: (playerId: string, field: keyof (PlayerStats & {games: number, points: number}), value: number) => void
 }) => {
     const playerStats = player.stats || {
         wins: 0, losses: 0, draws: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0,
@@ -69,28 +74,36 @@ const PlayerStatsCard = ({ player, rank, onPlayerSelect, canEditScouts, onStatCh
                             <p className="text-sm text-muted-foreground">{player.pos}</p>
                         </div>
                         <div className="text-right">
-                             {canEditScouts ? (
+                           {canEditScouts ? (
+                             <div onClick={(e) => e.stopPropagation()}>
                                 <EditableStatInput
-                                    value={player.points}
-                                    onChange={(e) => onStatChange(player.id, 'points', Number(e.target.value))}
+                                  label="Pontos"
+                                  value={player.points}
+                                  onChange={(e) => onStatChange(player.id, 'points', Number(e.target.value))}
                                 />
-                             ) : (
-                                <p className="font-extrabold text-xl text-primary">{player.points?.toFixed(1) ?? 'N/A'}</p>
-                             )}
-                            <p className="text-xs text-muted-foreground">Pontos</p>
+                              </div>
+                           ) : (
+                             <>
+                               <p className="font-extrabold text-xl text-primary">{player.points?.toFixed(1) ?? 'N/A'}</p>
+                               <p className="text-xs text-muted-foreground">Pontos</p>
+                             </>
+                           )}
                         </div>
                     </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
+                <AccordionContent className="px-4 pb-4" onClick={(e) => e.stopPropagation()}>
                     <div className="bg-muted/50 dark:bg-muted/20 p-4 rounded-lg grid grid-cols-3 sm:grid-cols-4 gap-y-4 text-center">
                         {canEditScouts ? (
                             <>
-                                <StatItem label="Jogos" value={player.games} />
-                                <StatItem label="Gols" value={playerStats.goals} />
-                                <StatItem label="Assist." value={playerStats.assists} />
-                                <StatItem label="SG" value={playerStats.goalDifference} />
-                                <StatItem label="CA" value={playerStats.yellowCards} />
-                                <StatItem label="CV" value={playerStats.redCards} />
+                                <EditableStatInput label="Jogos" value={player.games} onChange={(e) => onStatChange(player.id, 'games', Number(e.target.value))} />
+                                <EditableStatInput label="Gols" value={playerStats.goals} onChange={(e) => onStatChange(player.id, 'goals', Number(e.target.value))} />
+                                <EditableStatInput label="Assist." value={playerStats.assists} onChange={(e) => onStatChange(player.id, 'assists', Number(e.target.value))} />
+                                <EditableStatInput label="SG" value={playerStats.goalDifference} onChange={(e) => onStatChange(player.id, 'goalDifference', Number(e.target.value))} />
+                                <EditableStatInput label="CA" value={playerStats.yellowCards} onChange={(e) => onStatChange(player.id, 'yellowCards', Number(e.target.value))} />
+                                <EditableStatInput label="CV" value={playerStats.redCards} onChange={(e) => onStatChange(player.id, 'redCards', Number(e.target.value))} />
+                                <EditableStatInput label="Vitórias" value={playerStats.wins} onChange={(e) => onStatChange(player.id, 'wins', Number(e.target.value))} />
+                                <EditableStatInput label="Derrotas" value={playerStats.losses} onChange={(e) => onStatChange(player.id, 'losses', Number(e.target.value))} />
+                                <EditableStatInput label="Empates" value={playerStats.draws} onChange={(e) => onStatChange(player.id, 'draws', Number(e.target.value))} />
                             </>
                         ) : (
                             <>
@@ -117,19 +130,18 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
     const [editablePlayers, setEditablePlayers] = useState<Record<string, Player>>({});
 
     useEffect(() => {
-        // Initialize local state with data from props when the component loads or players data changes.
-        setEditablePlayers(players);
+        setEditablePlayers(JSON.parse(JSON.stringify(players)));
     }, [players]);
 
-    const handleStatChange = (playerId: string, field: keyof PlayerStats | 'points', value: number) => {
+    const handleStatChange = (playerId: string, field: keyof (PlayerStats & {games: number, points: number}), value: number) => {
         setEditablePlayers(prev => {
             const playerToUpdate = prev[playerId];
             if (!playerToUpdate) return prev;
-
+    
             const updatedPlayer = { ...playerToUpdate };
-
-            if (field === 'points') {
-                updatedPlayer.points = value;
+    
+            if (field === 'points' || field === 'games') {
+                updatedPlayer[field] = value;
             } else {
                  updatedPlayer.stats = {
                     ...(updatedPlayer.stats || { wins: 0, losses: 0, draws: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, performance: 0, points: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0 }),
@@ -149,13 +161,14 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
     };
 
     const sortedPlayers = useMemo(() => {
+        if (!editablePlayers) return [];
         return Object.entries(editablePlayers)
             .map(([id, player]) => ({...player, id}))
             .sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
     }, [editablePlayers]);
 
     return (
-        <div className={cn(canEditScouts && "pb-24")}>
+        <div className={cn(canEditScouts && "pb-40")}>
             <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
                 <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
                 <ArrowLeft className="h-6 w-6" />
