@@ -10,6 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '../ui/input';
+import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 interface ScoutEditorViewProps {
   onBack: () => void;
@@ -37,6 +40,69 @@ const StatInput = ({ label, value, onIncrement, onDecrement }: { label: string, 
         </div>
     </div>
 );
+
+const PlayerListContent = ({ lineup, players, playerStats, handleStatChange }: {
+    lineup: (string | null)[];
+    players: Record<string, Player>;
+    playerStats: Record<string, any>;
+    handleStatChange: (playerId: string, stat: string, value: any) => void;
+}) => {
+    const playerIds = lineup.filter((id): id is string => id !== null);
+
+    if (playerIds.length === 0) {
+        return <p className="text-muted-foreground text-center p-4">Nenhum jogador escalado neste time.</p>;
+    }
+
+    return (
+        <div className="space-y-3">
+            {playerIds.map(playerId => {
+                const player = players[playerId];
+                const stats = playerStats[playerId];
+                if (!player || !stats) return null;
+
+                return (
+                    <Card key={playerId} className="bg-card">
+                        <CardContent className="p-3">
+                            <div className="flex items-center gap-3 mb-3">
+                                <Avatar className="h-10 w-10">
+                                    <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" />
+                                    <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-bold text-foreground">{player.name}</p>
+                                    <p className="text-sm text-muted-foreground">{player.pos} - {player.team}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-y-4">
+                                <StatInput label="Gols" value={stats.goals} 
+                                    onIncrement={() => handleStatChange(playerId, 'goals', stats.goals + 1)} 
+                                    onDecrement={() => handleStatChange(playerId, 'goals', Math.max(0, stats.goals - 1))}
+                                />
+                                <StatInput label="Assist." value={stats.assists} 
+                                    onIncrement={() => handleStatChange(playerId, 'assists', stats.assists + 1)}
+                                    onDecrement={() => handleStatChange(playerId, 'assists', Math.max(0, stats.assists - 1))}
+                                />
+                                <div className="flex flex-col items-center">
+                                    <Label className="text-xs mb-1 text-muted-foreground">Sem sofrer gol</Label>
+                                    <Input type="checkbox" className="h-6 w-6" checked={stats.cleanSheet} onChange={(e) => handleStatChange(playerId, 'cleanSheet', e.target.checked)} />
+                                </div>
+                                <StatInput label="Amarelos" value={stats.yellowCards} 
+                                    onIncrement={() => handleStatChange(playerId, 'yellowCards', stats.yellowCards + 1)}
+                                    onDecrement={() => handleStatChange(playerId, 'yellowCards', Math.max(0, stats.yellowCards - 1))}
+                                />
+                                <StatInput label="Vermelhos" value={stats.redCards} 
+                                    onIncrement={() => handleStatChange(playerId, 'redCards', stats.redCards + 1)}
+                                    onDecrement={() => handleStatChange(playerId, 'redCards', Math.max(0, stats.redCards - 1))}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+            })}
+        </div>
+    );
+};
+
 
 export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, team2Lineup }: ScoutEditorViewProps) {
   const [playerStats, setPlayerStats] = useState<Record<string, { goals: number; assists: number; cleanSheet: boolean; yellowCards: number; redCards: number }>>(() => {
@@ -96,7 +162,6 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
           assists: (player.stats?.assists || 0) + stats.assists,
           yellowCards: (player.stats?.yellowCards || 0) + stats.yellowCards,
           redCards: (player.stats?.redCards || 0) + stats.redCards,
-          // Not calculating wins/losses here, simplifying for now
         }
       };
     });
@@ -107,63 +172,6 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
       description: "As pontuações dos jogadores foram atualizadas com sucesso.",
     });
   };
-
-  const renderPlayerList = (title: string, lineup: (string | null)[]) => {
-    const playerIds = lineup.filter((id): id is string => id !== null);
-    
-    return (
-        <div className="mb-6">
-            <h3 className="text-lg font-bold mb-3">{title}</h3>
-            <div className="space-y-3">
-            {playerIds.map(playerId => {
-                const player = players[playerId];
-                const stats = playerStats[playerId];
-                if (!player || !stats) return null;
-
-                return (
-                    <Card key={playerId} className="bg-card">
-                        <CardContent className="p-3">
-                            <div className="flex items-center gap-3 mb-3">
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" />
-                                    <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-bold text-foreground">{player.name}</p>
-                                    <p className="text-sm text-muted-foreground">{player.pos} - {player.team}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-y-4">
-                                <StatInput label="Gols" value={stats.goals} 
-                                    onIncrement={() => handleStatChange(playerId, 'goals', stats.goals + 1)} 
-                                    onDecrement={() => handleStatChange(playerId, 'goals', Math.max(0, stats.goals - 1))}
-                                />
-                                <StatInput label="Assist." value={stats.assists} 
-                                    onIncrement={() => handleStatChange(playerId, 'assists', stats.assists + 1)}
-                                    onDecrement={() => handleStatChange(playerId, 'assists', Math.max(0, stats.assists - 1))}
-                                />
-                                <div className="flex flex-col items-center">
-                                    <Label className="text-xs mb-1 text-muted-foreground">Sem sofrer gol</Label>
-                                    <Input type="checkbox" className="h-6 w-6" checked={stats.cleanSheet} onChange={(e) => handleStatChange(playerId, 'cleanSheet', e.target.checked)} />
-                                </div>
-                                <StatInput label="Amarelos" value={stats.yellowCards} 
-                                    onIncrement={() => handleStatChange(playerId, 'yellowCards', stats.yellowCards + 1)}
-                                    onDecrement={() => handleStatChange(playerId, 'yellowCards', Math.max(0, stats.yellowCards - 1))}
-                                />
-                                <StatInput label="Vermelhos" value={stats.redCards} 
-                                    onIncrement={() => handleStatChange(playerId, 'redCards', stats.redCards + 1)}
-                                    onDecrement={() => handleStatChange(playerId, 'redCards', Math.max(0, stats.redCards - 1))}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-            })}
-            </div>
-        </div>
-    )
-  };
-
 
   return (
     <div>
@@ -182,16 +190,36 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
             <CardHeader>
                 <CardTitle>Instruções</CardTitle>
                 <CardDescription>
-                    Insira os scouts para cada jogador que participou da partida. A pontuação será calculada e atualizada para todos os usuários.
+                    Expanda cada time para inserir os scouts dos jogadores. A pontuação será calculada e atualizada para todos os usuários ao salvar.
                 </CardDescription>
             </CardHeader>
         </Card>
         
         <ScrollArea className="h-[calc(100vh-220px)]">
-            <div className="pr-4">
-                {renderPlayerList("Time 1", team1Lineup)}
-                {renderPlayerList("Time 2", team2Lineup)}
-            </div>
+            <Accordion type="multiple" defaultValue={['time1', 'time2']} className="pr-4 space-y-4">
+                <AccordionItem value="time1" className="border rounded-lg overflow-hidden bg-card">
+                    <AccordionTrigger className="p-4 text-lg font-bold hover:no-underline">Time 1</AccordionTrigger>
+                    <AccordionContent className="p-4 pt-0">
+                        <PlayerListContent 
+                            lineup={team1Lineup}
+                            players={players}
+                            playerStats={playerStats}
+                            handleStatChange={handleStatChange}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="time2" className="border rounded-lg overflow-hidden bg-card">
+                    <AccordionTrigger className="p-4 text-lg font-bold hover:no-underline">Time 2</AccordionTrigger>
+                    <AccordionContent className="p-4 pt-0">
+                        <PlayerListContent 
+                            lineup={team2Lineup}
+                            players={players}
+                            playerStats={playerStats}
+                            handleStatChange={handleStatChange}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </ScrollArea>
       </main>
        <div className="fixed bottom-0 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-50">
