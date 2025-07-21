@@ -27,7 +27,7 @@ export default function MarketView({ players, onPlayerSelect, onBack, position }
       .sort((a, b) => b[1].value - a[1].value);
 
     if (lowerCaseSearch) {
-      return { 'Resultados da Busca': allPlayers };
+      return { 'Resultados da Busca': allPlayers.map(([id, p]) => ({ ...p, id })) };
     }
     
     const groups: Record<string, ({id: string} & Player)[]> = {
@@ -45,34 +45,18 @@ export default function MarketView({ players, onPlayerSelect, onBack, position }
       }
     });
 
-    // Order groups logically
     const orderedGroups: Record<string, ({id: string} & Player)[]> = {};
     const order: (keyof typeof groups)[] = ['ATA', 'MEI', 'LAT', 'ZAG', 'GOL'];
     
-    // If a specific position is requested, bring it to the top
-    if (position) {
-        const posPriority = position === 'ZAG' ? ['ZAG', 'LAT'] : [position];
-        posPriority.forEach(pos => {
-            if(groups[pos]) {
-                orderedGroups[pos] = groups[pos];
-            }
-        });
-        order.forEach(pos => {
-            if (!posPriority.includes(pos) && groups[pos]) {
-                 orderedGroups[pos] = groups[pos];
-            }
-        })
-    } else {
-       order.forEach(pos => {
-           if (groups[pos]) {
-               orderedGroups[pos] = groups[pos];
-           }
-       });
-    }
-
+    order.forEach(pos => {
+        if (groups[pos]) {
+            orderedGroups[pos] = groups[pos];
+        }
+    });
+    
     return orderedGroups;
 
-  }, [searchTerm, players, position]);
+  }, [searchTerm, players]);
 
   return (
     <div>
