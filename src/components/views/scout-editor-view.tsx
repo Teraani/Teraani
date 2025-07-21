@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import type { Player } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, Plus, Minus } from 'lucide-react';
@@ -139,29 +139,35 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
       const player = updatedPlayers[playerId];
       if (!player) return;
 
-      let points = 0;
-      points += stats.goals * pointsConfig.goal;
-      points += stats.assists * pointsConfig.assist;
-      points += stats.yellowCards * pointsConfig.yellowCard;
-      points += stats.redCards * pointsConfig.redCard;
+      let pointsFromGame = 0;
+      pointsFromGame += stats.goals * pointsConfig.goal;
+      pointsFromGame += stats.assists * pointsConfig.assist;
+      pointsFromGame += stats.yellowCards * pointsConfig.yellowCard;
+      pointsFromGame += stats.redCards * pointsConfig.redCard;
 
       if (stats.cleanSheet && ['GOL', 'ZAG', 'LAT'].includes(player.pos)) {
-        points += pointsConfig.cleanSheet;
+        pointsFromGame += pointsConfig.cleanSheet;
       }
       
-      const last_val = points - player.points; // This might not be the right logic, but for now it shows change
+      const newTotalPoints = player.points + pointsFromGame;
+      const last_val = pointsFromGame;
+      
+      const currentStats = player.stats ?? {
+        wins: 0, losses: 0, draws: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0,
+        performance: 0, points: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0
+      };
 
       updatedPlayers[playerId] = {
         ...player,
-        points: points,
+        points: newTotalPoints,
         last_val: last_val,
         games: player.games + 1, // Increment games played
         stats: {
-          ...player.stats,
-          goals: (player.stats?.goals || 0) + stats.goals,
-          assists: (player.stats?.assists || 0) + stats.assists,
-          yellowCards: (player.stats?.yellowCards || 0) + stats.yellowCards,
-          redCards: (player.stats?.redCards || 0) + stats.redCards,
+          ...currentStats,
+          goals: currentStats.goals + stats.goals,
+          assists: currentStats.assists + stats.assists,
+          yellowCards: currentStats.yellowCards + stats.yellowCards,
+          redCards: currentStats.redCards + stats.redCards,
         }
       };
     });
@@ -190,7 +196,7 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
             <CardHeader>
                 <CardTitle>Instruções</CardTitle>
                 <CardDescription>
-                    Expanda cada time para inserir os scouts dos jogadores. A pontuação será calculada e atualizada para todos os usuários ao salvar.
+                    Insira os scouts da partida para cada jogador. A pontuação será calculada e somada ao total ao salvar.
                 </CardDescription>
             </CardHeader>
         </Card>
