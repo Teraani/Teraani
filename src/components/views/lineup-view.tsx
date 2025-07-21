@@ -3,7 +3,7 @@ import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
-import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2 } from 'lucide-react';
+import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -13,6 +13,8 @@ import AddPlayerButton from '@/components/lineup/add-player-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
+import { generateBalancedTeam } from '@/ai/flows/suggest-player-replacements';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface LineupViewProps {
@@ -92,16 +94,16 @@ const TeamEditor = ({
   const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
   const reservePlayers = reserves.map(id => id ? { ...players[id], id } : null);
   
-  const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
-    const [defCount, midCount, atkCount] = formation.split('-').map(Number).reverse();
+  const { attackers, midfielders, defenders, goalkeeper, atkCount, midCount, defCount } = useMemo(() => {
+    const [parsedDef, parsedMid, parsedAtk] = formation.split('-').map(Number);
     let playerIndex = 0;
     
-    const assignedAttackers = lineupPlayers.slice(playerIndex, playerIndex + atkCount);
-    playerIndex += atkCount;
-    const assignedMidfielders = lineupPlayers.slice(playerIndex, playerIndex + midCount);
-    playerIndex += midCount;
-    const assignedDefenders = lineupPlayers.slice(playerIndex, playerIndex + defCount);
-    playerIndex += defCount;
+    const assignedAttackers = lineupPlayers.slice(playerIndex, playerIndex + parsedAtk);
+    playerIndex += parsedAtk;
+    const assignedMidfielders = lineupPlayers.slice(playerIndex, playerIndex + parsedMid);
+    playerIndex += parsedMid;
+    const assignedDefenders = lineupPlayers.slice(playerIndex, playerIndex + parsedDef);
+    playerIndex += parsedDef;
     const assignedGoalkeeper = lineupPlayers.slice(playerIndex, playerIndex + 1);
     
     return { 
@@ -109,16 +111,11 @@ const TeamEditor = ({
         midfielders: assignedMidfielders, 
         defenders: assignedDefenders, 
         goalkeeper: assignedGoalkeeper,
-        atkCount,
-        midCount,
-        defCount,
+        atkCount: parsedAtk,
+        midCount: parsedMid,
+        defCount: parsedDef,
     };
   }, [lineupPlayers, formation]);
-
-  const { atkCount, midCount, defCount } = useMemo(() => {
-     const [def, mid, atk] = formation.split('-').map(Number);
-     return { atkCount: atk, midCount: mid, defCount: def };
-  }, [formation]);
 
 
   const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
@@ -144,7 +141,7 @@ const TeamEditor = ({
         {Array.from({ length: 5 }).map((_, i) => {
             const player = reservePlayers[i];
             if (player) {
-                return <PlayerCard key={player.id} player={player} onPlayerSelect={onPlayerSelect} isReserve />;
+                return <PlayerCard key={`${player.id}-${i}`} player={player} onPlayerSelect={onPlayerSelect} isReserve />;
             } else if (canEdit) {
                 return <AddPlayerButton key={`add-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
             } else {
@@ -184,6 +181,8 @@ export default function LineupView(props: LineupViewProps) {
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('amarelo');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('team1');
+  const [isBalancing, setIsBalancing] = useState(false);
+  const { toast } = useToast();
   
   // This will reconstruct the user object for components that need it, like AiSuggestions
   const user: User = useMemo(() => ({
@@ -240,53 +239,56 @@ export default function LineupView(props: LineupViewProps) {
     setUserReserves(newReserves);
   };
 
-  const handleBalanceTeams = () => {
-    const allPlayerIds = [...team1Lineup, ...team2Lineup].filter((id): id is string => id !== null);
-    const allReserveIds = [...team1Reserves, ...team2Reserves].filter((id): id is string => id !== null);
-    
-    const allPlayers = [...allPlayerIds, ...allReserveIds]
-        .map(id => players[id] ? { ...players[id], id } : null)
-        .filter((p): p is { id: string } & Player => p !== null)
-        .sort((a, b) => b.points - a.points);
+  const handleBalanceTeams = async () => {
+    setIsBalancing(true);
+    try {
+        // Generate Team 1
+        const team1Result = await generateBalancedTeam({
+            availablePlayers: players,
+            teamBudget: 150, // Or some other logic for budget
+        });
 
-    const newTeam1Lineup: (string | null)[] = Array(11).fill(null);
-    const newTeam2Lineup: (string | null)[] = Array(11).fill(null);
-    const newTeam1Reserves: (string | null)[] = Array(5).fill(null);
-    const newTeam2Reserves: (string | null)[] = Array(5).fill(null);
-    let team1Score = 0;
-    let team2Score = 0;
-    
-    // Distribute lineup players
-    const lineupPlayersToDistribute = allPlayers.slice(0, 22);
-    let t1Idx = 0, t2Idx = 0;
-    lineupPlayersToDistribute.forEach(player => {
-        if (team1Score <= team2Score && t1Idx < 11) {
-            newTeam1Lineup[t1Idx++] = player.id;
-            team1Score += player.points;
-        } else if (t2Idx < 11) {
-            newTeam2Lineup[t2Idx++] = player.id;
-            team2Score += player.points;
-        } else if (t1Idx < 11) { // Fill remaining slots if any
-            newTeam1Lineup[t1Idx++] = player.id;
-            team1Score += player.points;
-        }
-    });
+        // Exclude selected players from Team 1 from the available pool for Team 2
+        const remainingPlayers = { ...players };
+        team1Result.lineup.forEach(id => delete remainingPlayers[id]);
+        team1Result.reserves.forEach(id => delete remainingPlayers[id]);
 
-    // Distribute reserve players
-    const reservePlayersToDistribute = allPlayers.slice(22);
-    let r1Idx = 0, r2Idx = 0;
-    reservePlayersToDistribute.forEach(player => {
-        if (r1Idx < 5) {
-            newTeam1Reserves[r1Idx++] = player.id;
-        } else if (r2Idx < 5) {
-            newTeam2Reserves[r2Idx++] = player.id;
-        }
-    });
+        // Generate Team 2
+        const team2Result = await generateBalancedTeam({
+            availablePlayers: remainingPlayers,
+            teamBudget: 150,
+        });
 
-    setTeam1Lineup(newTeam1Lineup);
-    setTeam2Lineup(newTeam2Lineup);
-    setTeam1Reserves(newTeam1Reserves);
-    setTeam2Reserves(newTeam2Reserves);
+        const newTeam1Lineup = Array(11).fill(null);
+        const newTeam1Reserves = Array(5).fill(null);
+        team1Result.lineup.slice(0, 11).forEach((id, i) => newTeam1Lineup[i] = id);
+        team1Result.reserves.slice(0, 5).forEach((id, i) => newTeam1Reserves[i] = id);
+        
+        const newTeam2Lineup = Array(11).fill(null);
+        const newTeam2Reserves = Array(5).fill(null);
+        team2Result.lineup.slice(0, 11).forEach((id, i) => newTeam2Lineup[i] = id);
+        team2Result.reserves.slice(0, 5).forEach((id, i) => newTeam2Reserves[i] = id);
+
+        setTeam1Lineup(newTeam1Lineup);
+        setTeam1Reserves(newTeam1Reserves);
+        setTeam2Lineup(newTeam2Lineup);
+        setTeam2Reserves(newTeam2Reserves);
+        
+        toast({
+            title: "Times Balanceados!",
+            description: "A IA gerou duas equipes equilibradas para o confronto.",
+        });
+
+    } catch (error) {
+        console.error("Error balancing teams:", error);
+        toast({
+            title: "Erro ao Balancear",
+            description: "Não foi possível gerar os times. Tente novamente.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsBalancing(false);
+    }
   };
 
   const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
@@ -419,9 +421,9 @@ export default function LineupView(props: LineupViewProps) {
         <div className="mt-4 flex flex-col gap-2">
             {!canEdit && <AiSuggestions user={user} players={players} onApplyLineup={handleApplyAiLineup} />}
              {canEdit && (
-                <Button onClick={handleBalanceTeams} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    Balancear Times
+                <Button onClick={handleBalanceTeams} className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={isBalancing}>
+                    {isBalancing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+                    {isBalancing ? 'Balanceando...' : 'Balancear Times'}
                 </Button>
             )}
             <div className={cn(
