@@ -116,7 +116,7 @@ export default function Home() {
       case 'games':
         return <GamesView onBack={goBack} />;
       case 'friends-score':
-        return <FriendsScoreView onBack={goBack} friends={appData.friends} />;
+        return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userWithCurrentLineup} players={appData.players} />;
       default:
         return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
     }
