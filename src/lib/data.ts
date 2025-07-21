@@ -64,7 +64,7 @@ export const data: AppData = {
     users: {
         'user1': {
             id: 'user1',
-            name: 'Felipe (Admin)',
+            name: 'Felipe',
             email: 'felipe@exemplo.com',
             teamName: "AmistososAI FC",
             partialScore: 58.49,
@@ -72,7 +72,7 @@ export const data: AppData = {
             valuation: 125.88,
             lineup: ['p9', 'p6', 'p14', 'p15', 'p16', 'p1', 'p5', 'p7', 'p12', 'p4', 'p17'],
             reserves: ['p2', 'p3', 'p8', 'p10', 'p13'],
-            role: 'admin',
+            role: 'player',
             avatar: 'https://placehold.co/128x128.png'
         },
         'user2': { id: 'user2', name: 'Renan Ropeiro', email: 'user2@example.com', teamName: 'User 2 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
@@ -100,7 +100,7 @@ export const data: AppData = {
         'user24': { id: 'user24', name: 'Érico', email: 'user24@example.com', teamName: 'User 24 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
         'user25': { id: 'user25', name: 'Lucas Limone', email: 'user25@example.com', teamName: 'User 25 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
         'user26': { id: 'user26', name: 'Lupo', email: 'user26@example.com', teamName: 'User 26 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user27': { id: 'user27', name: 'Jason', email: 'jason.teraani@gmail.com', teamName: 'User 27 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'admin', avatar: 'https://placehold.co/128x128.png' },
+        'user27': { id: 'user27', name: 'Jason (Admin)', email: 'jason.teraani@gmail.com', teamName: 'User 27 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'admin', avatar: 'https://placehold.co/128x128.png' },
         'user28': { id: 'user28', name: 'Giovani', email: 'user28@example.com', teamName: 'User 28 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
         'user29': { id: 'user29', name: 'Lucca', email: 'user29@example.com', teamName: 'User 29 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
         'user30': { id: 'user30', name: 'Pedro Roberto', email: 'user30@example.com', teamName: 'User 30 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
@@ -142,5 +142,3 @@ export const data: AppData = {
     },
     friends: []
 };
-
-    
