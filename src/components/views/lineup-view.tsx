@@ -8,27 +8,34 @@ import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import type { View, Position } from '@/app/page';
+import type { View, AddPlayerSlot } from '@/app/page';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '@/components/lineup/add-player-button';
 
 
 interface LineupViewProps {
-  user: User;
+  userLineup: (string | null)[];
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
   onNavigate: (view: View) => void;
-  setUserLineup: (lineup: string[]) => void;
-  onAddPlayer: (position: Position) => void;
+  setUserLineup: (lineup: (string | null)[]) => void;
+  onAddPlayer: (slot: AddPlayerSlot) => void;
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
-export default function LineupView({ user, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer }: LineupViewProps) {
+export default function LineupView({ userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
   const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
+
+  // This will reconstruct the user object for components that need it, like AiSuggestions
+  const user: User = useMemo(() => ({
+      ...data.user, // Assuming data is accessible or passed down. If not, might need to adjust.
+      lineup: userLineup.filter(id => id !== null) as string[]
+  }), [userLineup]);
+
 
   useEffect(() => {
     const checkMarketStatus = () => {
@@ -51,56 +58,74 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate, 
   }, []);
   
   const handleClearLineup = () => {
-    setUserLineup([]);
+    setUserLineup(Array(11).fill(null));
   };
 
-  const handleAddPlayer = (position: Player['pos']) => {
-    onAddPlayer(position);
+  const handleAddPlayer = (position: Player['pos'], index: number) => {
+    onAddPlayer({ position, index });
   };
-
-  const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
-  const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
+  
+  const lineupPlayers = userLineup.map(id => id ? { ...players[id], id } : null);
+  const totalScore = lineupPlayers.reduce((sum, player) => sum + (player?.points ?? 0), 0);
 
   const reservePlayers = useMemo(() => {
-    const lineupIds = new Set(user.lineup);
+    const lineupIds = new Set(userLineup);
     return Object.entries(players)
       .filter(([id]) => !lineupIds.has(id))
       .slice(0, 5)
       .map(([id, player]) => ({ ...player, id }));
-  }, [user.lineup, players]);
+  }, [userLineup, players]);
 
-  const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
-    const allPlayersByPos: { [key in Player['pos']]: ({ id: string } & Player)[] } = {
-      GOL: [], ZAG: [], LAT: [], MEI: [], ATA: [],
-    };
-    lineupPlayers.forEach(p => {
-        if(allPlayersByPos[p.pos]) {
-            allPlayersByPos[p.pos].push(p)
-        }
-    });
-
-    return {
-      attackers: allPlayersByPos.ATA,
-      midfielders: allPlayersByPos.MEI,
-      defenders: [...allPlayersByPos.ZAG, ...allPlayersByPos.LAT],
-      goalkeeper: allPlayersByPos.GOL,
-    };
-  }, [lineupPlayers]);
   
   const [defCount, midCount, atkCount] = formation.split('-').map(Number);
 
-  const renderPlayerRow = (count: number, assignedPlayers: (({ id: string; } & Player)[]), position: Player['pos']) => {
+  const formationSlots = {
+      'ATA': atkCount,
+      'MEI': midCount,
+      'DEF': defCount,
+      'GOL': 1
+  };
+  
+  const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
+    const lineupWithPos = lineupPlayers.map(p => p ? players[p.id].pos : null);
+    
+    // This sorting logic is the problem. It re-arranges players.
+    // We should not sort them but just render them as they are in userLineup array.
+    let playerIndex = 0;
+    
+    const assignedAttackers = [];
+    for(let i = 0; i < atkCount; i++) assignedAttackers.push(lineupPlayers[playerIndex++]);
+
+    const assignedMidfielders = [];
+    for(let i = 0; i < midCount; i++) assignedMidfielders.push(lineupPlayers[playerIndex++]);
+
+    const assignedDefenders = [];
+    for(let i = 0; i < defCount; i++) assignedDefenders.push(lineupPlayers[playerIndex++]);
+    
+    const assignedGoalkeeper = [];
+    for(let i = 0; i < 1; i++) assignedGoalkeeper.push(lineupPlayers[playerIndex++]);
+    
+    return {
+      attackers: assignedAttackers,
+      midfielders: assignedMidfielders,
+      defenders: assignedDefenders,
+      goalkeeper: assignedGoalkeeper,
+    };
+  }, [lineupPlayers, formation]);
+
+
+  const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
     const elements = [];
     for (let i = 0; i < count; i++) {
-        if (assignedPlayers[i]) {
-            elements.push(<PlayerCard key={assignedPlayers[i].id} player={assignedPlayers[i]} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />);
+        const player = assignedPlayers[i];
+        if (player) {
+            elements.push(<PlayerCard key={player.id} player={player} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />);
         } else {
-            elements.push(<AddPlayerButton key={`add-${position}-${i}`} onClick={() => handleAddPlayer(position)} />);
+            elements.push(<AddPlayerButton key={`add-${position}-${i}`} onClick={() => handleAddPlayer(position, startIndex + i)} />);
         }
     }
     return <div className="flex justify-around z-10 w-full">{elements}</div>;
   };
-
 
   return (
     <div className="bg-gray-900 min-h-screen">
@@ -130,10 +155,10 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate, 
       </header>
       <div className="p-4 pb-32">
         <Pitch>
-          {renderPlayerRow(atkCount, attackers, 'ATA')}
-          {renderPlayerRow(midCount, midfielders, 'MEI')}
-          {renderPlayerRow(defCount, defenders, 'ZAG')}
-          {renderPlayerRow(1, goalkeeper, 'GOL')}
+          {renderPlayerRow(atkCount, attackers, 'ATA', 0)}
+          {renderPlayerRow(midCount, midfielders, 'MEI', atkCount)}
+          {renderPlayerRow(defCount, defenders, 'ZAG', atkCount + midCount)}
+          {renderPlayerRow(1, goalkeeper, 'GOL', atkCount + midCount + defCount)}
         </Pitch>
         <div className="mt-4 flex flex-col gap-2">
             <AiSuggestions user={user} players={players} />
@@ -194,3 +219,6 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate, 
     </div>
   );
 }
+
+// Helper to access data, assuming it's imported in this file now
+import { data } from '@/lib/data';
