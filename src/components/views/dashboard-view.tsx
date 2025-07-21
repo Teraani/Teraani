@@ -45,21 +45,15 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
     };
 
     const { totalGames, totalPoints, performancePercentage } = useMemo(() => {
-        const lineupPlayers = user.lineup.map(id => players[id]).filter(Boolean);
-        const reservePlayers = user.reserves.map(id => players[id]).filter(Boolean);
-        const allUserPlayers = [...lineupPlayers, ...reservePlayers];
+        const userAsPlayer = Object.values(players).find(p => p.name.toLowerCase().includes(user.name.split(' ')[0].toLowerCase()));
         
-        const totalGames = allUserPlayers.reduce((sum, p) => sum + p.games, 0);
-        const totalPoints = allUserPlayers.reduce((sum, p) => sum + p.points, 0);
+        if (!userAsPlayer) {
+          return { totalGames: 0, totalPoints: 0, performancePercentage: '0%' };
+        }
 
-        // Simple performance logic: rounds with positive score are "wins"
-        const positiveScoreRounds = allUserPlayers.reduce((sum, p) => {
-            // This is a simulation as we don't have round-by-round data
-            // Assuming half of the games had a positive score for simplicity
-            return sum + Math.floor(p.games / 2);
-        }, 0);
-        
-        const performance = totalGames > 0 ? (positiveScoreRounds / totalGames) * 100 : 0;
+        const totalGames = userAsPlayer.games || 0;
+        const totalPoints = userAsPlayer.points || 0;
+        const performance = userAsPlayer.stats?.performance || 0;
         
         return {
             totalGames,
@@ -112,7 +106,7 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
                     </div>
                 </div>
                 <Button className="w-full mt-4" onClick={() => onNavigate('lineup')}>
-                    Ver Time
+                    Ver Times da Rodada
                 </Button>
             </CardContent>
         </Card>
@@ -196,7 +190,7 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <h1 className="text-xl font-bold text-foreground">Amistoso FC</h1>
+        <h1 className="text-xl font-bold text-foreground">Amistosos FC</h1>
 
         <div className="w-10 h-10" />
       </header>
