@@ -26,8 +26,8 @@ const StatItem = ({ label, value }: { label: string; value: string | number | un
 const PlayerStatsCard = ({ player, rank, onPlayerSelect }: { player: {id: string} & Player, rank: number, onPlayerSelect: (playerId: string) => void }) => (
   <Card className="bg-card shadow-sm">
       <AccordionItem value={`item-${rank}`} className="border-b-0">
-          <AccordionTrigger className="p-4 hover:no-underline" onClick={() => onPlayerSelect(player.id)}>
-              <div className="flex items-center gap-4 w-full">
+          <AccordionTrigger className="p-4 hover:no-underline">
+              <div className="flex items-center gap-4 w-full" onClick={(e) => { e.stopPropagation(); onPlayerSelect(player.id)}}>
                   <span className={cn(
                       "font-bold text-lg w-6 text-center",
                       rank === 1 && "text-amber-400",
