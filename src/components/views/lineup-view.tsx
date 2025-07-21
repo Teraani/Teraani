@@ -281,7 +281,6 @@ export default function LineupView(props: LineupViewProps) {
 
         const remainingPlayers = { ...players };
         team1Result.lineup.forEach(id => delete remainingPlayers[id]);
-        team1Result.reserves.forEach(id => delete remainingPlayers[id]);
 
         const team2Result = await generateBalancedTeam({
             availablePlayers: remainingPlayers,
@@ -290,18 +289,14 @@ export default function LineupView(props: LineupViewProps) {
 
         const newTeam1Lineup = Array(11).fill(null);
         team1Result.lineup.slice(0, 11).forEach((id, i) => newTeam1Lineup[i] = id);
-        const newTeam1Reserves = Array(5).fill(null);
-        team1Result.reserves.slice(0, 5).forEach((id, i) => newTeam1Reserves[i] = id);
         
         const newTeam2Lineup = Array(11).fill(null);
         team2Result.lineup.slice(0, 11).forEach((id, i) => newTeam2Lineup[i] = id);
-        const newTeam2Reserves = Array(5).fill(null);
-        team2Result.reserves.slice(0, 5).forEach((id, i) => newTeam2Reserves[i] = id);
 
         setTeam1Lineup(newTeam1Lineup);
-        setTeam1Reserves(newTeam1Reserves);
+        setTeam1Reserves(Array(5).fill(null));
         setTeam2Lineup(newTeam2Lineup);
-        setTeam2Reserves(newTeam2Reserves);
+        setTeam2Reserves(Array(5).fill(null));
         
         toast({
             title: "Times Balanceados!",
