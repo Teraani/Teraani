@@ -48,6 +48,7 @@ export default function Home() {
   const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
   const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(11).fill(null));
   const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
+  const [lineupsSaved, setLineupsSaved] = useState(false);
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -181,6 +182,7 @@ export default function Home() {
     console.log("Saving lineups...");
     console.log("Team 1:", team1Lineup, team1Reserves);
     console.log("Team 2:", team2Lineup, team2Reserves);
+    setLineupsSaved(true);
     toast({
         title: "Times Salvos!",
         description: "As escalações da rodada foram salvas com sucesso.",
@@ -248,6 +250,7 @@ export default function Home() {
                  team2Reserves={team2Reserves}
                  setTeam2Reserves={setTeam2Reserves}
                  onSaveLineups={handleSaveLineups}
+                 lineupsSaved={lineupsSaved}
                />;
       case 'player-details':
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;

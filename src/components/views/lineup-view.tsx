@@ -44,6 +44,7 @@ interface LineupViewProps {
   team2Reserves: (string | null)[];
   setTeam2Reserves: (reserves: (string | null)[]) => void;
   onSaveLineups: () => void;
+  lineupsSaved: boolean;
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
@@ -188,7 +189,7 @@ export default function LineupView(props: LineupViewProps) {
     userAvatar, currentUser, canEdit,
     team1Lineup, setTeam1Lineup, team1Reserves, setTeam1Reserves,
     team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves,
-    onSaveLineups,
+    onSaveLineups, lineupsSaved
   } = props;
     
   const [formation, setFormation] = useState<Formation>('4-3-3');
@@ -515,9 +516,11 @@ export default function LineupView(props: LineupViewProps) {
                     </Button>
                 </div>
             </div>
-            <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={onSaveLineups}>
-                Salvar Times da Rodada
-            </Button>
+            {!lineupsSaved && (
+              <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={onSaveLineups}>
+                  Salvar Times da Rodada
+              </Button>
+            )}
         </div>
       )}
     </div>
