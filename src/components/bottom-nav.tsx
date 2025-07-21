@@ -10,10 +10,10 @@ interface BottomNavProps {
 }
 
 const navItems = [
-  { view: 'dashboard' as View, icon: Home, label: 'Início' },
-  { view: 'lineup' as View, icon: Shirt, label: 'Escalação' },
-  { view: 'statistics' as View, icon: BarChart2, label: 'Estatísticas' },
-  { view: 'leagues' as View, icon: Trophy, label: 'Ligas' },
+  { view: 'dashboard' as View, icon: Home, label: 'Início', disabled: false },
+  { view: 'lineup' as View, icon: Shirt, label: 'Escalação', disabled: false },
+  { view: 'statistics' as View, icon: BarChart2, label: 'Estatísticas', disabled: false },
+  { view: 'leagues' as View, icon: Trophy, label: 'Ligas (em breve)', disabled: true },
 ];
 
 export default function BottomNav({ currentView, onNavigate }: BottomNavProps) {
@@ -22,15 +22,17 @@ export default function BottomNav({ currentView, onNavigate }: BottomNavProps) {
       {navItems.map((item) => (
         <button
           key={item.view}
-          onClick={() => onNavigate(item.view)}
+          onClick={() => !item.disabled && onNavigate(item.view)}
+          disabled={item.disabled}
           className={cn(
-            'flex flex-col items-center text-gray-500 dark:text-gray-400 hover:text-primary w-full transition-colors duration-200 relative',
-            { 'text-primary dark:text-primary': currentView === item.view }
+            'flex flex-col items-center text-gray-500 dark:text-gray-400 w-full transition-colors duration-200 relative',
+            { 'text-primary dark:text-primary': !item.disabled && currentView === item.view },
+            item.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:text-primary'
           )}
           aria-current={currentView === item.view ? 'page' : undefined}
         >
           <item.icon className="h-6 w-6" />
-          <span className="text-xs font-medium">{item.label}</span>
+          <span className="text-xs font-medium text-center">{item.label}</span>
         </button>
       ))}
     </nav>
