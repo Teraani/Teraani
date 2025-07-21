@@ -3,7 +3,7 @@ import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
-import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2 } from 'lucide-react';
+import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -15,6 +15,16 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { generateBalancedTeam } from '@/ai/flows/suggest-player-replacements';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 
 interface LineupViewProps {
@@ -42,6 +52,13 @@ interface LineupViewProps {
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
+
+interface PlayerActionState {
+  playerId: string;
+  isReserve: boolean;
+  index: number;
+  team: 'team1' | 'team2' | 'user';
+}
 
 const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtColor, onColorChange: (color: ShirtColor) => void, disabled: boolean }) => {
     const colors: { value: ShirtColor, label: string }[] = [
@@ -77,9 +94,10 @@ const TeamEditor = ({
   players,
   formation,
   shirtColor,
-  onPlayerSelect,
+  onPlayerCardClick,
   onAddPlayer,
   canEdit,
+  teamIdentifier
 }: {
   teamName: string;
   lineup: (string | null)[];
@@ -87,9 +105,10 @@ const TeamEditor = ({
   players: Record<string, Player>;
   formation: Formation;
   shirtColor: ShirtColor;
-  onPlayerSelect: (playerId: string) => void;
+  onPlayerCardClick: (state: PlayerActionState) => void;
   onAddPlayer: (position: Player['pos'] | 'RES', index: number) => void;
   canEdit: boolean;
+  teamIdentifier: 'team1' | 'team2' | 'user';
 }) => {
     
   const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
@@ -126,7 +145,7 @@ const TeamEditor = ({
                 const player = assignedPlayers[i];
                 const slotIndex = startIndex + i;
                 if (player) {
-                    return <PlayerCard key={`${player.id}-${slotIndex}`} player={player} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />;
+                    return <PlayerCard key={`${player.id}-${slotIndex}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: slotIndex, team: teamIdentifier })} shirtColor={shirtColor} />;
                 } else if (canEdit) {
                     return <AddPlayerButton key={`add-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
                 } else {
@@ -142,7 +161,7 @@ const TeamEditor = ({
         {Array.from({ length: 5 }).map((_, i) => {
             const player = reservePlayers[i];
             if (player) {
-                return <PlayerCard key={`${player.id}-${i}`} player={player} onPlayerSelect={onPlayerSelect} isReserve />;
+                return <PlayerCard key={`${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
             } else if (canEdit) {
                 return <AddPlayerButton key={`add-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
             } else {
@@ -185,8 +204,8 @@ export default function LineupView(props: LineupViewProps) {
   const [activeTab, setActiveTab] = useState('team1');
   const [isBalancing, setIsBalancing] = useState(false);
   const { toast } = useToast();
+  const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
   
-  // This will reconstruct the user object for components that need it, like AiSuggestions
   const user: User = useMemo(() => ({
       ...currentUser,
       lineup: userLineup.filter(id => id !== null) as string[],
@@ -197,22 +216,56 @@ export default function LineupView(props: LineupViewProps) {
   useEffect(() => {
     const checkMarketStatus = () => {
       const now = new Date();
-      const day = now.getDay(); // 0=Sun, 1=Mon, ..., 4=Thu, ...
+      const day = now.getDay();
       const hour = now.getHours();
-      
-      // Market is closed on Thursdays from 18:00 onwards
-      if (day === 4 && hour >= 18) {
-        setIsMarketOpen(false);
-      } else {
-        setIsMarketOpen(true);
-      }
+      setIsMarketOpen(!(day === 4 && hour >= 18));
     };
 
     checkMarketStatus();
-    // Optional: Check every minute if you want it to update live without a page refresh
     const interval = setInterval(checkMarketStatus, 60000); 
     return () => clearInterval(interval);
   }, []);
+
+  const handlePlayerCardClick = (state: PlayerActionState) => {
+    if (canEdit) {
+      setPlayerActionState(state);
+    } else {
+      onPlayerSelect(state.playerId);
+    }
+  };
+
+  const handleRemovePlayer = () => {
+    if (!playerActionState) return;
+
+    const { team, isReserve, index } = playerActionState;
+
+    const lineupSetters = {
+      user: { lineup: setUserLineup, reserves: setUserReserves },
+      team1: { lineup: setTeam1Lineup, reserves: setTeam1Reserves },
+      team2: { lineup: setTeam2Lineup, reserves: setTeam2Reserves },
+    };
+    
+    const lineups = {
+        user: { lineup: userLineup, reserves: userReserves },
+        team1: { lineup: team1Lineup, reserves: team1Reserves },
+        team2: { lineup: team2Lineup, reserves: team2Reserves },
+    }
+
+    const { lineup, reserves } = lineups[team];
+    const { lineup: setLineup, reserves: setReserves } = lineupSetters[team];
+
+    if (isReserve) {
+        const newReserves = [...reserves];
+        newReserves[index] = null;
+        setReserves(newReserves);
+    } else {
+        const newLineup = [...lineup];
+        newLineup[index] = null;
+        setLineup(newLineup);
+    }
+    
+    setPlayerActionState(null);
+  };
   
   const handleClearLineup = (team: 'team1' | 'team2') => {
     if (team === 'team1') {
@@ -244,31 +297,28 @@ export default function LineupView(props: LineupViewProps) {
   const handleBalanceTeams = async () => {
     setIsBalancing(true);
     try {
-        // Generate Team 1
         const team1Result = await generateBalancedTeam({
             availablePlayers: players,
-            teamBudget: 150, // Or some other logic for budget
+            teamBudget: 150,
         });
 
-        // Exclude selected players from Team 1 from the available pool for Team 2
         const remainingPlayers = { ...players };
         team1Result.lineup.forEach(id => delete remainingPlayers[id]);
         team1Result.reserves.forEach(id => delete remainingPlayers[id]);
 
-        // Generate Team 2
         const team2Result = await generateBalancedTeam({
             availablePlayers: remainingPlayers,
             teamBudget: 150,
         });
 
         const newTeam1Lineup = Array(11).fill(null);
-        const newTeam1Reserves = Array(5).fill(null);
         team1Result.lineup.slice(0, 11).forEach((id, i) => newTeam1Lineup[i] = id);
+        const newTeam1Reserves = Array(5).fill(null);
         team1Result.reserves.slice(0, 5).forEach((id, i) => newTeam1Reserves[i] = id);
         
         const newTeam2Lineup = Array(11).fill(null);
-        const newTeam2Reserves = Array(5).fill(null);
         team2Result.lineup.slice(0, 11).forEach((id, i) => newTeam2Lineup[i] = id);
+        const newTeam2Reserves = Array(5).fill(null);
         team2Result.reserves.slice(0, 5).forEach((id, i) => newTeam2Reserves[i] = id);
 
         setTeam1Lineup(newTeam1Lineup);
@@ -302,6 +352,28 @@ export default function LineupView(props: LineupViewProps) {
   
   return (
     <div>
+      <AlertDialog open={!!playerActionState} onOpenChange={(open) => !open && setPlayerActionState(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{playerActionState && players[playerActionState.playerId]?.name}</AlertDialogTitle>
+            <AlertDialogDescription>
+              O que você gostaria de fazer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2">
+            <Button variant="outline" onClick={() => { onPlayerSelect(playerActionState!.playerId); setPlayerActionState(null); }}>
+              <Eye className="mr-2 h-4 w-4" />
+              Ver Detalhes do Jogador
+            </Button>
+            <Button variant="destructive" onClick={handleRemovePlayer}>
+              <UserX className="mr-2 h-4 w-4" />
+              Remover da Escalação
+            </Button>
+            <AlertDialogCancel onClick={() => setPlayerActionState(null)}>Cancelar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="bg-card p-4 flex flex-col items-center gap-4">
         <div className="flex justify-between items-center w-full">
             <DropdownMenu>
@@ -372,13 +444,14 @@ export default function LineupView(props: LineupViewProps) {
                                 </Button>
                             </div>
                             <TeamEditor
+                                teamIdentifier="team1"
                                 teamName="Time 1"
                                 lineup={team1Lineup}
                                 reserves={team1Reserves}
                                 players={players}
                                 formation={formation}
                                 shirtColor={team1ShirtColor}
-                                onPlayerSelect={onPlayerSelect}
+                                onPlayerCardClick={handlePlayerCardClick}
                                 onAddPlayer={handleAddPlayerForTeam('team1')}
                                 canEdit={canEdit}
                             />
@@ -392,13 +465,14 @@ export default function LineupView(props: LineupViewProps) {
                                 </Button>
                             </div>
                             <TeamEditor
+                                teamIdentifier="team2"
                                 teamName="Time 2"
                                 lineup={team2Lineup}
                                 reserves={team2Reserves}
                                 players={players}
                                 formation={formation}
                                 shirtColor={team2ShirtColor}
-                                onPlayerSelect={onPlayerSelect}
+                                onPlayerCardClick={handlePlayerCardClick}
                                 onAddPlayer={handleAddPlayerForTeam('team2')}
                                 canEdit={canEdit}
                             />
@@ -408,15 +482,16 @@ export default function LineupView(props: LineupViewProps) {
             </Card>
         ) : (
             <TeamEditor
+                teamIdentifier="user"
                 teamName={currentUser.teamName}
                 lineup={userLineup}
                 reserves={userReserves}
                 players={players}
                 formation={formation}
-                shirtColor={team1ShirtColor} // Defaulting to team1 color for user's view
-                onAddPlayer={(pos, idx) => onAddPlayer({ position: pos, index: idx })}
+                shirtColor={team1ShirtColor}
+                onAddPlayer={(pos, idx) => onAddPlayer({ position: pos, index: idx, team: 'team1' })}
                 canEdit={canEdit}
-                onPlayerSelect={onPlayerSelect}
+                onPlayerCardClick={handlePlayerCardClick}
             />
         )}
         

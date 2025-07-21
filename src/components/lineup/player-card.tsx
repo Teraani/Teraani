@@ -5,7 +5,7 @@ import type { ShirtColor } from '@/components/views/lineup-view';
 
 interface PlayerCardProps {
   player: { id: string } & Player;
-  onPlayerSelect: (playerId: string) => void;
+  onPlayerSelect: () => void;
   isReserve?: boolean;
   shirtColor?: ShirtColor;
 }
@@ -25,7 +25,7 @@ export default function PlayerCard({ player, onPlayerSelect, isReserve = false, 
   const secondaryColor = shirtColor === 'branco' ? '#231F20' : '#FFFFFF';
 
   return (
-    <button className="flex flex-col items-center text-center w-20 group" onClick={() => onPlayerSelect(player.id)}>
+    <button className="flex flex-col items-center text-center w-20 group" onClick={onPlayerSelect}>
       <div className="relative w-16 h-16 flex items-center justify-center">
         <svg viewBox="0 0 48 48" className="relative w-12 h-12 z-10" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g>
