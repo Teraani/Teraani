@@ -6,7 +6,6 @@ import type { Player } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Search } from 'lucide-react';
-import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -59,7 +58,10 @@ export default function PartialScoreView({ players, onBack, onPlayerSelect }: Pa
                 onClick={() => onPlayerSelect(player.id)}
                 >
                 <div className="flex items-center space-x-3">
-                    <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" className="rounded-full w-10 h-10 object-cover" />
+                    <Avatar className="w-10 h-10">
+                        <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" className="object-cover"/>
+                        <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
                     <div>
                     <p className="font-bold">{player.name}</p>
                     <p className="text-sm text-muted-foreground">{player.pos} - {player.team}</p>
