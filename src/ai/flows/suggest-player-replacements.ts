@@ -48,95 +48,39 @@ export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Pr
         return array;
     };
     
-    const playersByPos: Record<string, ({ id: string } & Player)[]> = {
-        'GOL': [],
-        'DEF': [], // ZAG or LAT
-        'MEI': [], // MEI or VOL
-        'ATA': []
-    };
-
-    allPlayersWithId.forEach(p => {
-        if (p.pos === 'GOL') playersByPos['GOL'].push(p);
-        else if (['ZAG', 'LAT'].includes(p.pos)) playersByPos['DEF'].push(p);
-        else if (['MEI', 'VOL'].includes(p.pos)) playersByPos['MEI'].push(p);
-        else if (p.pos === 'ATA') playersByPos['ATA'].push(p);
-    });
-
-    for (const pos in playersByPos) {
-        shuffle(playersByPos[pos]);
-    }
-
     const lineup: string[] = [];
     const reserves: string[] = [];
     const selectedIds = new Set<string>();
     let currentCost = 0;
 
-    const formation = {
-        'GOL': 1,
-        'DEF': 4,
-        'MEI': 3,
-        'ATA': 3
-    };
+    const shuffledPlayers = shuffle(allPlayersWithId);
 
-    const reserveFormation = {
-        'GOL': 1,
-        'DEF': 1,
-        'MEI': 1,
-        'ATA': 1,
-        'ANY': 1
-    };
-
-    const selectPlayers = (count: number, from: ({ id: string } & Player)[]) => {
-        const selected = [];
-        for (const player of from) {
-            if (selected.length >= count) break;
-            if (!selectedIds.has(player.id) && currentCost + player.value <= teamBudget) {
-                selected.push(player.id);
-                selectedIds.add(player.id);
-                currentCost += player.value;
-            }
-        }
-        return selected;
-    };
-
-    // Select lineup
-    lineup.push(...selectPlayers(formation.GOL, playersByPos.GOL));
-    lineup.push(...selectPlayers(formation.DEF, playersByPos.DEF));
-    lineup.push(...selectPlayers(formation.MEI, playersByPos.MEI));
-    lineup.push(...selectPlayers(formation.ATA, playersByPos.ATA));
-
-
-    // Select reserves
-    reserves.push(...selectPlayers(reserveFormation.GOL, playersByPos.GOL));
-    reserves.push(...selectPlayers(reserveFormation.DEF, playersByPos.DEF));
-    reserves.push(...selectPlayers(reserveFormation.MEI, playersByPos.MEI));
-    reserves.push(...selectPlayers(reserveFormation.ATA, playersByPos.ATA));
-    
-    // Select one more any player for reserve
-    const remainingPlayers = allPlayersWithId.filter(p => !selectedIds.has(p.id));
-    reserves.push(...selectPlayers(reserveFormation.ANY, shuffle(remainingPlayers)));
-
-    // Fill up if not enough players were selected due to budget
-    const fillSlots = (targetArray: string[], targetCount: number) => {
-        while(targetArray.length < targetCount) {
-             const randomPlayer = shuffle(allPlayersWithId.filter(p => !selectedIds.has(p.id)))[0];
-             if(randomPlayer && !selectedIds.has(randomPlayer.id) && currentCost + randomPlayer.value <= teamBudget) {
-                targetArray.push(randomPlayer.id);
-                selectedIds.add(randomPlayer.id);
-                currentCost += randomPlayer.value;
-             } else {
-                 break; // Cannot add more players
-             }
+    // Select 11 for lineup
+    for (const player of shuffledPlayers) {
+        if (lineup.length >= 11) break;
+        if (!selectedIds.has(player.id) && currentCost + player.value <= teamBudget) {
+            lineup.push(player.id);
+            selectedIds.add(player.id);
+            currentCost += player.value;
         }
     }
-    
-    fillSlots(lineup, 11);
-    fillSlots(reserves, 5);
 
+    // Select 5 for reserves
+    for (const player of shuffledPlayers) {
+        if (reserves.length >= 5) break;
+        if (!selectedIds.has(player.id) && currentCost + player.value <= teamBudget) {
+            reserves.push(player.id);
+            selectedIds.add(player.id);
+            currentCost += player.value;
+        }
+    }
+
+    // If we couldn't fill the teams due to budget, we stop. 
+    // The UI should handle cases with fewer than 11 or 5 players.
 
     return {
         lineup,
         reserves,
-        reasoning: 'Este time foi gerado de forma aleatória, buscando um bom equilíbrio entre as posições e o aproveitamento do orçamento disponível.'
+        reasoning: 'Este time foi gerado de forma aleatória, aproveitando o orçamento disponível sem restrição de posição.'
     };
 }
