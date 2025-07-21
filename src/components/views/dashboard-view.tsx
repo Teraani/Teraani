@@ -6,7 +6,7 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Circle, Upload } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy } from 'lucide-react';
 import React, { useState, useRef, useMemo } from 'react';
 
 interface DashboardViewProps {
@@ -102,22 +102,23 @@ function PlayerSummary({ user, players, onNavigate }: { user: User, players: Rec
     );
 }
 
-function QuickAccess() {
+function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
     const items = [
-        { label: "Parciais gerais" },
-        { label: "Parcial dos amigos" },
-        { label: "Resultado dos jogos" },
+        { label: "Parciais gerais", view: 'partial-score' as View, icon: BarChart3 },
+        { label: "Parcial dos amigos", view: 'dashboard' as View, icon: Users },
+        { label: "Resultado dos jogos", view: 'games' as View, icon: Trophy },
     ];
     return (
         <div>
             <h3 className="text-xl font-bold text-center mb-4 text-gray-800 dark:text-gray-100">Acesso Rápido</h3>
             <div className="grid grid-cols-3 gap-4 text-center">
                 {items.map(item => (
-                    <div key={item.label} className="flex flex-col items-center gap-2">
-                        <div className="w-20 h-20 bg-gray-300 dark:bg-zinc-700 rounded-full flex items-center justify-center">
+                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center gap-2 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-800 transition-colors">
+                        <div className="w-20 h-20 bg-gray-300 dark:bg-zinc-700 rounded-full flex items-center justify-center text-primary dark:text-primary">
+                            <item.icon className="w-10 h-10" />
                         </div>
                         <p className="text-sm text-gray-700 dark:text-gray-300">{item.label}</p>
-                    </div>
+                    </button>
                 ))}
             </div>
         </div>
@@ -150,7 +151,7 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
       </header>
       <div className="p-4 space-y-8">
         <PlayerSummary user={user} players={players} onNavigate={onNavigate} />
-        <QuickAccess />
+        <QuickAccess onNavigate={onNavigate} />
         <ConnectSection />
       </div>
     </div>
