@@ -4,8 +4,8 @@
 import { useState, useMemo } from 'react';
 import type { User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Crown, ShieldCheck, Search, FilePenLine } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Crown, ShieldCheck, Search, FilePenLine, UserCheck, UserX } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -29,14 +29,14 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
     if (editorOfTheRound === user.id) {
       onSetEditor(null);
       toast({
-        title: 'Permissão Removida!',
-        description: `${user.name} não é mais o editor da rodada.`,
+        title: 'Permissão de Edição de Time Removida!',
+        description: `${user.name} não pode mais editar os times.`,
         variant: 'destructive'
       });
     } else {
       onSetEditor(user.id);
       toast({
-        title: 'Permissão Concedida!',
+        title: 'Permissão de Edição de Time Concedida!',
         description: `${user.name} agora pode editar os times nesta rodada.`,
       });
     }
@@ -46,76 +46,24 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
     if (scoutEditor === user.id) {
       onSetScoutEditor(null);
       toast({
-        title: 'Permissão de Scout Removida!',
+        title: 'Permissão de Edição de Scout Removida!',
         description: `${user.name} não pode mais editar os scouts.`,
         variant: 'destructive'
       });
     } else {
       onSetScoutEditor(user.id);
       toast({
-        title: 'Permissão de Scout Concedida!',
+        title: 'Permissão de Edição de Scout Concedida!',
         description: `${user.name} agora pode editar os scouts dos jogadores.`,
       });
     }
   };
 
   const filteredUsers = useMemo(() => {
-    return users.filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    return users
+        .filter(user => user.role === 'player')
+        .filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [users, searchTerm]);
-
-  const renderUserList = (permissionType: 'lineup' | 'scout') => (
-    <div className="space-y-3 pr-4">
-      {filteredUsers.map((user) => {
-        const isLineupEditor = editorOfTheRound === user.id;
-        const isScoutEditor = scoutEditor === user.id;
-        const isCurrentUserEditor = permissionType === 'lineup' ? isLineupEditor : isScoutEditor;
-        const buttonText = permissionType === 'lineup' ? 'Editor da Rodada' : 'Editor de Scout';
-        const grantPermissionText = permissionType === 'lineup' ? 'Conceder Permissão' : 'Permitir Scout';
-
-        return (
-          <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="player avatar"/>
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold text-foreground flex items-center gap-2">
-                  {user.name}
-                  {user.role === 'admin' && <ShieldCheck className="h-4 w-4 text-primary" />}
-                </p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
-              </div>
-            </div>
-            {user.role === 'player' && (
-              <Button
-                size="sm"
-                variant={isCurrentUserEditor ? 'destructive' : 'default'}
-                onClick={() => permissionType === 'lineup' ? handleSetEditorClick(user) : handleSetScoutEditorClick(user)}
-                className={cn("transition-all",
-                    isCurrentUserEditor ? "bg-green-600 hover:bg-red-600" : ""
-                )}
-              >
-                {isCurrentUserEditor ? (
-                  <>
-                    {permissionType === 'lineup' ? <Crown className="mr-2 h-4 w-4" /> : <FilePenLine className="mr-2 h-4 w-4" />}
-                    {buttonText}
-                  </>
-                ) : (
-                  grantPermissionText
-                )}
-              </Button>
-            )}
-          </div>
-        );
-      })}
-       {filteredUsers.length === 0 && (
-        <div className="text-center py-10 text-muted-foreground">
-          <p>Nenhum jogador encontrado.</p>
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div>
@@ -128,44 +76,77 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
       </header>
 
       <main className="p-4 space-y-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            placeholder="Buscar jogador pelo nome..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-muted/30 border-border"
-          />
-        </div>
-
         <Card className="bg-card border border-border">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-foreground">Permissão para Edição de Times</CardTitle>
-             <p className="text-sm text-muted-foreground pt-1">
-              Escolha um jogador para escalar os times nesta rodada.
-            </p>
+            <CardTitle className="text-lg font-semibold text-foreground">Gerenciar Permissões</CardTitle>
+            <CardDescription>
+              Conceda ou revogue permissões de edição para os jogadores em cada rodada.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[calc(50vh-180px)]">
-              {renderUserList('lineup')}
+             <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    placeholder="Buscar jogador pelo nome..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-muted/30 border-border"
+                />
+            </div>
+            <ScrollArea className="h-[calc(100vh-300px)]">
+                <div className="space-y-3 pr-4">
+                    {filteredUsers.map((user) => {
+                        const isLineupEditor = editorOfTheRound === user.id;
+                        const isScoutEditor = scoutEditor === user.id;
+
+                        return (
+                        <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                            <div className="flex items-center gap-3">
+                                <Avatar>
+                                    <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="player avatar"/>
+                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold text-foreground flex items-center gap-2">
+                                        {user.name}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                </div>
+                            </div>
+                           
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    size="sm"
+                                    variant={isLineupEditor ? 'secondary' : 'outline'}
+                                    onClick={() => handleSetEditorClick(user)}
+                                    className={cn("transition-all", isLineupEditor && "bg-blue-600 text-white hover:bg-blue-700")}
+                                >
+                                    {isLineupEditor ? <Crown className="mr-2 h-4 w-4" /> : <Crown className="mr-2 h-4 w-4" />}
+                                    Editar Times
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant={isScoutEditor ? 'secondary' : 'outline'}
+                                    onClick={() => handleSetScoutEditorClick(user)}
+                                    className={cn("transition-all", isScoutEditor && "bg-green-600 text-white hover:bg-green-700")}
+                                >
+                                    {isScoutEditor ? <FilePenLine className="mr-2 h-4 w-4" /> : <FilePenLine className="mr-2 h-4 w-4" />}
+                                    Editar Scouts
+                                </Button>
+                            </div>
+                           
+                        </div>
+                        );
+                    })}
+                    {filteredUsers.length === 0 && (
+                        <div className="text-center py-10 text-muted-foreground">
+                        <p>Nenhum jogador encontrado.</p>
+                        </div>
+                    )}
+                </div>
             </ScrollArea>
           </CardContent>
         </Card>
-        
-        <Card className="bg-card border border-border">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold text-foreground">Permissão para Edição de Scouts</CardTitle>
-             <p className="text-sm text-muted-foreground pt-1">
-              Escolha um jogador para editar os dados e scouts dos atletas.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[calc(50vh-180px)]">
-              {renderUserList('scout')}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
       </main>
     </div>
   );
