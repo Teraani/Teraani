@@ -3,13 +3,15 @@ import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
-import { Clock, Palette, Shield, Star, Trash2 } from 'lucide-react';
+import { Clock, Palette, Shield, Star, Trash2, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { View } from '@/app/page';
 import { cn } from '@/lib/utils';
+import AddPlayerButton from '@/components/lineup/add-player-button';
+
 
 interface LineupViewProps {
   user: User;
@@ -25,6 +27,7 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
   const [formation, setFormation] = useState<Formation>('4-3-3');
   const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
+  const [currentLineup, setCurrentLineup] = useState<string[]>(user.lineup);
 
   useEffect(() => {
     const checkMarketStatus = () => {
@@ -45,17 +48,27 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
     const interval = setInterval(checkMarketStatus, 60000); 
     return () => clearInterval(interval);
   }, []);
+  
+  const handleClearLineup = () => {
+    setCurrentLineup([]);
+  };
 
-  const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
+  const handleAddPlayer = (position: Player['pos']) => {
+    // For now, let's navigate to the market view.
+    // In a real scenario, you might open a filtered modal or a specific view.
+    onNavigate('dashboard'); // Placeholder, should navigate to a market/player list
+  };
+
+  const lineupPlayers = currentLineup.map(id => ({ ...players[id], id }));
   const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
 
   const reservePlayers = useMemo(() => {
-    const lineupIds = new Set(user.lineup);
+    const lineupIds = new Set(currentLineup);
     return Object.entries(players)
       .filter(([id]) => !lineupIds.has(id))
       .slice(0, 5)
       .map(([id, player]) => ({ ...player, id }));
-  }, [user.lineup, players]);
+  }, [currentLineup, players]);
 
   const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
     const allPlayersByPos: { [key in Player['pos']]: ({ id: string } & Player)[] } = {
@@ -67,17 +80,27 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
         }
     });
 
-    const [defCount, midCount, atkCount] = formation.split('-').map(Number);
-    
-    const allDefenders = [...allPlayersByPos.ZAG, ...allPlayersByPos.LAT];
-
     return {
-      attackers: allPlayersByPos.ATA.slice(0, atkCount),
-      midfielders: allPlayersByPos.MEI.slice(0, midCount),
-      defenders: allDefenders.slice(0, defCount),
-      goalkeeper: allPlayersByPos.GOL.slice(0, 1),
+      attackers: allPlayersByPos.ATA,
+      midfielders: allPlayersByPos.MEI,
+      defenders: [...allPlayersByPos.ZAG, ...allPlayersByPos.LAT],
+      goalkeeper: allPlayersByPos.GOL,
     };
-  }, [lineupPlayers, formation]);
+  }, [lineupPlayers]);
+  
+  const [defCount, midCount, atkCount] = formation.split('-').map(Number);
+
+  const renderPlayerRow = (count: number, assignedPlayers: (({ id: string; } & Player)[]), position: Player['pos']) => {
+    const elements = [];
+    for (let i = 0; i < count; i++) {
+        if (assignedPlayers[i]) {
+            elements.push(<PlayerCard key={assignedPlayers[i].id} player={assignedPlayers[i]} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />);
+        } else {
+            elements.push(<AddPlayerButton key={`add-${position}-${i}`} onClick={() => handleAddPlayer(position)} />);
+        }
+    }
+    return <div className="flex justify-around z-10 w-full">{elements}</div>;
+  };
 
 
   return (
@@ -108,26 +131,10 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
       </header>
       <div className="p-4 pb-32">
         <Pitch>
-          {attackers.length > 0 && (
-            <div className="flex justify-around z-10 w-full">
-              {attackers.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />)}
-            </div>
-          )}
-          {midfielders.length > 0 && (
-            <div className="flex justify-around z-10 w-full">
-              {midfielders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />)}
-            </div>
-          )}
-          {defenders.length > 0 && (
-            <div className="flex justify-around z-10 w-full">
-              {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />)}
-            </div>
-          )}
-          {goalkeeper.length > 0 && (
-            <div className="flex justify-around z-10 w-full">
-              {goalkeeper.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />)}
-            </div>
-          )}
+          {renderPlayerRow(atkCount, attackers, 'ATA')}
+          {renderPlayerRow(midCount, midfielders, 'MEI')}
+          {renderPlayerRow(defCount, defenders, 'ZAG')}
+          {renderPlayerRow(1, goalkeeper, 'GOL')}
         </Pitch>
         <div className="mt-4 flex flex-col gap-2">
             <AiSuggestions user={user} players={players} />
@@ -165,9 +172,9 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
                   </Select>
               </div>
               <div className="flex flex-col items-center gap-1 text-white">
-                  <span className="text-xs">Capitão</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-gray-700 hover:bg-gray-600 rounded-full">
-                      <Star className="h-5 w-5 text-yellow-400" />
+                  <span className="text-xs">Desfazer Time</span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-gray-700 hover:bg-gray-600 rounded-full" onClick={handleClearLineup}>
+                      <Trash2 className="h-5 w-5 text-red-400" />
                   </Button>
               </div>
           </div>
@@ -176,7 +183,7 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
                   <Shield className="mr-2 h-4 w-4" />
                   Reservas
               </Button>
-              <Button variant="secondary" className="bg-gray-700 text-white hover:bg-gray-600">
+              <Button variant="secondary" className="bg-gray-700 text-white hover:bg-gray-600" onClick={handleClearLineup}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Limpar Time
               </Button>
