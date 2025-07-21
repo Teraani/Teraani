@@ -124,11 +124,20 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
                       </SelectContent>
                   </Select>
               </div>
-              <div className="flex flex-col items-center gap-1 text-white opacity-50 cursor-not-allowed">
+              <div className="flex flex-col items-center gap-1 text-white">
                   <span className="text-xs">Cor da Camisa</span>
-                  <div className="w-auto bg-gray-700 border-none text-white h-8 flex items-center justify-center px-3 rounded-md">
-                    <Palette className="h-5 w-5" />
-                  </div>
+                  <Select defaultValue="verde">
+                      <SelectTrigger className="w-auto bg-gray-700 border-none text-white h-8">
+                           <Palette className="h-5 w-5" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="verde">Verde</SelectItem>
+                          <SelectItem value="amarelo">Amarelo</SelectItem>
+                          <SelectItem value="preto">Preto</SelectItem>
+                          <SelectItem value="vermelho">Vermelho</SelectItem>
+                          <SelectItem value="branco">Branco</SelectItem>
+                      </SelectContent>
+                  </Select>
               </div>
               <div className="flex flex-col items-center gap-1 text-white">
                   <span className="text-xs">Capitão</span>

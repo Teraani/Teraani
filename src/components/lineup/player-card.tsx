@@ -30,7 +30,6 @@ export default function PlayerCard({ player, onPlayerSelect, isReserve = false }
   return (
     <button className="flex flex-col items-center text-center w-20 group" onClick={() => onPlayerSelect(player.id)}>
       <div className="relative w-16 h-16 flex items-center justify-center">
-        <div className="absolute w-[50px] h-[50px] bg-black/30 rounded-md top-0"></div>
         <svg viewBox="0 0 48 48" className="relative w-12 h-12 z-10" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 7L4 12V22L12 19V7Z" fill={colors.secondary} stroke="#1F2937" strokeWidth="1"/>
             <path d="M36 7L44 12V22L36 19V7Z" fill={colors.secondary} stroke="#1F2937" strokeWidth="1"/>
