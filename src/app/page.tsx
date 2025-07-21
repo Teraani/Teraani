@@ -162,7 +162,7 @@ export default function Home() {
   };
 
   return (
-    <div className="bg-gray-100 dark:bg-zinc-900 min-h-screen">
+    <div className="min-h-screen">
       <main className="pb-20">
         {renderView()}
       </main>
