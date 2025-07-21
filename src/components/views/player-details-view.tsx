@@ -145,7 +145,7 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                                 <p className="font-bold text-lg">{player.points?.toFixed(2) ?? '0.00'}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">Média</p>
+                                <p className="text-sm text-muted-foreground">Média por Partida</p>
                                 <p className="font-bold text-lg">{averagePoints.toFixed(2)}</p>
                             </div>
                         </div>
