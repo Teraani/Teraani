@@ -115,6 +115,13 @@ export default function Home() {
     }));
   };
 
+  const handleSetScoutEditor = (userId: string | null) => {
+    setAppData(prevData => ({
+        ...prevData,
+        scoutEditor: userId,
+    }));
+  };
+
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
   const userWithCurrentLineup = useMemo(() => {
@@ -155,7 +162,7 @@ export default function Home() {
       case 'statistics':
         return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'admin':
-        return <AdminView onBack={goBack} users={Object.values(appData.users)} editorOfTheRound={appData.editorOfTheRound} onSetEditor={handleSetEditor} />;
+        return <AdminView onBack={goBack} users={Object.values(appData.users)} editorOfTheRound={appData.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={appData.scoutEditor} onSetScoutEditor={handleSetScoutEditor} />;
       default:
         return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }

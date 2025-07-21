@@ -54,6 +54,7 @@ export interface Friend {
 interface AppData {
   users: Record<string, User>;
   editorOfTheRound: string | null;
+  scoutEditor: string | null;
   players: Record<string, Player>;
   friends: Friend[];
 }
@@ -105,6 +106,7 @@ export const data: AppData = {
         'user31': { id: 'user31', name: 'Rafael Ohy', email: 'user31@example.com', teamName: 'User 31 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
     },
     editorOfTheRound: null,
+    scoutEditor: null,
     players: {
       'p1': { name: 'Rafael Ohy', team: 'AVA', pos: 'MEI', value: 49.5, points: 49.5, last_val: 0.5, games: 21, img: 'https://placehold.co/60x60', stats: { wins: 15, losses: 3, draws: 3, goalsFor: 60, goalsAgainst: 46, goalDifference: 14, performance: 78.57, points: 49.5, goals: 10, assists: 9, yellowCards: 1, redCards: 0 } },
       'p2': { name: 'Renan Ropeiro', team: 'BOT', pos: 'MEI', value: 27, points: 27, last_val: 0.5, games: 13, img: 'https://placehold.co/60x60', stats: { wins: 9, losses: 3, draws: 2, goalsFor: 35, goalsAgainst: 28, goalDifference: 7, performance: 69.23, points: 27, goals: 1, assists: 0, yellowCards: 0, redCards: 0 } },
