@@ -14,8 +14,10 @@ import MarketView from '@/components/views/market-view';
 import FriendsScoreView from '@/components/views/friends-score-view';
 import StatisticsView from '@/components/views/statistics-view';
 import BottomNav from '@/components/bottom-nav';
+import LoginView from '@/components/views/login-view';
+import RegisterView from '@/components/views/register-view';
 
-export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics';
+export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -27,7 +29,7 @@ export interface AddPlayerSlot {
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [previousView, setPreviousView] = useState<View>('dashboard');
+  const [previousView, setPreviousView] = useState<View>('welcome');
   const [appData, setAppData] = useState(data);
   const [userLineup, setUserLineup] = useState<(string | null)[]>(appData.user.lineup || Array(11).fill(null));
   const [userReserves, setUserReserves] = useState<(string | null)[]>(appData.user.reserves || Array(5).fill(null));
@@ -104,7 +106,11 @@ export default function Home() {
   const renderView = () => {
     switch (currentView) {
       case 'welcome':
-        return <WelcomeView onEnter={() => navigateTo('dashboard')} />;
+        return <WelcomeView onEnter={() => navigateTo('login')} />;
+      case 'login':
+        return <LoginView onLoginSuccess={() => navigateTo('dashboard')} onNavigateToRegister={() => navigateTo('register')} onBack={() => navigateTo('welcome')} />;
+      case 'register':
+        return <RegisterView onRegisterSuccess={() => navigateTo('dashboard')} onNavigateToLogin={() => navigateTo('login')} />;
       case 'dashboard':
         return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
@@ -131,7 +137,7 @@ export default function Home() {
       <main className="pb-20">
         {renderView()}
       </main>
-      {currentView !== 'welcome' && <BottomNav currentView={currentView} onNavigate={navigateTo} />}
+      {currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register' && <BottomNav currentView={currentView} onNavigate={navigateTo} />}
     </div>
   );
 }
