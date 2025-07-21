@@ -15,6 +15,7 @@ export interface User {
   totalScore: number;
   valuation: number;
   lineup: string[];
+  reserves: string[];
 }
 
 interface AppData {
@@ -28,7 +29,8 @@ export const data: AppData = {
         partialScore: 58.49,
         totalScore: 1154.89,
         valuation: 125.88,
-        lineup: ['p9', 'p6', 'p14', 'p15', 'p16', 'p1', 'p5', 'p7', 'p12', 'p4', 'p17']
+        lineup: ['p9', 'p6', 'p14', 'p15', 'p16', 'p1', 'p5', 'p7', 'p12', 'p4', 'p17'],
+        reserves: ['p2', 'p3', 'p8', 'p10', 'p13']
     },
     players: {
         'p1': { name: 'Jason', team: 'FLA', pos: 'MEI', value: 15.00, points: 9.70, last_val: 0.50, games: 11, img: 'https://placehold.co/60x60' },

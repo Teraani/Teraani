@@ -17,7 +17,7 @@ export type View = 'welcome' | 'dashboard' | 'lineup' | 'player-details' | 'leag
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
-  position: Player['pos'];
+  position: Player['pos'] | 'RES'; // 'RES' for reserve
   index: number;
 }
 
@@ -26,7 +26,8 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('dashboard');
-  const [userLineup, setUserLineup] = useState<(string | null)[]>(data.user.lineup || []);
+  const [userLineup, setUserLineup] = useState<(string | null)[]>(data.user.lineup || Array(11).fill(null));
+  const [userReserves, setUserReserves] = useState<(string | null)[]>(data.user.reserves || Array(5).fill(null));
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
 
@@ -46,14 +47,23 @@ export default function Home() {
   const addPlayerToLineup = (playerId: string) => {
     if (slotToAddPlayer === null) return;
   
-    setUserLineup(prevLineup => {
-      const newLineup = [...(prevLineup || [])];
-      // Place player in the specific slot that was clicked
-      if (slotToAddPlayer.index >= 0 && slotToAddPlayer.index < newLineup.length) {
-        newLineup[slotToAddPlayer.index] = playerId;
-      }
-      return newLineup;
-    });
+    if (slotToAddPlayer.position === 'RES') {
+      setUserReserves(prevReserves => {
+        const newReserves = [...(prevReserves || [])];
+        if (slotToAddPlayer.index >= 0 && slotToAddPlayer.index < newReserves.length) {
+          newReserves[slotToAddPlayer.index] = playerId;
+        }
+        return newReserves;
+      });
+    } else {
+      setUserLineup(prevLineup => {
+        const newLineup = [...(prevLineup || [])];
+        if (slotToAddPlayer.index >= 0 && slotToAddPlayer.index < newLineup.length) {
+          newLineup[slotToAddPlayer.index] = playerId;
+        }
+        return newLineup;
+      });
+    }
   
     setSlotToAddPlayer(null);
     navigateTo('lineup');
@@ -73,7 +83,8 @@ export default function Home() {
   const userWithCurrentLineup = useMemo(() => ({
     ...appData.user,
     lineup: (userLineup || []).filter(id => id !== null) as string[],
-  }), [appData.user, userLineup]);
+    reserves: (userReserves || []).filter(id => id !== null) as string[],
+  }), [appData.user, userLineup, userReserves]);
 
   const renderView = () => {
     switch (currentView) {
@@ -82,7 +93,7 @@ export default function Home() {
       case 'dashboard':
         return <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
       case 'lineup':
-        return <LineupView userLineup={userLineup} setUserLineup={setUserLineup} players={appData.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} />;
+        return <LineupView userLineup={userLineup} setUserLineup={setUserLineup} userReserves={userReserves} setUserReserves={setUserReserves} players={appData.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} />;
       case 'player-details':
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} /> : <DashboardView user={userWithCurrentLineup} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} />;
       case 'market':

@@ -3,7 +3,7 @@ import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
-import { Clock, Palette, Shield, Star, Trash2, PlusCircle } from 'lucide-react';
+import { Clock, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,21 +20,24 @@ interface LineupViewProps {
   onNavigate: (view: View) => void;
   setUserLineup: (lineup: (string | null)[]) => void;
   onAddPlayer: (slot: AddPlayerSlot) => void;
+  userReserves: (string | null)[];
+  setUserReserves: (reserves: (string | null)[]) => void;
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
-export default function LineupView({ userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer }: LineupViewProps) {
+export default function LineupView({ userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer, userReserves, setUserReserves }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
   const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
 
   // This will reconstruct the user object for components that need it, like AiSuggestions
   const user: User = useMemo(() => ({
-      ...data.user, // Assuming data is accessible or passed down. If not, might need to adjust.
-      lineup: userLineup.filter(id => id !== null) as string[]
-  }), [userLineup]);
+      ...data.user,
+      lineup: userLineup.filter(id => id !== null) as string[],
+      reserves: userReserves.filter(id => id !== null) as string[]
+  }), [userLineup, userReserves]);
 
 
   useEffect(() => {
@@ -59,51 +62,33 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
   
   const handleClearLineup = () => {
     setUserLineup(Array(11).fill(null));
+    setUserReserves(Array(5).fill(null));
   };
 
-  const handleAddPlayer = (position: Player['pos'], index: number) => {
+  const handleAddPlayer = (position: Player['pos'] | 'RES', index: number) => {
     onAddPlayer({ position, index });
   };
   
   const lineupPlayers = userLineup.map(id => id ? { ...players[id], id } : null);
+  const reservePlayers = userReserves.map(id => id ? { ...players[id], id } : null);
   const totalScore = lineupPlayers.reduce((sum, player) => sum + (player?.points ?? 0), 0);
 
-  const reservePlayers = useMemo(() => {
-    const lineupIds = new Set(userLineup);
-    return Object.entries(players)
-      .filter(([id]) => !lineupIds.has(id))
-      .slice(0, 5)
-      .map(([id, player]) => ({ ...player, id }));
-  }, [userLineup, players]);
-
   
-  const [defCount, midCount, atkCount] = formation.split('-').map(Number);
+  const [defCount, midCount, atkCount] = useMemo(() => formation.split('-').map(Number), [formation]);
 
-  const formationSlots = {
-      'ATA': atkCount,
-      'MEI': midCount,
-      'DEF': defCount,
-      'GOL': 1
-  };
-  
   const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
-    const lineupWithPos = lineupPlayers.map(p => p ? players[p.id].pos : null);
-    
-    // This sorting logic is the problem. It re-arranges players.
-    // We should not sort them but just render them as they are in userLineup array.
     let playerIndex = 0;
     
-    const assignedAttackers = [];
-    for(let i = 0; i < atkCount; i++) assignedAttackers.push(lineupPlayers[playerIndex++]);
-
-    const assignedMidfielders = [];
-    for(let i = 0; i < midCount; i++) assignedMidfielders.push(lineupPlayers[playerIndex++]);
-
-    const assignedDefenders = [];
-    for(let i = 0; i < defCount; i++) assignedDefenders.push(lineupPlayers[playerIndex++]);
+    const assignedAttackers = lineupPlayers.slice(playerIndex, playerIndex + atkCount);
+    playerIndex += atkCount;
     
-    const assignedGoalkeeper = [];
-    for(let i = 0; i < 1; i++) assignedGoalkeeper.push(lineupPlayers[playerIndex++]);
+    const assignedMidfielders = lineupPlayers.slice(playerIndex, playerIndex + midCount);
+    playerIndex += midCount;
+
+    const assignedDefenders = lineupPlayers.slice(playerIndex, playerIndex + defCount);
+    playerIndex += defCount;
+    
+    const assignedGoalkeeper = lineupPlayers.slice(playerIndex, playerIndex + 1);
     
     return {
       attackers: assignedAttackers,
@@ -111,21 +96,35 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
       defenders: assignedDefenders,
       goalkeeper: assignedGoalkeeper,
     };
-  }, [lineupPlayers, formation]);
+  }, [lineupPlayers, atkCount, midCount, defCount]);
 
 
   const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
     const elements = [];
     for (let i = 0; i < count; i++) {
         const player = assignedPlayers[i];
+        const slotIndex = startIndex + i;
         if (player) {
-            elements.push(<PlayerCard key={player.id} player={player} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />);
+            elements.push(<PlayerCard key={`${player.id}-${slotIndex}`} player={player} onPlayerSelect={onPlayerSelect} shirtColor={shirtColor} />);
         } else {
-            elements.push(<AddPlayerButton key={`add-${position}-${i}`} onClick={() => handleAddPlayer(position, startIndex + i)} />);
+            elements.push(<AddPlayerButton key={`add-${position}-${slotIndex}`} onClick={() => handleAddPlayer(position, slotIndex)} />);
         }
     }
     return <div className="flex justify-around z-10 w-full">{elements}</div>;
   };
+
+  const renderReserves = () => {
+    const elements = [];
+    for (let i = 0; i < 5; i++) {
+        const player = reservePlayers[i];
+        if (player) {
+            elements.push(<PlayerCard key={player.id} player={player} onPlayerSelect={onPlayerSelect} isReserve />);
+        } else {
+            elements.push(<AddPlayerButton key={`add-RES-${i}`} onClick={() => handleAddPlayer('RES', i)} />);
+        }
+    }
+    return <div className="flex flex-wrap justify-center gap-4">{elements}</div>;
+  }
 
   return (
     <div className="bg-gray-900 min-h-screen">
@@ -173,11 +172,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
         
         <div className="mt-8">
             <h3 className="text-white text-lg font-bold mb-4 text-center">Reservas</h3>
-            <div className="flex flex-wrap justify-center gap-4">
-                {reservePlayers.map(p => (
-                    <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} isReserve />
-                ))}
-            </div>
+            {renderReserves()}
         </div>
       </div>
        <div className="fixed bottom-0 left-0 right-0 bg-gray-800 p-2 border-t border-gray-700 shadow-lg z-50">
@@ -204,8 +199,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
           </div>
           <div className="grid grid-cols-3 gap-2">
               <Button variant="secondary" className="bg-gray-700 text-white hover:bg-gray-600">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Reservas
+                  Limpar Reservas
               </Button>
               <Button variant="secondary" className="bg-gray-700 text-white hover:bg-gray-600" onClick={handleClearLineup}>
                   <Trash2 className="mr-2 h-4 w-4" />

@@ -1,7 +1,7 @@
 import type { Player } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 
 interface PlayerListItemProps {
@@ -20,7 +20,7 @@ export default function PlayerListItem({ player, onPlayerSelect }: PlayerListIte
     >
       <div className="flex items-center space-x-3">
         <Avatar className="w-12 h-12">
-            <Image src={player.img} alt={player.name} width={48} height={48} data-ai-hint="player portrait" className="object-cover"/>
+            <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" className="object-cover"/>
             <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
