@@ -195,10 +195,8 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="flex justify-center gap-4">
-            <Button className="rounded-lg px-8">Início</Button>
-            <Button variant="ghost" className="text-primary-foreground font-semibold rounded-lg px-8">Amigos</Button>
-        </div>
+        <h1 className="text-xl font-bold text-foreground">Amistoso FC</h1>
+
         <div className="w-10 h-10" />
       </header>
       <div className="p-4 space-y-8">
