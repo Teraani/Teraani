@@ -7,6 +7,7 @@ import { ArrowLeft, Shield } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '../ui/scroll-area';
 
 interface GamesViewProps {
   onBack: () => void;
@@ -28,6 +29,22 @@ const gamesData = {
   '4': [
     { date: '17 de julho - 19:00hs', homeTeam: 'Verde', awayTeam: 'Amarelo', homeScore: 2, awayScore: 0, status: 'Finalizado' },
     { date: '17 de julho - 21:00hs', homeTeam: 'Azul', awayTeam: 'Vermelho', homeScore: 1, awayScore: 1, status: 'Finalizado' },
+  ],
+  '5': [
+    { date: '24 de julho - 19:00hs', homeTeam: 'Amarelo', awayTeam: 'Azul', homeScore: 0, awayScore: 0, status: 'Finalizado' },
+    { date: '24 de julho - 21:00hs', homeTeam: 'Vermelho', awayTeam: 'Verde', homeScore: 2, awayScore: 1, status: 'Finalizado' },
+  ],
+  '6': [
+    { date: '31 de julho - 19:00hs', homeTeam: 'Verde', awayTeam: 'Azul', homeScore: 3, awayScore: 2, status: 'Finalizado' },
+    { date: '31 de julho - 21:00hs', homeTeam: 'Vermelho', awayTeam: 'Amarelo', homeScore: 1, awayScore: 1, status: 'Finalizado' },
+  ],
+  '7': [
+    { date: '07 de agosto - 19:00hs', homeTeam: 'Amarelo', awayTeam: 'Verde', homeScore: 2, awayScore: 2, status: 'Finalizado' },
+    { date: '07 de agosto - 21:00hs', homeTeam: 'Vermelho', awayTeam: 'Azul', homeScore: 0, awayScore: 1, status: 'Finalizado' },
+  ],
+  '8': [
+    { date: '14 de agosto - 19:00hs', homeTeam: 'Azul', awayTeam: 'Amarelo', homeScore: 4, awayScore: 1, status: 'Finalizado' },
+    { date: '14 de agosto - 21:00hs', homeTeam: 'Verde', awayTeam: 'Vermelho', homeScore: 0, awayScore: 0, status: 'Finalizado' },
   ],
 };
 
@@ -53,51 +70,57 @@ export default function GamesView({ onBack }: GamesViewProps) {
         <div className="w-9 h-9" />
       </header>
 
-      <main className="p-4">
+      <main>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Round)} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-card">
-            <TabsTrigger value="1" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">Rodada 1</TabsTrigger>
-            <TabsTrigger value="2" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">Rodada 2</TabsTrigger>
-            <TabsTrigger value="3" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">Rodada 3</TabsTrigger>
-            <TabsTrigger value="4" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">Rodada 4</TabsTrigger>
-          </TabsList>
-          {Object.entries(gamesData).map(([round, games]) => (
-            <TabsContent key={round} value={round}>
-              <div className="space-y-3 mt-4">
-                {games.map((game, index) => (
-                  <Card key={index} className="bg-card border border-border">
-                    <CardContent className="p-4">
-                        <div className="flex justify-between items-center text-center">
-                            <div className="flex flex-col items-center gap-2 w-1/3">
-                                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", teamColors[game.homeTeam])}>
-                                    <Shield className="w-6 h-6 text-white"/>
-                                </div>
-                                <span className="font-semibold text-sm text-foreground">{game.homeTeam}</span>
-                            </div>
-
-                            <div className="flex flex-col items-center">
-                                <span className="text-xs text-muted-foreground">{game.date}</span>
-                                <div className="flex items-center gap-3 my-1">
-                                    <span className="text-2xl font-bold text-foreground">{game.homeScore}</span>
-                                    <span className="text-muted-foreground">x</span>
-                                    <span className="text-2xl font-bold text-foreground">{game.awayScore}</span>
-                                </div>
-                                <span className="text-xs font-semibold text-primary">{game.status}</span>
-                            </div>
-
-                            <div className="flex flex-col items-center gap-2 w-1/3">
-                                <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", teamColors[game.awayTeam])}>
-                                    <Shield className="w-6 h-6 text-white"/>
-                                </div>
-                                <span className="font-semibold text-sm text-foreground">{game.awayTeam}</span>
-                            </div>
-                        </div>
-                    </CardContent>
-                  </Card>
+          <ScrollArea className="w-full whitespace-nowrap">
+            <TabsList className="bg-card px-4 gap-2">
+                {Object.keys(gamesData).map(round => (
+                    <TabsTrigger key={round} value={round} className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground px-4">
+                        Rodada {round}
+                    </TabsTrigger>
                 ))}
-              </div>
-            </TabsContent>
-          ))}
+            </TabsList>
+          </ScrollArea>
+          
+          <div className="p-4">
+            {Object.entries(gamesData).map(([round, games]) => (
+              <TabsContent key={round} value={round} className="mt-0">
+                <div className="space-y-3">
+                  {games.map((game, index) => (
+                    <Card key={index} className="bg-card border border-border">
+                      <CardContent className="p-4">
+                          <div className="flex justify-between items-center text-center">
+                              <div className="flex flex-col items-center gap-2 w-1/3">
+                                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", teamColors[game.homeTeam])}>
+                                      <Shield className="w-6 h-6 text-white"/>
+                                  </div>
+                                  <span className="font-semibold text-sm text-foreground">{game.homeTeam}</span>
+                              </div>
+
+                              <div className="flex flex-col items-center">
+                                  <span className="text-xs text-muted-foreground">{game.date}</span>
+                                  <div className="flex items-center gap-3 my-1">
+                                      <span className="text-2xl font-bold text-foreground">{game.homeScore}</span>
+                                      <span className="text-muted-foreground">x</span>
+                                      <span className="text-2xl font-bold text-foreground">{game.awayScore}</span>
+                                  </div>
+                                  <span className="text-xs font-semibold text-primary">{game.status}</span>
+                              </div>
+
+                              <div className="flex flex-col items-center gap-2 w-1/3">
+                                  <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", teamColors[game.awayTeam])}>
+                                      <Shield className="w-6 h-6 text-white"/>
+                                  </div>
+                                  <span className="font-semibold text-sm text-foreground">{game.awayTeam}</span>
+                              </div>
+                          </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+            ))}
+          </div>
         </Tabs>
       </main>
     </div>
