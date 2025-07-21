@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Player } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Minus, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -41,68 +41,51 @@ const StatInput = ({ label, value, onIncrement, onDecrement }: { label: string, 
     </div>
 );
 
-const PlayerListContent = ({ lineup, players, playerStats, handleStatChange }: {
-    lineup: (string | null)[];
-    players: Record<string, Player>;
-    playerStats: Record<string, any>;
+const PlayerStatEditorCard = ({ player, stats, handleStatChange }: {
+    player: Player & { id: string };
+    stats: any;
     handleStatChange: (playerId: string, stat: string, value: any) => void;
 }) => {
-    const playerIds = lineup.filter((id): id is string => id !== null);
-
-    if (playerIds.length === 0) {
-        return <p className="text-muted-foreground text-center p-4">Nenhum jogador escalado neste time.</p>;
-    }
-
+    if (!player || !stats) return null;
     return (
-        <div className="space-y-3">
-            {playerIds.map(playerId => {
-                const player = players[playerId];
-                const stats = playerStats[playerId];
-                if (!player || !stats) return null;
-
-                return (
-                    <Card key={playerId} className="bg-card">
-                        <CardContent className="p-3">
-                            <div className="flex items-center gap-3 mb-3">
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" />
-                                    <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-bold text-foreground">{player.name}</p>
-                                    <p className="text-sm text-muted-foreground">{player.pos} - {player.team}</p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-y-4">
-                                <StatInput label="Gols" value={stats.goals} 
-                                    onIncrement={() => handleStatChange(playerId, 'goals', stats.goals + 1)} 
-                                    onDecrement={() => handleStatChange(playerId, 'goals', Math.max(0, stats.goals - 1))}
-                                />
-                                <StatInput label="Assist." value={stats.assists} 
-                                    onIncrement={() => handleStatChange(playerId, 'assists', stats.assists + 1)}
-                                    onDecrement={() => handleStatChange(playerId, 'assists', Math.max(0, stats.assists - 1))}
-                                />
-                                <div className="flex flex-col items-center">
-                                    <Label className="text-xs mb-1 text-muted-foreground">Sem sofrer gol</Label>
-                                    <Input type="checkbox" className="h-6 w-6" checked={stats.cleanSheet} onChange={(e) => handleStatChange(playerId, 'cleanSheet', e.target.checked)} />
-                                </div>
-                                <StatInput label="Amarelos" value={stats.yellowCards} 
-                                    onIncrement={() => handleStatChange(playerId, 'yellowCards', stats.yellowCards + 1)}
-                                    onDecrement={() => handleStatChange(playerId, 'yellowCards', Math.max(0, stats.yellowCards - 1))}
-                                />
-                                <StatInput label="Vermelhos" value={stats.redCards} 
-                                    onIncrement={() => handleStatChange(playerId, 'redCards', stats.redCards + 1)}
-                                    onDecrement={() => handleStatChange(playerId, 'redCards', Math.max(0, stats.redCards - 1))}
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-            })}
-        </div>
+        <Card className="bg-card">
+            <CardContent className="p-3">
+                <div className="flex items-center gap-3 mb-3">
+                    <Avatar className="h-10 w-10">
+                        <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" />
+                        <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="font-bold text-foreground">{player.name}</p>
+                        <p className="text-sm text-muted-foreground">{player.pos} - {player.team}</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-3 gap-y-4">
+                    <StatInput label="Gols" value={stats.goals} 
+                        onIncrement={() => handleStatChange(player.id, 'goals', stats.goals + 1)} 
+                        onDecrement={() => handleStatChange(player.id, 'goals', Math.max(0, stats.goals - 1))}
+                    />
+                    <StatInput label="Assist." value={stats.assists} 
+                        onIncrement={() => handleStatChange(player.id, 'assists', stats.assists + 1)}
+                        onDecrement={() => handleStatChange(player.id, 'assists', Math.max(0, stats.assists - 1))}
+                    />
+                    <div className="flex flex-col items-center">
+                        <Label className="text-xs mb-1 text-muted-foreground">Sem sofrer gol</Label>
+                        <Input type="checkbox" className="h-6 w-6" checked={stats.cleanSheet} onChange={(e) => handleStatChange(player.id, 'cleanSheet', e.target.checked)} />
+                    </div>
+                    <StatInput label="Amarelos" value={stats.yellowCards} 
+                        onIncrement={() => handleStatChange(player.id, 'yellowCards', stats.yellowCards + 1)}
+                        onDecrement={() => handleStatChange(player.id, 'yellowCards', Math.max(0, stats.yellowCards - 1))}
+                    />
+                    <StatInput label="Vermelhos" value={stats.redCards} 
+                        onIncrement={() => handleStatChange(player.id, 'redCards', stats.redCards + 1)}
+                        onDecrement={() => handleStatChange(player.id, 'redCards', Math.max(0, stats.redCards - 1))}
+                    />
+                </div>
+            </CardContent>
+        </Card>
     );
 };
-
 
 export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, team2Lineup }: ScoutEditorViewProps) {
   const [playerStats, setPlayerStats] = useState<Record<string, { goals: number; assists: number; cleanSheet: boolean; yellowCards: number; redCards: number }>>(() => {
@@ -118,7 +101,8 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
     });
     return initialStats;
   });
-
+  
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   const handleStatChange = (playerId: string, stat: keyof typeof playerStats.p1, value: number | boolean) => {
@@ -138,6 +122,9 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
       const stats = playerStats[playerId];
       const player = updatedPlayers[playerId];
       if (!player) return;
+
+      const hasPlayed = Object.values(stats).some(val => (typeof val === 'number' && val > 0) || val === true);
+      if (!hasPlayed) return; // Only update players who had stats entered
 
       let pointsFromGame = 0;
       pointsFromGame += stats.goals * pointsConfig.goal;
@@ -161,7 +148,7 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
         ...player,
         points: newTotalPoints,
         last_val: last_val,
-        games: player.games + 1, // Increment games played
+        games: player.games + 1,
         stats: {
           ...currentStats,
           goals: currentStats.goals + stats.goals,
@@ -178,6 +165,22 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
       description: "As pontuações dos jogadores foram atualizadas com sucesso.",
     });
   };
+  
+  const { team1Players, team2Players, otherPlayers } = useMemo(() => {
+    const team1Ids = new Set(team1Lineup.filter(Boolean));
+    const team2Ids = new Set(team2Lineup.filter(Boolean));
+    const lowerCaseSearch = searchTerm.toLowerCase();
+
+    const all = Object.entries(players)
+      .map(([id, p]) => ({ ...p, id }))
+      .filter(p => p.name.toLowerCase().includes(lowerCaseSearch));
+
+    return {
+        team1Players: all.filter(p => team1Ids.has(p.id)),
+        team2Players: all.filter(p => team2Ids.has(p.id)),
+        otherPlayers: all.filter(p => !team1Ids.has(p.id) && !team2Ids.has(p.id)),
+    }
+  }, [players, team1Lineup, team2Lineup, searchTerm]);
 
   return (
     <div className="pb-40">
@@ -192,37 +195,46 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
       </header>
       
       <main className="p-4">
-        <Card className="bg-muted/30 border-primary/20 mb-6">
-            <CardHeader>
-                <CardTitle>Instruções</CardTitle>
-                <CardDescription>
-                    Insira os scouts da partida para cada jogador. A pontuação será calculada e somada ao total ao salvar.
-                </CardDescription>
-            </CardHeader>
-        </Card>
+        <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+                placeholder="Buscar jogador pelo nome..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-muted/30 border-border"
+            />
+        </div>
         
-        <ScrollArea className="h-[calc(100vh-220px)]">
-            <Accordion type="multiple" defaultValue={['time1', 'time2']} className="pr-4 space-y-4">
+        <ScrollArea className="h-[calc(100vh-280px)]">
+            <Accordion type="multiple" defaultValue={['time1', 'time2', 'outros']} className="pr-4 space-y-4">
                 <AccordionItem value="time1" className="border rounded-lg overflow-hidden bg-card">
                     <AccordionTrigger className="p-4 text-lg font-bold hover:no-underline">Time 1</AccordionTrigger>
-                    <AccordionContent className="p-4 pt-0">
-                        <PlayerListContent 
-                            lineup={team1Lineup}
-                            players={players}
-                            playerStats={playerStats}
-                            handleStatChange={handleStatChange}
-                        />
+                    <AccordionContent className="p-4 pt-0 space-y-3">
+                        {team1Players.length > 0 ? (
+                            team1Players.map(p => <PlayerStatEditorCard key={p.id} player={p} stats={playerStats[p.id]} handleStatChange={handleStatChange} />)
+                        ) : (
+                            <p className="text-muted-foreground text-center p-4">Nenhum jogador escalado neste time.</p>
+                        )}
                     </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="time2" className="border rounded-lg overflow-hidden bg-card">
                     <AccordionTrigger className="p-4 text-lg font-bold hover:no-underline">Time 2</AccordionTrigger>
-                    <AccordionContent className="p-4 pt-0">
-                        <PlayerListContent 
-                            lineup={team2Lineup}
-                            players={players}
-                            playerStats={playerStats}
-                            handleStatChange={handleStatChange}
-                        />
+                    <AccordionContent className="p-4 pt-0 space-y-3">
+                        {team2Players.length > 0 ? (
+                           team2Players.map(p => <PlayerStatEditorCard key={p.id} player={p} stats={playerStats[p.id]} handleStatChange={handleStatChange} />)
+                        ) : (
+                            <p className="text-muted-foreground text-center p-4">Nenhum jogador escalado neste time.</p>
+                        )}
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="outros" className="border rounded-lg overflow-hidden bg-card">
+                    <AccordionTrigger className="p-4 text-lg font-bold hover:no-underline">Outros Jogadores</AccordionTrigger>
+                    <AccordionContent className="p-4 pt-0 space-y-3">
+                        {otherPlayers.length > 0 ? (
+                            otherPlayers.map(p => <PlayerStatEditorCard key={p.id} player={p} stats={playerStats[p.id]} handleStatChange={handleStatChange} />)
+                        ) : (
+                             <p className="text-muted-foreground text-center p-4">Nenhum outro jogador encontrado.</p>
+                        )}
                     </AccordionContent>
                 </AccordionItem>
             </Accordion>
@@ -242,3 +254,5 @@ export default function ScoutEditorView({ onBack, players, onSave, team1Lineup, 
 const Label = (props: React.LabelHTMLAttributes<HTMLLabelElement>) => (
     <label {...props} className={cn("text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70", props.className)} />
 );
+
+    
