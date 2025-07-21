@@ -9,6 +9,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 export const metadata: Metadata = {
   title: 'AmistososAI FC',
   description: 'Escale seu time, participe de ligas e mostre que você sabe mitar!',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
