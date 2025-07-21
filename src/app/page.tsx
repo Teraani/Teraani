@@ -17,8 +17,9 @@ import AdminView from '@/components/views/admin-view';
 import BottomNav from '@/components/bottom-nav';
 import LoginView from '@/components/views/login-view';
 import RegisterView from '@/components/views/register-view';
+import LiveView from '@/components/views/live-view';
 
-export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin';
+export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -216,6 +217,8 @@ export default function Home() {
         return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'admin':
         return <AdminView onBack={goBack} users={Object.values(appData.users)} editorOfTheRound={appData.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={appData.scoutEditor} onSetScoutEditor={handleSetScoutEditor} />;
+      case 'live':
+        return <LiveView onBack={() => navigateTo('dashboard')} user={userWithCurrentLineup!} players={appData.players} />;
       default:
         return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }
