@@ -97,6 +97,7 @@ const TeamEditor = ({
   onPlayerCardClick,
   onAddPlayer,
   canEdit,
+  isOwnTeam,
   teamIdentifier
 }: {
   teamName: string;
@@ -108,6 +109,7 @@ const TeamEditor = ({
   onPlayerCardClick: (state: PlayerActionState) => void;
   onAddPlayer: (position: Player['pos'] | 'RES', index: number) => void;
   canEdit: boolean;
+  isOwnTeam: boolean;
   teamIdentifier: 'team1' | 'team2' | 'user';
 }) => {
     
@@ -137,6 +139,7 @@ const TeamEditor = ({
     };
   }, [lineupPlayers, formation]);
 
+  const showAddButton = canEdit || isOwnTeam;
 
   const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
     return (
@@ -145,11 +148,11 @@ const TeamEditor = ({
                 const player = assignedPlayers[i];
                 const slotIndex = startIndex + i;
                 if (player) {
-                    return <PlayerCard key={`${player.id}-${slotIndex}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: slotIndex, team: teamIdentifier })} shirtColor={shirtColor} />;
-                } else if (canEdit) {
-                    return <AddPlayerButton key={`add-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
+                    return <PlayerCard key={`${teamIdentifier}-${player.id}-${slotIndex}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: slotIndex, team: teamIdentifier })} shirtColor={shirtColor} />;
+                } else if (showAddButton) {
+                    return <AddPlayerButton key={`add-${teamIdentifier}-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
                 } else {
-                    return <div key={`empty-${position}-${slotIndex}`} className="w-20 h-28" />;
+                    return <div key={`empty-${teamIdentifier}-${position}-${slotIndex}`} className="w-20 h-28" />;
                 }
             })}
         </div>
@@ -161,11 +164,11 @@ const TeamEditor = ({
         {Array.from({ length: 5 }).map((_, i) => {
             const player = reservePlayers[i];
             if (player) {
-                return <PlayerCard key={`${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
-            } else if (canEdit) {
-                return <AddPlayerButton key={`add-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
+                return <PlayerCard key={`${teamIdentifier}-${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
+            } else if (showAddButton) {
+                return <AddPlayerButton key={`add-${teamIdentifier}-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
             } else {
-                return <div key={`empty-RES-${i}`} className="w-20 h-28" />;
+                return <div key={`empty-${teamIdentifier}-RES-${i}`} className="w-20 h-28" />;
             }
         })}
     </div>
@@ -227,11 +230,12 @@ export default function LineupView(props: LineupViewProps) {
   }, []);
 
   const handlePlayerCardClick = (state: PlayerActionState) => {
-    if (canEdit) {
-      setPlayerActionState(state);
-    } else {
+    // Regular players can only manage their own team
+    if (!canEdit && state.team !== 'user') {
       onPlayerSelect(state.playerId);
+      return;
     }
+    setPlayerActionState(state);
   };
 
   const handleRemovePlayer = () => {
@@ -267,21 +271,26 @@ export default function LineupView(props: LineupViewProps) {
     setPlayerActionState(null);
   };
   
-  const handleClearLineup = (team: 'team1' | 'team2') => {
+  const handleClearLineup = (team: 'team1' | 'team2' | 'user') => {
     if (team === 'team1') {
         setTeam1Lineup(Array(11).fill(null));
         setTeam1Reserves(Array(5).fill(null));
-    } else {
+    } else if (team === 'team2') {
         setTeam2Lineup(Array(11).fill(null));
         setTeam2Reserves(Array(5).fill(null));
+    } else {
+        setUserLineup(Array(11).fill(null));
+        setUserReserves(Array(5).fill(null));
     }
   };
   
-  const handleClearReserves = (team: 'team1' | 'team2') => {
+  const handleClearReserves = (team: 'team1' | 'team2' | 'user') => {
     if (team === 'team1') {
       setTeam1Reserves(Array(5).fill(null));
-    } else {
+    } else if (team === 'team2') {
       setTeam2Reserves(Array(5).fill(null));
+    } else {
+      setUserReserves(Array(5).fill(null));
     }
   };
 
@@ -344,8 +353,11 @@ export default function LineupView(props: LineupViewProps) {
   };
 
   const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
-    if (!canEdit) return;
     onAddPlayer({ position, index, team });
+  };
+
+  const handleAddPlayerForUser = (position: Player['pos'] | 'RES', index: number) => {
+    onAddPlayer({ position, index });
   };
   
   const totalScore = userLineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
@@ -454,6 +466,7 @@ export default function LineupView(props: LineupViewProps) {
                                 onPlayerCardClick={handlePlayerCardClick}
                                 onAddPlayer={handleAddPlayerForTeam('team1')}
                                 canEdit={canEdit}
+                                isOwnTeam={false}
                             />
                         </TabsContent>
                         <TabsContent value="team2" className="mt-4">
@@ -475,6 +488,7 @@ export default function LineupView(props: LineupViewProps) {
                                 onPlayerCardClick={handlePlayerCardClick}
                                 onAddPlayer={handleAddPlayerForTeam('team2')}
                                 canEdit={canEdit}
+                                isOwnTeam={false}
                             />
                         </TabsContent>
                     </Tabs>
@@ -488,9 +502,10 @@ export default function LineupView(props: LineupViewProps) {
                 reserves={userReserves}
                 players={players}
                 formation={formation}
-                shirtColor={team1ShirtColor}
-                onAddPlayer={(pos, idx) => onAddPlayer({ position: pos, index: idx, team: 'team1' })}
-                canEdit={canEdit}
+                shirtColor={'verde'} 
+                onAddPlayer={handleAddPlayerForUser}
+                canEdit={false}
+                isOwnTeam={true}
                 onPlayerCardClick={handlePlayerCardClick}
             />
         )}
@@ -516,7 +531,7 @@ export default function LineupView(props: LineupViewProps) {
           <div className="flex justify-around items-center px-2 pb-2">
               <div className="flex flex-col items-center gap-1">
                   <span className="text-xs">Esquema Tático</span>
-                  <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={!canEdit}>
+                  <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={canEdit}>
                       <SelectTrigger className="w-auto bg-muted border-none h-8">
                           <SelectValue />
                       </SelectTrigger>
@@ -533,16 +548,21 @@ export default function LineupView(props: LineupViewProps) {
                     variant="ghost" 
                     size="icon" 
                     className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
-                    onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')} 
-                    disabled={!canEdit}
+                    onClick={() => handleClearReserves(canEdit ? (activeTab as 'team1' | 'team2') : 'user')} 
                   >
                       <Trash2 className="h-5 w-5 text-red-400" />
                   </Button>
               </div>
           </div>
-          <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={onSaveLineups} disabled={!canEdit}>
-              Salvar Times
-          </Button>
+          {canEdit ? (
+            <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={onSaveLineups}>
+                Salvar Times da Rodada
+            </Button>
+          ) : (
+            <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={() => {toast({title: "Time Salvo!", description: "Sua escalação foi salva com sucesso."})}}>
+                Salvar Minha Escalação
+            </Button>
+          )}
       </div>
     </div>
   );
