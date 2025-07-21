@@ -4,13 +4,20 @@
 import { useState, useMemo } from 'react';
 import type { User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Crown, ShieldCheck, Search, FilePenLine, UserCheck, UserX } from 'lucide-react';
+import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '../ui/input';
 import { ScrollArea } from '../ui/scroll-area';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
 
 interface AdminViewProps {
   onBack: () => void;
@@ -80,7 +87,7 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold text-foreground">Gerenciar Permissões</CardTitle>
             <CardDescription>
-              Conceda ou revogue permissões de edição para os jogadores em cada rodada.
+              Conceda ou revogue permissões de edição para os jogadores.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -114,26 +121,25 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
                                 </div>
                             </div>
                            
-                            <div className="flex items-center gap-2">
-                                <Button
-                                    size="sm"
-                                    variant={isLineupEditor ? 'secondary' : 'outline'}
-                                    onClick={() => handleSetEditorClick(user)}
-                                    className={cn("transition-all", isLineupEditor && "bg-blue-600 text-white hover:bg-blue-700")}
-                                >
-                                    {isLineupEditor ? <Crown className="mr-2 h-4 w-4" /> : <Crown className="mr-2 h-4 w-4" />}
-                                    Editar Times
+                           <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <Settings className="h-5 w-5" />
                                 </Button>
-                                <Button
-                                    size="sm"
-                                    variant={isScoutEditor ? 'secondary' : 'outline'}
-                                    onClick={() => handleSetScoutEditorClick(user)}
-                                    className={cn("transition-all", isScoutEditor && "bg-green-600 text-white hover:bg-green-700")}
-                                >
-                                    {isScoutEditor ? <FilePenLine className="mr-2 h-4 w-4" /> : <FilePenLine className="mr-2 h-4 w-4" />}
-                                    Editar Scouts
-                                </Button>
-                            </div>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleSetEditorClick(user)}>
+                                  <Crown className="mr-2 h-4 w-4" />
+                                  <span>Editar Times</span>
+                                  {isLineupEditor && <Check className="ml-auto h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSetScoutEditorClick(user)}>
+                                  <FilePenLine className="mr-2 h-4 w-4" />
+                                  <span>Editar Scouts</span>
+                                  {isScoutEditor && <Check className="ml-auto h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                            
                         </div>
                         );
