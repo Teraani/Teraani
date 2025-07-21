@@ -57,27 +57,6 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
     }
   };
 
-  const renderPlayerList = (title: string, playerIds: string[]) => (
-    <div>
-        <h4 className="text-lg font-semibold mb-2 text-foreground">{title}</h4>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {playerIds.map(playerId => {
-                const player = players[playerId];
-                if (!player) return null;
-                return (
-                    <div key={playerId} className="flex items-center gap-2 p-2 bg-muted/50 dark:bg-muted/20 rounded-md">
-                        <Image src={player.img} alt={player.name} width={32} height={32} data-ai-hint="player portrait" className="rounded-full" />
-                        <div>
-                            <p className="text-xs font-bold truncate">{player.name}</p>
-                            <p className="text-xs text-muted-foreground">{player.pos}</p>
-                        </div>
-                    </div>
-                )
-            })}
-        </div>
-    </div>
-  );
-
   return (
     <>
       <Button onClick={handleGetSuggestions} disabled={isLoading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
@@ -95,7 +74,7 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
       </Button>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md bg-card">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wand2 className="text-primary"/>
@@ -118,8 +97,6 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
                            <p className="text-sm text-muted-foreground">{suggestion.reasoning}</p>
                         </CardContent>
                     </Card>
-                    {renderPlayerList("Time Titular", suggestion.lineup)}
-                    {renderPlayerList("Reservas", suggestion.reserves)}
                 </>
             )}
             {!isLoading && !suggestion && (
