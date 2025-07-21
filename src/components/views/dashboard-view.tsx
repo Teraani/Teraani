@@ -6,7 +6,7 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck } from 'lucide-react';
 import React, { useState, useRef, useMemo } from 'react';
 import {
   DropdownMenu,
@@ -95,7 +95,7 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
                             accept="image/*"
                         />
                     </div>
-                    <h3 className="text-2xl font-bold">Felipe</h3>
+                    <h3 className="text-2xl font-bold">{user.name}</h3>
                 </div>
                 <div className="grid grid-cols-3 text-center mt-4">
                     <div>
@@ -175,13 +175,19 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
           <DropdownMenuContent className="w-56" align="start" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">Felipe</p>
+                <p className="text-sm font-medium leading-none">{user.name}</p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  felipe@exemplo.com
+                  {user.email}
                 </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {user.role === 'admin' && (
+              <DropdownMenuItem onClick={() => onNavigate('admin')}>
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>Admin</span>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => onNavigate('welcome')}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sair</span>

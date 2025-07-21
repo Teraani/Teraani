@@ -26,12 +26,17 @@ export interface PlayerStats {
 }
 
 export interface User {
+  id: string;
+  name: string;
+  email: string;
   teamName: string;
   partialScore: number;
   totalScore: number;
   valuation: number;
   lineup: string[];
   reserves: string[];
+  role: 'admin' | 'player';
+  avatar?: string;
 }
 
 export interface Friend {
@@ -47,20 +52,55 @@ export interface Friend {
 }
 
 interface AppData {
-  user: User;
+  users: Record<string, User>;
+  editorOfTheRound: string | null;
   players: Record<string, Player>;
   friends: Friend[];
 }
 
 export const data: AppData = {
-    user: {
-        teamName: "AmistososAI FC",
-        partialScore: 58.49,
-        totalScore: 1154.89,
-        valuation: 125.88,
-        lineup: ['p9', 'p6', 'p14', 'p15', 'p16', 'p1', 'p5', 'p7', 'p12', 'p4', 'p17'],
-        reserves: ['p2', 'p3', 'p8', 'p10', 'p13']
+    users: {
+        'user1': {
+            id: 'user1',
+            name: 'Felipe (Admin)',
+            email: 'felipe@exemplo.com',
+            teamName: "AmistososAI FC",
+            partialScore: 58.49,
+            totalScore: 1154.89,
+            valuation: 125.88,
+            lineup: ['p9', 'p6', 'p14', 'p15', 'p16', 'p1', 'p5', 'p7', 'p12', 'p4', 'p17'],
+            reserves: ['p2', 'p3', 'p8', 'p10', 'p13'],
+            role: 'admin',
+            avatar: 'https://placehold.co/128x128.png'
+        },
+        'user2': {
+            id: 'user2',
+            name: 'João Jogador',
+            email: 'joao@exemplo.com',
+            teamName: "João FC",
+            partialScore: 45.30,
+            totalScore: 1020.10,
+            valuation: 110.50,
+            lineup: [],
+            reserves: [],
+            role: 'player',
+            avatar: 'https://placehold.co/128x128.png'
+        },
+        'user3': {
+            id: 'user3',
+            name: 'Maria Atacante',
+            email: 'maria@exemplo.com',
+            teamName: "Maria Gols",
+            partialScore: 65.80,
+            totalScore: 1234.50,
+            valuation: 135.20,
+            lineup: [],
+            reserves: [],
+            role: 'player',
+            avatar: 'https://placehold.co/128x128.png'
+        }
     },
+    editorOfTheRound: null,
     players: {
       'p1': { name: 'Rafael Ohy', team: 'AVA', pos: 'MEI', value: 49.5, points: 49.5, last_val: 0.5, games: 21, img: 'https://placehold.co/60x60', stats: { wins: 15, losses: 3, draws: 3, goalsFor: 60, goalsAgainst: 46, goalDifference: 14, performance: 78.57, points: 49.5, goals: 10, assists: 9, yellowCards: 1, redCards: 0 } },
       'p2': { name: 'Renan Ropeiro', team: 'BOT', pos: 'MEI', value: 27, points: 27, last_val: 0.5, games: 13, img: 'https://placehold.co/60x60', stats: { wins: 9, losses: 3, draws: 2, goalsFor: 35, goalsAgainst: 28, goalDifference: 7, performance: 69.23, points: 27, goals: 1, assists: 0, yellowCards: 0, redCards: 0 } },

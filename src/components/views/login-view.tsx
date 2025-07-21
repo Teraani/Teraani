@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Mail } from 'lucide-react';
+import type { User } from '@/lib/data';
 
 interface LoginViewProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (userId: string) => void;
   onNavigateToRegister: () => void;
   onBack: () => void;
+  users: Record<string, User>;
 }
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -21,12 +24,26 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 
-export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack }: LoginViewProps) {
+export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack, users }: LoginViewProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = () => {
+    const user = Object.values(users).find(u => u.email === email);
+    // NOTE: In a real app, password would be hashed and checked on a server.
+    if (user) {
+        onLoginSuccess(user.id);
+    } else {
+        setError('E-mail ou senha inválidos.');
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-zinc-900">
        <header className="bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center">
          <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-800">
-          <ArrowLeft className="h-6 w-6 text-foreground" />
+          <ArrowLeft className="h-6 w-6 text-white" />
         </Button>
         <h1 className="text-xl font-bold text-center flex-1 pr-10">Login</h1>
       </header>
@@ -38,14 +55,15 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack
                     <Label htmlFor="email">E-mail</Label>
                     <div className="relative mt-1">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                        <Input id="email" type="email" placeholder="seuemail@exemplo.com" className="pl-10" />
+                        <Input id="email" type="email" placeholder="seuemail@exemplo.com" className="pl-10" value={email} onChange={(e) => setEmail(e.target.value)} />
                     </div>
                 </div>
                 <div>
                     <Label htmlFor="password">Senha</Label>
-                    <Input id="password" type="password" placeholder="Sua senha" className="mt-1" />
+                    <Input id="password" type="password" placeholder="Sua senha" className="mt-1" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
-                <Button onClick={onLoginSuccess} className="w-full bg-primary h-12 text-lg">
+                {error && <p className="text-sm text-destructive">{error}</p>}
+                <Button onClick={handleLogin} className="w-full bg-primary h-12 text-lg">
                     Entrar
                 </Button>
             </div>
@@ -61,7 +79,7 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister, onBack
                 </div>
             </div>
 
-            <Button onClick={onLoginSuccess} variant="outline" className="w-full h-12 text-lg">
+            <Button onClick={() => onLoginSuccess('user1')} variant="outline" className="w-full h-12 text-lg">
                 <GoogleIcon className="mr-2" />
                 Google
             </Button>

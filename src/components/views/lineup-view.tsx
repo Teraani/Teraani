@@ -24,22 +24,29 @@ interface LineupViewProps {
   userReserves: (string | null)[];
   setUserReserves: (reserves: (string | null)[]) => void;
   userAvatar: string | null;
+  currentUser: User;
+  editorOfTheRound: string | null;
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
-export default function LineupView({ userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer, userReserves, setUserReserves, userAvatar }: LineupViewProps) {
+export default function LineupView({ userLineup, players, onPlayerSelect, onNavigate, setUserLineup, onAddPlayer, userReserves, setUserReserves, userAvatar, currentUser, editorOfTheRound }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
   const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
 
+  const canEdit = useMemo(() => {
+      if (!currentUser) return false;
+      return currentUser.role === 'admin' || currentUser.id === editorOfTheRound;
+  }, [currentUser, editorOfTheRound]);
+
   // This will reconstruct the user object for components that need it, like AiSuggestions
   const user: User = useMemo(() => ({
-      ...data.user,
+      ...currentUser,
       lineup: userLineup.filter(id => id !== null) as string[],
       reserves: userReserves.filter(id => id !== null) as string[]
-  }), [userLineup, userReserves]);
+  }), [currentUser, userLineup, userReserves]);
 
 
   useEffect(() => {
@@ -86,6 +93,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
 
 
   const handleAddPlayer = (position: Player['pos'] | 'RES', index: number) => {
+    if (!canEdit) return;
     onAddPlayer({ position, index });
   };
   
@@ -164,13 +172,19 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
               <DropdownMenuContent className="w-56" align="start" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Felipe</p>
+                    <p className="text-sm font-medium leading-none text-white">{currentUser.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      felipe@exemplo.com
+                      {currentUser.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {currentUser.role === 'admin' && (
+                  <DropdownMenuItem onClick={() => onNavigate('admin')}>
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Admin</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => onNavigate('welcome')}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
@@ -181,7 +195,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
             <div className="flex-1 flex justify-center items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-foreground">Time</Button>
+                    <Button variant="ghost" className="text-white">Time</Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => setShirtColor('verde')}>Verde</DropdownMenuItem>
@@ -229,9 +243,9 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
        <div className="fixed bottom-0 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
           <div className="flex justify-between items-center px-2 pb-2">
               <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs text-foreground">Esquema Tático</span>
-                  <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
-                      <SelectTrigger className="w-auto bg-muted border-none h-8 text-foreground">
+                  <span className="text-xs text-white">Esquema Tático</span>
+                  <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={!canEdit}>
+                      <SelectTrigger className="w-auto bg-muted border-none h-8 text-white">
                           <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -242,21 +256,21 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
                   </Select>
               </div>
               <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs text-foreground">Desfazer Time</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-muted hover:bg-accent rounded-full" onClick={handleClearLineup}>
+                  <span className="text-xs text-white">Desfazer Time</span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 bg-muted hover:bg-accent rounded-full" onClick={handleClearLineup} disabled={!canEdit}>
                       <Trash2 className="h-5 w-5 text-red-400" />
                   </Button>
               </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
-              <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent">
+              <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent" disabled={!canEdit}>
                   Limpar Reservas
               </Button>
-              <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent" onClick={handleClearLineup}>
+              <Button variant="secondary" className="bg-muted text-foreground hover:bg-accent" onClick={handleClearLineup} disabled={!canEdit}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Limpar Time
               </Button>
-              <Button className="bg-green-600 text-white hover:bg-green-700">
+              <Button className="bg-green-600 text-white hover:bg-green-700" disabled={!canEdit}>
                   Salvar Time
               </Button>
           </div>
@@ -264,6 +278,3 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
     </div>
   );
 }
-
-// Helper to access data, assuming it's imported in this file now
-import { data } from '@/lib/data';
