@@ -1,78 +1,70 @@
 'use server';
 /**
- * @fileOverview AI-powered player replacement suggestions for the user's lineup.
+ * @fileOverview AI-powered lineup generation.
  *
- * - suggestPlayerReplacements - A function that suggests player replacements based on real-time data.
- * - SuggestPlayerReplacementsInput - The input type for the suggestPlayerReplacements function.
- * - SuggestPlayerReplacementsOutput - The return type for the suggestPlayerReplacements function.
+ * - generateBalancedTeam - A function that generates a random but balanced lineup.
+ * - GenerateBalancedTeamInput - The input type for the generateBalancedTeam function.
+ * - GenerateBalancedTeamOutput - The return type for the generateBalancedTeam function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const SuggestPlayerReplacementsInputSchema = z.object({
-  teamName: z.string().describe('The name of the user\s team.'),
-  currentLineup: z.array(z.string()).describe('Array of player IDs in the current lineup.'),
+const GenerateBalancedTeamInputSchema = z.object({
   availablePlayers: z.record(z.string(), z.object({
     name: z.string(),
     team: z.string(),
     pos: z.string(),
     value: z.number(),
     points: z.number(),
-    last_val: z.number(),
-    games: z.number(),
-    img: z.string(),
-  })).describe('A map of available players with their details.'),
-  teamBudget: z.number().describe('The remaining budget for the team.'),
-  upcomingMatchDifficulty: z.string().describe('Difficulty of the upcoming match (e.g., easy, medium, hard).'),
+  })).describe('A map of available players with their details. The key is the player ID.'),
+  teamBudget: z.number().describe('The maximum budget for the team.'),
 });
-export type SuggestPlayerReplacementsInput = z.infer<typeof SuggestPlayerReplacementsInputSchema>;
+export type GenerateBalancedTeamInput = z.infer<typeof GenerateBalancedTeamInputSchema>;
 
-const SuggestPlayerReplacementsOutputSchema = z.array(z.object({
-  playerToReplaceId: z.string().describe('The ID of the player to replace in the lineup.'),
-  suggestedReplacementPlayerId: z.string().describe('The ID of the suggested replacement player.'),
-  reasoning: z.string().describe('The detailed reasoning behind the suggested replacement.'),
-}));
-export type SuggestPlayerReplacementsOutput = z.infer<typeof SuggestPlayerReplacementsOutputSchema>;
+const GenerateBalancedTeamOutputSchema = z.object({
+    lineup: z.array(z.string()).describe('An array of 11 player IDs for the main lineup.'),
+    reserves: z.array(z.string()).describe('An array of 5 player IDs for the reserves.'),
+    reasoning: z.string().describe('A brief explanation of the team selection strategy.')
+});
+export type GenerateBalancedTeamOutput = z.infer<typeof GenerateBalancedTeamOutputSchema>;
 
-export async function suggestPlayerReplacements(input: SuggestPlayerReplacementsInput): Promise<SuggestPlayerReplacementsOutput> {
-  return suggestPlayerReplacementsFlow(input);
+
+export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Promise<GenerateBalancedTeamOutput> {
+  return generateBalancedTeamFlow(input);
 }
 
 const prompt = ai.definePrompt({
-  name: 'suggestPlayerReplacementsPrompt',
-  input: {schema: SuggestPlayerReplacementsInputSchema},
-  output: {schema: SuggestPlayerReplacementsOutputSchema},
-  prompt: `You are an AI assistant specializing in providing suggestions for player replacements in a fantasy football lineup.
+  name: 'generateBalancedTeamPrompt',
+  input: {schema: GenerateBalancedTeamInputSchema},
+  output: {schema: GenerateBalancedTeamOutputSchema},
+  prompt: `You are an AI assistant specializing in creating balanced fantasy football lineups.
+Your task is to generate a random, yet competitive and balanced, full team (11 starting players and 5 reserves) from the list of available players, while respecting the team budget.
 
-  Given the current lineup, available players, team budget, and upcoming match difficulty, provide a list of suggested player replacements with detailed reasoning for each suggestion.
+**Constraints:**
+1.  **Total Budget:** The total value of all 16 selected players (11 lineup + 5 reserves) must not exceed the provided \`teamBudget\`.
+2.  **Formation (Lineup):** The 11-player lineup must strictly follow a 4-3-3 formation:
+    - 1 Goalkeeper (GOL)
+    - 4 Defenders (ZAG or LAT)
+    - 3 Midfielders (MEI or VOL)
+    - 3 Forwards (ATA)
+3.  **Reserves:** Select 5 additional players for the bench. Try to pick one for each general position type (Goalkeeper, Defender, Midfielder, Forward) and one extra.
+4.  **Balancing:** Do not just pick the most expensive players. Create a balanced team by mixing high-value star players with cost-effective, high-potential players. The team should be competitive based on their points, but also random enough to be interesting.
+5.  **Uniqueness:** Ensure all selected player IDs are unique across the lineup and reserves.
 
-  Team Name: {{{teamName}}}
-Current Lineup: {{#each currentLineup}}{{{this}}}, {{/each}}
-Available Players: {{#each (toArray availablePlayers)}}{{{this.name}}} ({{{this.pos}}}), {{/each}}
-Team Budget: {{{teamBudget}}}
-Upcoming Match Difficulty: {{{upcomingMatchDifficulty}}}
+**Input Data:**
+-   **Available Players:** A map of player objects, where the key is the player's unique ID. Each player has a name, position (\`pos\`), value (\`value\`), and total points (\`points\`).
+-   **Team Budget:** {{{teamBudget}}}
 
-  Consider factors such as player form, recent performance, upcoming match difficulty, player value, and team budget when making suggestions.
-
-  Format your response as a JSON array of objects, where each object contains the playerToReplaceId, suggestedReplacementPlayerId, and a detailed reasoning for the replacement. The availablePlayers parameter is a map of player ids to player objects, and the currentLineup is an array of player ids.
-
-  Example:
-  [
-    {
-      "playerToReplaceId": "p4",
-      "suggestedReplacementPlayerId": "p2",
-      "reasoning": "M. DEPAY has been underperforming with a recent negative valuation. Replacing him with K. JORGE, who has shown better form and a positive valuation, could improve the team's overall performance."
-    }
-  ]
-  `,
+Based on the provided list of \`availablePlayers\` and the \`teamBudget\`, return a JSON object containing the generated \`lineup\` (11 player IDs), \`reserves\` (5 player IDs), and a brief \`reasoning\` for your choices.
+`,
 });
 
-const suggestPlayerReplacementsFlow = ai.defineFlow(
+const generateBalancedTeamFlow = ai.defineFlow(
   {
-    name: 'suggestPlayerReplacementsFlow',
-    inputSchema: SuggestPlayerReplacementsInputSchema,
-    outputSchema: SuggestPlayerReplacementsOutputSchema,
+    name: 'generateBalancedTeamFlow',
+    inputSchema: GenerateBalancedTeamInputSchema,
+    outputSchema: GenerateBalancedTeamOutputSchema,
   },
   async input => {
     const {output} = await prompt(input);

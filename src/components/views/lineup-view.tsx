@@ -67,6 +67,24 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
     setUserReserves(Array(5).fill(null));
   };
 
+  const handleApplyAiLineup = (lineup: string[], reserves: string[]) => {
+    // Ensure the arrays have the correct length, filling with null if necessary
+    const newLineup = Array(11).fill(null);
+    const newReserves = Array(5).fill(null);
+
+    lineup.slice(0, 11).forEach((id, i) => {
+        newLineup[i] = id;
+    });
+
+    reserves.slice(0, 5).forEach((id, i) => {
+        newReserves[i] = id;
+    });
+
+    setUserLineup(newLineup);
+    setUserReserves(newReserves);
+  };
+
+
   const handleAddPlayer = (position: Player['pos'] | 'RES', index: number) => {
     onAddPlayer({ position, index });
   };
@@ -193,7 +211,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
           {renderPlayerRow(1, goalkeeper, 'GOL', atkCount + midCount + defCount)}
         </Pitch>
         <div className="mt-4 flex flex-col gap-2">
-            <AiSuggestions user={user} players={players} />
+            <AiSuggestions user={user} players={players} onApplyLineup={handleApplyAiLineup} />
             <div className={cn(
                 "p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center font-bold text-primary-foreground",
                 isMarketOpen ? "bg-green-600" : "bg-orange-500"
