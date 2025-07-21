@@ -204,14 +204,14 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
         </div>
         
         <div className="mt-8">
-            <h3 className="text-lg font-bold mb-4 text-center">Reservas</h3>
+            <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
             {renderReserves()}
         </div>
       </div>
        <div className="fixed bottom-0 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
           <div className="flex justify-between items-center px-2 pb-2">
               <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs">Esquema Tático</span>
+                  <span className="text-xs text-muted-foreground">Esquema Tático</span>
                   <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
                       <SelectTrigger className="w-auto bg-muted border-none h-8">
                           <SelectValue />
@@ -224,7 +224,7 @@ export default function LineupView({ userLineup, players, onPlayerSelect, onNavi
                   </Select>
               </div>
               <div className="flex flex-col items-center gap-1">
-                  <span className="text-xs">Desfazer Time</span>
+                  <span className="text-xs text-muted-foreground">Desfazer Time</span>
                   <Button variant="ghost" size="icon" className="h-8 w-8 bg-muted hover:bg-accent rounded-full" onClick={handleClearLineup}>
                       <Trash2 className="h-5 w-5 text-red-400" />
                   </Button>
