@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
@@ -9,6 +9,7 @@ import { Share2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import type { View } from '@/app/page';
+import { cn } from '@/lib/utils';
 
 interface LineupViewProps {
   user: User;
@@ -23,6 +24,27 @@ export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 export default function LineupView({ user, players, onPlayerSelect, onNavigate }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
   const [shirtColor, setShirtColor] = useState<ShirtColor>('verde');
+  const [isMarketOpen, setIsMarketOpen] = useState(true);
+
+  useEffect(() => {
+    const checkMarketStatus = () => {
+      const now = new Date();
+      const day = now.getDay(); // 0=Sun, 1=Mon, ..., 4=Thu, ...
+      const hour = now.getHours();
+      
+      // Market is closed on Thursdays from 18:00 onwards
+      if (day === 4 && hour >= 18) {
+        setIsMarketOpen(false);
+      } else {
+        setIsMarketOpen(true);
+      }
+    };
+
+    checkMarketStatus();
+    // Optional: Check every minute if you want it to update live without a page refresh
+    const interval = setInterval(checkMarketStatus, 60000); 
+    return () => clearInterval(interval);
+  }, []);
 
   const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
   const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
@@ -109,9 +131,12 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
         </Pitch>
         <div className="mt-4 flex flex-col gap-2">
             <AiSuggestions user={user} players={players} />
-            <div className="bg-orange-500 text-white p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center">
+            <div className={cn(
+                "text-white p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center",
+                isMarketOpen ? "bg-green-600" : "bg-orange-500"
+            )}>
                 <Clock className="w-5 h-5" />
-                <span className="font-bold">MERCADO FECHADO</span>
+                <span className="font-bold">{isMarketOpen ? "MERCADO ABERTO" : "MERCADO FECHADO"}</span>
             </div>
         </div>
         
