@@ -75,18 +75,18 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
 
 
   return (
-    <div className="bg-gray-100 dark:bg-zinc-900 min-h-screen">
-       <header className="bg-white dark:bg-zinc-800 p-4 shadow-md flex items-center sticky top-0 z-20">
-        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-700">
+    <div className="dark">
+       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
+        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6 text-foreground" />
         </Button>
-        <h2 className="text-xl font-bold text-center flex-1 text-gray-800 dark:text-gray-100">Jogador</h2>
+        <h2 className="text-xl font-bold text-center flex-1 text-foreground">Jogador</h2>
         <div className="w-9 h-9"></div>
       </header>
       
-      <div className="bg-green-500 p-4 flex items-center gap-4">
+      <div className="bg-gradient-to-b from-primary/20 to-transparent p-4 flex items-center gap-4">
         <div className="relative">
-          <Avatar className="w-20 h-20 border-4 border-white cursor-pointer" onClick={handleAvatarClick}>
+          <Avatar className="w-20 h-20 border-4 border-card cursor-pointer" onClick={handleAvatarClick}>
             <AvatarImage src={player.img} alt={player.name} className="object-cover" />
             <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
           </Avatar>
@@ -102,13 +102,13 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
           />
         </div>
         <div>
-          <h3 className="text-2xl font-bold text-white">{player.name}</h3>
-          <p className="text-white">{player.pos}</p>
+          <h3 className="text-2xl font-bold text-foreground">{player.name}</h3>
+          <p className="text-muted-foreground">{player.pos}</p>
         </div>
       </div>
       
       <div className="p-4 space-y-4">
-        <Card className="bg-gray-200 dark:bg-zinc-800 border-none">
+        <Card className="bg-card border-none">
            <CardContent className="p-0">
              <Tabs defaultValue="resumo" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
@@ -118,42 +118,42 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                 </TabsList>
                 <TabsContent value="resumo">
                      <div className="mt-4 p-4">
-                        <h4 className="font-bold text-gray-800 dark:text-gray-100">Último Jogo</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Quinta - VI Guarani - 19:00hs</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Verde 1 x 2 Amarelo</p>
+                        <h4 className="font-bold text-foreground">Último Jogo</h4>
+                        <p className="text-sm text-muted-foreground mt-2">Quinta - VI Guarani - 19:00hs</p>
+                        <p className="text-sm text-muted-foreground">Verde 1 x 2 Amarelo</p>
 
-                        <h4 className="font-bold text-gray-800 dark:text-gray-100 mt-4">Índice por Rodada</h4>
-                        <Button className="mt-2 h-auto py-1 px-4 bg-blue-600 hover:bg-blue-700 text-white">Pontuação</Button>
+                        <h4 className="font-bold text-foreground mt-4">Índice por Rodada</h4>
+                        <Button className="mt-2 h-auto py-1 px-4 bg-primary/20 hover:bg-primary/30 text-primary-foreground">Pontuação</Button>
                         <div className="h-[200px] mt-2">
                             <PlayerStatsChart data={chartData} />
                         </div>
                     </div>
                 </TabsContent>
                  <TabsContent value="detalhes" className="p-4 space-y-4">
-                    <Card className="bg-gray-200 dark:bg-zinc-700">
+                    <Card className="bg-muted/50 dark:bg-muted/20">
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-lg font-bold">Médias de Pontos</CardTitle>
+                        <CardTitle className="text-lg font-bold text-foreground">Médias de Pontos</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="flex justify-around text-center">
                             <div>
                                 <p className="text-sm text-muted-foreground">Jogos</p>
-                                <p className="font-bold text-lg">{player.games ?? 0}</p>
+                                <p className="font-bold text-lg text-foreground">{player.games ?? 0}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Total Pontos</p>
-                                <p className="font-bold text-lg">{player.points?.toFixed(2) ?? '0.00'}</p>
+                                <p className="font-bold text-lg text-foreground">{player.points?.toFixed(2) ?? '0.00'}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Média por Partida</p>
-                                <p className="font-bold text-lg">{averagePoints.toFixed(2)}</p>
+                                <p className="font-bold text-lg text-foreground">{averagePoints.toFixed(2)}</p>
                             </div>
                         </div>
                       </CardContent>
                     </Card>
 
                     <div>
-                      <h3 className="text-lg font-bold mb-3">Pontuação por time</h3>
+                      <h3 className="text-lg font-bold text-foreground mb-3">Pontuação por time</h3>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm font-semibold text-muted-foreground mb-2 px-2">
                             <span>Time</span>
@@ -163,11 +163,11 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                             </div>
                         </div>
                         {matchesByTeam.map((match) => (
-                            <div key={match.team} className="flex justify-between items-center bg-white dark:bg-zinc-800 p-3 rounded-lg">
-                            <span className="font-bold">{match.team}</span>
+                            <div key={match.team} className="flex justify-between items-center bg-muted/50 dark:bg-muted/20 p-3 rounded-lg">
+                            <span className="font-bold text-foreground">{match.team}</span>
                             <div className="flex gap-8 text-right">
-                                <span className="font-bold text-md w-10">{match.average.toFixed(2)}</span>
-                                <span className="font-bold text-md w-10">{match.points.toFixed(2)}</span>
+                                <span className="font-bold text-md w-10 text-foreground">{match.average.toFixed(2)}</span>
+                                <span className="font-bold text-md w-10 text-foreground">{match.points.toFixed(2)}</span>
                             </div>
                         </div>
                         ))}
@@ -175,7 +175,7 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                     </div>
                  </TabsContent>
                  <TabsContent value="heatmap" className="p-4 space-y-4">
-                    <h4 className="font-bold text-gray-800 dark:text-gray-100">Mapa de Calor</h4>
+                    <h4 className="font-bold text-foreground">Mapa de Calor</h4>
                     <div className="text-center text-muted-foreground p-4 bg-muted/50 dark:bg-muted/20 rounded-lg">
                         <p className="mb-4">Conecte sua conta Strava, Garmin ou Samsung para visualizar o mapa de calor de suas atividades em campo.</p>
                         <div className="flex justify-center gap-4 mb-4">
