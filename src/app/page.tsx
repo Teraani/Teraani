@@ -19,6 +19,7 @@ import LoginView from '@/components/views/login-view';
 import RegisterView from '@/components/views/register-view';
 import { useToast } from '@/hooks/use-toast';
 import LiveView from '@/components/views/live-view';
+import type { LiveEvent } from '@/components/views/live-view';
 
 
 export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live';
@@ -36,6 +37,7 @@ export default function Home() {
   const [previousView, setPreviousView] = useState<View>('welcome');
   const [appData, setAppData] = useState(data);
   const { toast } = useToast();
+  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
 
   // Simulate a logged-in user. By default, it's the admin.
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
@@ -190,6 +192,14 @@ export default function Home() {
     });
   };
 
+  const handleAddLiveEvent = (event: Omit<LiveEvent, 'time'>) => {
+    const newEvent: LiveEvent = {
+      ...event,
+      time: `${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+    };
+    setLiveEvents(prevEvents => [newEvent, ...prevEvents]);
+  };
+
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
@@ -268,7 +278,15 @@ export default function Home() {
       case 'admin':
         return <AdminView onBack={goBack} users={Object.values(appData.users)} editorOfTheRound={appData.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={appData.scoutEditor} onSetScoutEditor={handleSetScoutEditor} />;
        case 'live':
-        return <LiveView onBack={goBack} user={userWithCurrentLineup!} players={appData.players} />;
+        return <LiveView 
+                  onBack={goBack} 
+                  user={userWithCurrentLineup!} 
+                  players={appData.players} 
+                  canEditScouts={canEditScouts}
+                  liveEvents={liveEvents}
+                  onAddLiveEvent={handleAddLiveEvent}
+                  allPlayers={Object.values(appData.players).map(p => ({...p, id: Object.keys(appData.players).find(key => appData.players[key] === p)!}))}
+                />;
       default:
         return <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }
