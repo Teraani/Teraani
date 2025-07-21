@@ -17,14 +17,20 @@ interface LineupViewProps {
 }
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2';
-type JerseyColor = 'green' | 'yellow';
 
 export default function LineupView({ user, players, onPlayerSelect, onNavigate }: LineupViewProps) {
   const [formation, setFormation] = useState<Formation>('4-3-3');
-  const [jerseyColor, setJerseyColor] = useState<JerseyColor>('green');
 
   const lineupPlayers = user.lineup.map(id => ({ ...players[id], id }));
   const totalScore = lineupPlayers.reduce((sum, player) => sum + player.points, 0);
+
+  const reservePlayers = useMemo(() => {
+    const lineupIds = new Set(user.lineup);
+    return Object.entries(players)
+      .filter(([id]) => !lineupIds.has(id))
+      .slice(0, 5)
+      .map(([id, player]) => ({ ...player, id }));
+  }, [user.lineup, players]);
 
   const { attackers, midfielders, defenders, goalkeeper } = useMemo(() => {
     const allPlayersByPos: { [key in Player['pos']]: ({ id: string } & Player)[] } = {
@@ -67,22 +73,22 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
         <Pitch>
           {attackers.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {attackers.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} jerseyColor={jerseyColor} />)}
+              {attackers.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
             </div>
           )}
           {midfielders.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {midfielders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} jerseyColor={jerseyColor} />)}
+              {midfielders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
             </div>
           )}
           {defenders.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} jerseyColor={jerseyColor} />)}
+              {defenders.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
             </div>
           )}
           {goalkeeper.length > 0 && (
             <div className="flex justify-around z-10 w-full">
-              {goalkeeper.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} jerseyColor={jerseyColor} />)}
+              {goalkeeper.map(p => <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} />)}
             </div>
           )}
         </Pitch>
@@ -91,6 +97,15 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
             <div className="bg-orange-500 text-white p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center">
                 <Clock className="w-5 h-5" />
                 <span className="font-bold">MERCADO FECHADO</span>
+            </div>
+        </div>
+        
+        <div className="mt-8">
+            <h3 className="text-white text-lg font-bold mb-4 text-center">Reservas</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
+                {reservePlayers.map(p => (
+                    <PlayerCard key={p.id} player={p} onPlayerSelect={onPlayerSelect} isReserve />
+                ))}
             </div>
         </div>
       </div>
@@ -109,17 +124,11 @@ export default function LineupView({ user, players, onPlayerSelect, onNavigate }
                       </SelectContent>
                   </Select>
               </div>
-               <div className="flex flex-col items-center gap-1 text-white">
+              <div className="flex flex-col items-center gap-1 text-white opacity-50 cursor-not-allowed">
                   <span className="text-xs">Cor da Camisa</span>
-                  <Select value={jerseyColor} onValueChange={(value: JerseyColor) => setJerseyColor(value)}>
-                      <SelectTrigger className="w-auto bg-gray-700 border-none text-white h-8">
-                          <SelectValue placeholder={<Palette className="h-5 w-5" />} />
-                      </SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="green">Verde</SelectItem>
-                          <SelectItem value="yellow">Amarelo</SelectItem>
-                      </SelectContent>
-                  </Select>
+                  <div className="w-auto bg-gray-700 border-none text-white h-8 flex items-center justify-center px-3 rounded-md">
+                    <Palette className="h-5 w-5" />
+                  </div>
               </div>
               <div className="flex flex-col items-center gap-1 text-white">
                   <span className="text-xs">Capitão</span>
