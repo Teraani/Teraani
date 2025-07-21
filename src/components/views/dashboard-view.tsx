@@ -154,9 +154,9 @@ function ConnectSection() {
         <Card className="bg-secondary border-none">
             <CardContent className="p-4 text-center">
                 <ul className="space-y-2">
-                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com strava</a></li>
-                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com garmim</a></li>
-                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com a Samsung</a></li>
+                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com strava (em breve)</a></li>
+                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com garmim (em breve)</a></li>
+                    <li><a href="#" className="font-semibold text-secondary-foreground hover:underline">Conecte-se com a Samsung (em breve)</a></li>
                 </ul>
             </CardContent>
         </Card>
