@@ -64,7 +64,7 @@ const AddFriendDialog = ({ players, onSelect }: { players: Record<string, Player
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="hover:bg-gray-200 dark:hover:bg-zinc-800">
+        <Button variant="ghost" size="icon" className="hover:bg-accent">
           <UserPlus className="h-6 w-6 text-foreground" />
         </Button>
       </DialogTrigger>
@@ -141,12 +141,12 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
 
 
   return (
-    <div className="bg-gray-100 dark:bg-zinc-950 min-h-screen">
-      <header className="bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center justify-between sticky top-0 z-20">
-        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-gray-200 dark:hover:bg-zinc-800">
+    <div className="dark">
+      <header className="bg-card p-4 shadow-sm flex items-center justify-between sticky top-0 z-20">
+        <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6 text-foreground" />
         </Button>
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Amigos</h2>
+        <h2 className="text-xl font-bold text-foreground">Amigos</h2>
         <AddFriendDialog players={players} onSelect={handleAddCompetitor} />
       </header>
 
@@ -154,8 +154,8 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
         <div className="space-y-3">
           {competitors.map((competitor) => (
             <Card key={competitor.id} className={cn(
-                "bg-white dark:bg-zinc-900 shadow-none border-b border-gray-200 dark:border-zinc-800 rounded-none last:border-b-0",
-                competitor.id === 'user' && "border-2 border-primary dark:border-primary"
+                "bg-card shadow-none border-b border-border/50 rounded-lg",
+                competitor.id === 'user' && "border-2 border-primary"
               )}>
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -166,17 +166,17 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
                     teamName={competitor.teamName}
                   />
                   <div className="ml-4">
-                    <p className="font-bold text-gray-800 dark:text-gray-100">{competitor.teamName}</p>
+                    <p className="font-bold text-foreground">{competitor.teamName}</p>
                     <div className="flex items-center gap-2">
                        {competitor.isPro && <Badge className="bg-yellow-400 text-yellow-900 px-1.5 py-0 text-[10px] h-4">PRO</Badge>}
-                       <span className="text-sm text-gray-500 dark:text-gray-400">{competitor.name}</span>
+                       <span className="text-sm text-muted-foreground">{competitor.name}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="text-right">
                     <p className="font-bold text-lg text-green-500">{competitor.score?.toFixed(2) ?? '---'}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">JOG. PONT. {competitor.playersPlayed}/{competitor.totalPlayers}</p>
+                    <p className="text-xs text-muted-foreground">JOG. PONT. {competitor.playersPlayed}/{competitor.totalPlayers}</p>
                 </div>
               </CardContent>
             </Card>
