@@ -8,16 +8,33 @@ import { Button } from '@/components/ui/button';
 import { Search, ArrowLeft } from 'lucide-react';
 import PlayerListItem from '@/components/market/player-list-item';
 import type { Position } from '@/app/page';
+import { useToast } from '@/hooks/use-toast';
 
 interface MarketViewProps {
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
   onBack: () => void;
   position: Position;
+  scaledPlayerIds: string[];
 }
 
-export default function MarketView({ players, onPlayerSelect, onBack, position }: MarketViewProps) {
+export default function MarketView({ players, onPlayerSelect, onBack, position, scaledPlayerIds }: MarketViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const { toast } = useToast();
+
+  const scaledIdsSet = useMemo(() => new Set(scaledPlayerIds), [scaledPlayerIds]);
+
+  const handleSelectPlayer = (playerId: string) => {
+    if (scaledIdsSet.has(playerId)) {
+      toast({
+        title: "Jogador já escalado!",
+        description: "Este jogador já está em um dos times. Remova-o para poder escalá-lo em outra posição.",
+        variant: "destructive",
+      });
+      return;
+    }
+    onPlayerSelect(playerId);
+  };
 
   const groupedPlayers = useMemo(() => {
     const lowerCaseSearch = searchTerm.toLowerCase();
@@ -90,7 +107,12 @@ export default function MarketView({ players, onPlayerSelect, onBack, position }
                 <h3 className="font-bold text-lg mb-2">{pos}</h3>
                 <div className="space-y-2">
                   {playerList.map((player) => (
-                    <PlayerListItem key={player.id} player={player} onPlayerSelect={() => onPlayerSelect(player.id)} />
+                    <PlayerListItem 
+                      key={player.id} 
+                      player={player} 
+                      onPlayerSelect={() => handleSelectPlayer(player.id)}
+                      isScaled={scaledIdsSet.has(player.id)}
+                    />
                   ))}
                 </div>
               </div>

@@ -3,13 +3,15 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
+import { Badge } from '../ui/badge';
 
 interface PlayerListItemProps {
   player: { id: string } & Player;
   onPlayerSelect: (playerId: string) => void;
+  isScaled?: boolean;
 }
 
-export default function PlayerListItem({ player, onPlayerSelect }: PlayerListItemProps) {
+export default function PlayerListItem({ player, onPlayerSelect, isScaled }: PlayerListItemProps) {
   const valColor = player.last_val >= 0 ? 'text-green-600' : 'text-red-600';
   const valSign = player.last_val >= 0 ? '+' : '';
 
@@ -24,7 +26,10 @@ export default function PlayerListItem({ player, onPlayerSelect }: PlayerListIte
             <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-bold text-gray-800 dark:text-gray-100">{player.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-bold text-gray-800 dark:text-gray-100">{player.name}</p>
+            {isScaled && <Badge variant="secondary" className="text-xs">Escalado</Badge>}
+          </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">{player.pos} - {player.team}</p>
         </div>
       </div>

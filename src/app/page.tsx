@@ -152,6 +152,14 @@ export default function Home() {
     }
   }, [currentUser, userLineup, userReserves]);
 
+  const allScaledPlayerIds = useMemo(() => {
+    const scaledIds = new Set<string>();
+    [...team1Lineup, ...team1Reserves, ...team2Lineup, ...team2Reserves, ...userLineup, ...userReserves].forEach(id => {
+      if (id) scaledIds.add(id);
+    });
+    return Array.from(scaledIds);
+  }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves, userLineup, userReserves]);
+
   const renderView = () => {
     if (!userWithCurrentLineup && currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register') {
       return <LoginView onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => navigateTo('register')} onBack={() => navigateTo('welcome')} users={appData.users} />;
@@ -191,7 +199,13 @@ export default function Home() {
       case 'player-details':
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userWithCurrentLineup!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'market':
-        return <MarketView players={appData.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} />;
+        return <MarketView 
+                 players={appData.players} 
+                 onPlayerSelect={addPlayerToLineup} 
+                 onBack={goBack} 
+                 position={slotToAddPlayer?.position ?? null}
+                 scaledPlayerIds={allScaledPlayerIds}
+               />;
       case 'partial-score':
         return <PartialScoreView user={userWithCurrentLineup!} players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'games':
