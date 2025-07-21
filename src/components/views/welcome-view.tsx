@@ -17,11 +17,11 @@ const SoccerBallIcon = (props: React.SVGProps<SVGSVGElement>) => (
     {...props}
   >
     <circle cx="12" cy="12" r="10" />
-    <path d="m12 5.2 4.2 2.5-1.7 4.3-5 0-1.7-4.3z" />
+    <path d="m12 5.2 4.2 2.5-1.7 4.3-5 0-1.7-4.3z" fill="currentColor" />
     <path d="M5.1 9.2 3.4 14l4.3 1.7 2.5-4.2z" />
     <path d="m18.9 9.2 1.7 4.8-4.3-1.7-2.5-4.2z" />
-    <path d="M12 18.8 7.8 16.3l-2.5 4.2L9.6 22z" />
-    <path d="m12 18.8 4.2-2.5 2.5 4.2-4.3-1.5z" />
+    <path d="M12 18.8 7.8 16.3l-2.5 4.2L9.6 22z" fill="currentColor" />
+    <path d="m12 18.8 4.2-2.5 2.5 4.2-4.3-1.5z" fill="currentColor" />
   </svg>
 );
 
