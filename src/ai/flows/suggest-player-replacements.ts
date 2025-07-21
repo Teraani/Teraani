@@ -1,14 +1,14 @@
 'use server';
 /**
- * @fileOverview AI-powered lineup generation.
+ * @fileOverview Player lineup generation.
  *
  * - generateBalancedTeam - A function that generates a random but balanced lineup.
  * - GenerateBalancedTeamInput - The input type for the generateBalancedTeam function.
  * - GenerateBalancedTeamOutput - The return type for the generateBalancedTeam function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
+import type { Player } from '@/lib/data';
 
 const GenerateBalancedTeamInputSchema = z.object({
   availablePlayers: z.record(z.string(), z.object({
@@ -17,6 +17,10 @@ const GenerateBalancedTeamInputSchema = z.object({
     pos: z.string(),
     value: z.number(),
     points: z.number(),
+    img: z.string().optional(),
+    stats: z.any().optional(),
+    last_val: z.number().optional(),
+    games: z.number().optional(),
   })).describe('A map of available players with their details. The key is the player ID.'),
   teamBudget: z.number().describe('The maximum budget for the team.'),
 });
@@ -31,43 +35,108 @@ export type GenerateBalancedTeamOutput = z.infer<typeof GenerateBalancedTeamOutp
 
 
 export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Promise<GenerateBalancedTeamOutput> {
-  return generateBalancedTeamFlow(input);
+    const { availablePlayers, teamBudget } = input;
+
+    const allPlayersWithId = Object.entries(availablePlayers).map(([id, player]) => ({ id, ...player }));
+
+    // Helper to shuffle array
+    const shuffle = <T>(array: T[]): T[] => {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    };
+    
+    const playersByPos: Record<string, ({ id: string } & Player)[]> = {
+        'GOL': [],
+        'DEF': [], // ZAG or LAT
+        'MEI': [], // MEI or VOL
+        'ATA': []
+    };
+
+    allPlayersWithId.forEach(p => {
+        if (p.pos === 'GOL') playersByPos['GOL'].push(p);
+        else if (['ZAG', 'LAT'].includes(p.pos)) playersByPos['DEF'].push(p);
+        else if (['MEI', 'VOL'].includes(p.pos)) playersByPos['MEI'].push(p);
+        else if (p.pos === 'ATA') playersByPos['ATA'].push(p);
+    });
+
+    for (const pos in playersByPos) {
+        shuffle(playersByPos[pos]);
+    }
+
+    const lineup: string[] = [];
+    const reserves: string[] = [];
+    const selectedIds = new Set<string>();
+    let currentCost = 0;
+
+    const formation = {
+        'GOL': 1,
+        'DEF': 4,
+        'MEI': 3,
+        'ATA': 3
+    };
+
+    const reserveFormation = {
+        'GOL': 1,
+        'DEF': 1,
+        'MEI': 1,
+        'ATA': 1,
+        'ANY': 1
+    };
+
+    const selectPlayers = (count: number, from: ({ id: string } & Player)[]) => {
+        const selected = [];
+        for (const player of from) {
+            if (selected.length >= count) break;
+            if (!selectedIds.has(player.id) && currentCost + player.value <= teamBudget) {
+                selected.push(player.id);
+                selectedIds.add(player.id);
+                currentCost += player.value;
+            }
+        }
+        return selected;
+    };
+
+    // Select lineup
+    lineup.push(...selectPlayers(formation.GOL, playersByPos.GOL));
+    lineup.push(...selectPlayers(formation.DEF, playersByPos.DEF));
+    lineup.push(...selectPlayers(formation.MEI, playersByPos.MEI));
+    lineup.push(...selectPlayers(formation.ATA, playersByPos.ATA));
+
+
+    // Select reserves
+    reserves.push(...selectPlayers(reserveFormation.GOL, playersByPos.GOL));
+    reserves.push(...selectPlayers(reserveFormation.DEF, playersByPos.DEF));
+    reserves.push(...selectPlayers(reserveFormation.MEI, playersByPos.MEI));
+    reserves.push(...selectPlayers(reserveFormation.ATA, playersByPos.ATA));
+    
+    // Select one more any player for reserve
+    const remainingPlayers = allPlayersWithId.filter(p => !selectedIds.has(p.id));
+    reserves.push(...selectPlayers(reserveFormation.ANY, shuffle(remainingPlayers)));
+
+    // Fill up if not enough players were selected due to budget
+    const fillSlots = (targetArray: string[], targetCount: number) => {
+        while(targetArray.length < targetCount) {
+             const randomPlayer = shuffle(allPlayersWithId.filter(p => !selectedIds.has(p.id)))[0];
+             if(randomPlayer && !selectedIds.has(randomPlayer.id) && currentCost + randomPlayer.value <= teamBudget) {
+                targetArray.push(randomPlayer.id);
+                selectedIds.add(randomPlayer.id);
+                currentCost += randomPlayer.value;
+             } else {
+                 break; // Cannot add more players
+             }
+        }
+    }
+    
+    fillSlots(lineup, 11);
+    fillSlots(reserves, 5);
+
+
+    return {
+        lineup,
+        reserves,
+        reasoning: 'Este time foi gerado de forma aleatória, buscando um bom equilíbrio entre as posições e o aproveitamento do orçamento disponível.'
+    };
 }
-
-const prompt = ai.definePrompt({
-  name: 'generateBalancedTeamPrompt',
-  input: {schema: GenerateBalancedTeamInputSchema},
-  output: {schema: GenerateBalancedTeamOutputSchema},
-  prompt: `You are an AI assistant specializing in creating balanced fantasy football lineups.
-Your task is to generate a random, yet competitive and balanced, full team (11 starting players and 5 reserves) from the list of available players, while respecting the team budget.
-
-**Constraints:**
-1.  **Total Budget:** The total value of all 16 selected players (11 lineup + 5 reserves) must not exceed the provided \`teamBudget\`.
-2.  **Formation (Lineup):** The 11-player lineup must strictly follow a 4-3-3 formation:
-    - 1 Goalkeeper (GOL)
-    - 4 Defenders (ZAG or LAT)
-    - 3 Midfielders (MEI or VOL)
-    - 3 Forwards (ATA)
-3.  **Reserves:** Select 5 additional players for the bench. Try to pick one for each general position type (Goalkeeper, Defender, Midfielder, Forward) and one extra.
-4.  **Balancing:** Do not just pick the most expensive players. Create a balanced team by mixing high-value star players with cost-effective, high-potential players. The team should be competitive based on their points, but also random enough to be interesting.
-5.  **Uniqueness:** Ensure all selected player IDs are unique across the lineup and reserves.
-
-**Input Data:**
--   **Available Players:** A map of player objects, where the key is the player's unique ID. Each player has a name, position (\`pos\`), value (\`value\`), and total points (\`points\`).
--   **Team Budget:** {{{teamBudget}}}
-
-Based on the provided list of \`availablePlayers\` and the \`teamBudget\`, return a JSON object containing the generated \`lineup\` (11 player IDs), \`reserves\` (5 player IDs), and a brief \`reasoning\` for your choices.
-`,
-});
-
-const generateBalancedTeamFlow = ai.defineFlow(
-  {
-    name: 'generateBalancedTeamFlow',
-    inputSchema: GenerateBalancedTeamInputSchema,
-    outputSchema: GenerateBalancedTeamOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
