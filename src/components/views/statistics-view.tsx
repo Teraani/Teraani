@@ -42,7 +42,7 @@ const PlayerStatsCard = ({ player, rank }: { player: Player, rank: number }) => 
                   </Avatar>
                   <div className="flex-1 text-left">
                       <p className="font-bold text-base text-foreground">{player.name}</p>
-                      <p className="text-sm text-muted-foreground">{player.team} - {player.pos}</p>
+                      <p className="text-sm text-muted-foreground">{player.pos}</p>
                   </div>
                   <div className="text-right">
                       <p className="font-extrabold text-xl text-primary">{player.points?.toFixed(1) ?? 'N/A'}</p>
