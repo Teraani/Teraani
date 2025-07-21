@@ -258,7 +258,7 @@ export default function Home() {
                  scaledPlayerIds={allScaledPlayerIds}
                />;
       case 'partial-score':
-        return <PartialScoreView user={userWithCurrentLineup!} players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
+        return <PartialScoreView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'games':
         return <GamesView onBack={goBack} />;
       case 'friends-score':
