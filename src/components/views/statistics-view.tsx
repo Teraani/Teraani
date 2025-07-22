@@ -6,15 +6,21 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, PlayerStats, Ranking, GoalieRanking, User } from '@/lib/data';
 import { data } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Shield, Star, Award, Footprints, Target, Percent, Trophy } from 'lucide-react';
+import { ArrowLeft, Save, Shield, Star, Award, Footprints, Target, Percent, Trophy, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent } from '../ui/card';
 import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from '../ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+
 
 interface StatisticsViewProps {
   players: Record<string, Player>;
@@ -24,6 +30,18 @@ interface StatisticsViewProps {
   canEditScouts: boolean;
   onSave: (updatedPlayers: Record<string, Player>, updatedScalers?: Record<string, Ranking>, updatedGoalies?: Record<string, GoalieRanking>) => void;
 }
+
+type StatCategory = 'general' | 'scorers' | 'assists' | 'avgGoals' | 'scalers' | 'defense';
+
+const statCategories: { key: StatCategory; label: string; icon: React.ElementType }[] = [
+  { key: 'general', label: 'Geral', icon: Star },
+  { key: 'scorers', label: 'Artilharia', icon: Target },
+  { key: 'assists', label: 'Assistências', icon: Footprints },
+  { key: 'avgGoals', label: 'Média de Gols', icon: Percent },
+  { key: 'scalers', label: 'Escalantes', icon: Trophy },
+  { key: 'defense', label: 'Goleiros', icon: Shield },
+];
+
 
 const RankingListItem = ({ player, rank, statValue, statLabel, onPlayerSelect }: {
     player: {id: string; avatar?: string} & (Player | Ranking | GoalieRanking | User),
@@ -228,6 +246,7 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
     const [editablePlayers, setEditablePlayers] = useState<Record<string, Player>>({});
     const [editableScalers, setEditableScalers] = useState<Record<string, Ranking>>({});
     const [editableGoalies, setEditableGoalies] = useState<Record<string, GoalieRanking>>({});
+    const [activeStat, setActiveStat] = useState<StatCategory>('general');
 
     const [hasChanges, setHasChanges] = useState(false);
     
@@ -292,6 +311,28 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
             }
         })
     }, [editableGoalies, users]);
+    
+    const renderContent = () => {
+      switch (activeStat) {
+        case 'general':
+          return <EditableRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />;
+        case 'scorers':
+          return <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="goals" label="Gols" type="player" />;
+        case 'assists':
+          return <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="assists" label="Assist." type="player" />;
+        case 'avgGoals':
+          return <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="avgGoals" label="Média" type="player" />;
+        case 'scalers':
+          return <SimpleRankingList items={scalersMemo} onPlayerSelect={onPlayerSelect} stat="avgDifference" label="Diferença Média" type="scaler" />;
+        case 'defense':
+          return <SimpleRankingList items={goaliesMemo} onPlayerSelect={onPlayerSelect} stat="avgGoalsConceded" label="Média Gols Sofridos" type="goalie" />;
+        default:
+          return null;
+      }
+    };
+
+    const currentCategory = statCategories.find(c => c.key === activeStat);
+    const CurrentIcon = currentCategory?.icon || Star;
 
 
     return (
@@ -305,39 +346,29 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
             </header>
 
             <main className="p-4">
-                 <Tabs defaultValue="general" className="w-full">
-                    <ScrollArea className="w-full whitespace-nowrap pb-4">
-                        <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-full">
-                            <TabsTrigger value="general"><Star className="w-4 h-4 mr-1"/>Geral</TabsTrigger>
-                            <TabsTrigger value="scorers"><Target className="w-4 h-4 mr-1"/>Artilharia</TabsTrigger>
-                            <TabsTrigger value="assists"><Footprints className="w-4 h-4 mr-1"/>Assists</TabsTrigger>
-                            <TabsTrigger value="avgGoals"><Percent className="w-4 h-4 mr-1"/>Média Gols</TabsTrigger>
-                            <TabsTrigger value="scalers"><Trophy className="w-4 h-4 mr-1"/>Escalantes</TabsTrigger>
-                            <TabsTrigger value="defense"><Shield className="w-4 h-4 mr-1"/>Goleiros</TabsTrigger>
-                        </TabsList>
-                    </ScrollArea>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between mb-4">
+                         <div className="flex items-center">
+                           <CurrentIcon className="w-4 h-4 mr-2" />
+                           {currentCategory?.label}
+                         </div>
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+                      {statCategories.map(category => (
+                        <DropdownMenuItem key={category.key} onSelect={() => setActiveStat(category.key)}>
+                          <category.icon className="w-4 h-4 mr-2" />
+                          {category.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                     
-                    <ScrollArea className="h-[calc(100vh-220px)] pr-2">
-                        <TabsContent value="general">
-                            <EditableRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
-                        </TabsContent>
-                        <TabsContent value="scorers">
-                            <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="goals" label="Gols" type="player" />
-                        </TabsContent>
-                        <TabsContent value="assists">
-                           <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="assists" label="Assist." type="player" />
-                        </TabsContent>
-                        <TabsContent value="avgGoals">
-                           <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="avgGoals" label="Média" type="player" />
-                        </TabsContent>
-                         <TabsContent value="scalers">
-                           <SimpleRankingList items={scalersMemo} onPlayerSelect={onPlayerSelect} stat="avgDifference" label="Diferença Média" type="scaler" />
-                        </TabsContent>
-                        <TabsContent value="defense">
-                           <SimpleRankingList items={goaliesMemo} onPlayerSelect={onPlayerSelect} stat="avgGoalsConceded" label="Média Gols Sofridos" type="goalie" />
-                        </TabsContent>
-                    </ScrollArea>
-                </Tabs>
+                <ScrollArea className="h-[calc(100vh-220px)] pr-2">
+                   {renderContent()}
+                </ScrollArea>
             </main>
             {canEditScouts && hasChanges && (
                 <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-30">
