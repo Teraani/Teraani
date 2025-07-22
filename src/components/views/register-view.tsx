@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,6 @@ const SignalIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 interface RegisterViewProps {
   onRegisterSuccess: () => void;
-  onNavigateToLogin: () => void; // This prop might be obsolete now
 }
 
 export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
@@ -66,3 +64,4 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
     </div>
   );
 }
+

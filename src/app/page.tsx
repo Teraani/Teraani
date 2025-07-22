@@ -16,7 +16,7 @@ import FriendsScoreView from '@/components/views/friends-score-view';
 import StatisticsView from '@/components/views/statistics-view';
 import AdminView from '@/components/views/admin-view';
 import BottomNav from '@/components/bottom-nav';
-import RegisterView from '@/components/views/register-view';
+import LoginView from '@/components/views/login-view';
 import { useToast } from '@/hooks/use-toast';
 import LiveView from '@/components/views/live-view';
 import type { LiveEvent } from '@/components/views/live-view';
@@ -24,7 +24,7 @@ import PaymentsView from '@/components/views/payments-view';
 import { cn } from '@/lib/utils';
 
 
-export type View = 'welcome' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
+export type View = 'welcome' | 'login' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -87,16 +87,11 @@ export default function Home() {
     // User lineup is now derived from the global teams, not individual state
     setUserAvatar(user.avatar || null);
     navigateTo('dashboard');
-  };
-
-  const handleRegisterSuccess = () => {
-    // In a real app, you'd create a new user. Here, we'll just log in as the default user.
-    handleLoginSuccess('user27'); // Log in as admin for now
     toast({
-      title: "Login realizado com sucesso!",
-      description: "Bem-vindo ao Amistosos FC!",
+      title: `Bem-vindo, ${user.name}!`,
+      description: "Login realizado com sucesso.",
     });
-  }
+  };
 
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
@@ -310,18 +305,18 @@ export default function Home() {
     return Array.from(scaledIds);
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
-  const showBottomNav = currentView !== 'welcome' && currentView !== 'register';
+  const showBottomNav = currentView !== 'welcome' && currentView !== 'login';
 
   const renderView = () => {
     if (!userForViews && showBottomNav) {
-      return <RegisterView onRegisterSuccess={handleRegisterSuccess} onNavigateToLogin={() => navigateTo('register')} />;
+      return <LoginView users={Object.values(appData.users)} onLogin={handleLoginSuccess} />;
     }
 
     switch (currentView) {
       case 'welcome':
-        return <WelcomeView onEnter={() => navigateTo('register')} />;
-      case 'register':
-        return <RegisterView onRegisterSuccess={handleRegisterSuccess} onNavigateToLogin={() => navigateTo('register')} />;
+        return <WelcomeView onEnter={() => navigateTo('login')} />;
+      case 'login':
+        return <LoginView users={Object.values(appData.users)} onLogin={handleLoginSuccess} />;
       case 'dashboard':
         return <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
