@@ -322,6 +322,34 @@ export default function LineupView(props: LineupViewProps) {
   const team1Score = team1Lineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
   const team2Score = team2Lineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
   
+  const handleShare = () => {
+    const getTeamText = (teamName: string, lineup: (string | null)[], reserves: (string | null)[]) => {
+      let text = `*${teamName}*\n\n`;
+      text += "*Titulares:*\n";
+      lineup.forEach((id, index) => {
+        if (id && players[id]) {
+          text += `${index + 1}. ${players[id].name}\n`;
+        }
+      });
+      text += "\n*Reservas:*\n";
+      reserves.forEach((id, index) => {
+        if (id && players[id]) {
+          text += `${index + 1}. ${players[id].name}\n`;
+        }
+      });
+      return text;
+    };
+
+    const team1Text = getTeamText('TIME 1', team1Lineup, team1Reserves);
+    const team2Text = getTeamText('TIME 2', team2Lineup, team2Reserves);
+    
+    const fullMessage = `🔥 *ESCALAÇÃO DA RODADA - AMISTOSOS FC* 🔥\n\n${team1Text}\n-----------------\n\n${team2Text}`;
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullMessage)}`;
+    
+    window.open(whatsappUrl, '_blank');
+  };
+
   const editorView = (
      <>
         <Card>
@@ -454,7 +482,7 @@ export default function LineupView(props: LineupViewProps) {
 
             <h2 className="text-xl font-bold">Escalação</h2>
             
-            <Button variant="ghost" className="text-primary-foreground">
+            <Button variant="ghost" className="text-primary-foreground" onClick={handleShare}>
                 <Share2 className="w-5 h-5" />
             </Button>
         </div>
