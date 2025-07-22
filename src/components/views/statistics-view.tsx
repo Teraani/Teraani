@@ -2,9 +2,10 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Player, PlayerStats } from '@/lib/data';
+import type { Player, PlayerStats, Ranking, GoalieRanking } from '@/lib/data';
+import { data } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Shield, Star, Award, Footprints } from 'lucide-react';
+import { ArrowLeft, Save, Shield, Star, Award, Footprints, Target, Percent, Trophy } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent } from '../ui/card';
 import { cn } from '@/lib/utils';
@@ -13,6 +14,14 @@ import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from '../ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table"
 
 interface StatisticsViewProps {
   players: Record<string, Player>;
@@ -100,7 +109,7 @@ const PlayerStatsEditor = ({ player, canEditScouts, onPlayerChange }: { player: 
 const RankingList = ({ players, onPlayerSelect, stat, label, canEditScouts, onPlayersChange }: {
     players: ({id: string} & Player)[],
     onPlayerSelect: (playerId: string) => void,
-    stat: 'points' | 'goals' | 'assists' | 'saves',
+    stat: 'points' | 'goals' | 'assists' | 'saves' | 'avgGoals',
     label: string,
     canEditScouts: boolean,
     onPlayersChange: (playerId: string, updatedPlayer: Player) => void
@@ -110,6 +119,11 @@ const RankingList = ({ players, onPlayerSelect, stat, label, canEditScouts, onPl
         return [...players].sort((a, b) => {
             if (stat === 'points') return (b.points ?? 0) - (a.points ?? 0);
             if (stat === 'saves') return (a.stats?.goalsAgainst ?? 999) - (b.stats?.goalsAgainst ?? 999);
+            if (stat === 'avgGoals') {
+                 const avgA = a.games > 0 ? (a.stats?.goals ?? 0) / a.games : 0;
+                 const avgB = b.games > 0 ? (b.stats?.goals ?? 0) / b.games : 0;
+                 return avgB - avgA;
+            }
             const statKey = stat as keyof PlayerStats;
             return (b.stats?.[statKey] ?? 0) - (a.stats?.[statKey] ?? 0);
         });
@@ -118,6 +132,9 @@ const RankingList = ({ players, onPlayerSelect, stat, label, canEditScouts, onPl
     const getStatValue = (player: Player) => {
         if (stat === 'points') return player.points.toFixed(1);
         if (stat === 'saves') return player.stats?.goalsAgainst ?? 0;
+        if (stat === 'avgGoals') {
+            return player.games > 0 ? ((player.stats?.goals ?? 0) / player.games).toFixed(2) : '0.00';
+        }
         const statKey = stat as keyof PlayerStats;
         return player.stats?.[statKey] ?? 0;
     }
@@ -149,6 +166,42 @@ const RankingList = ({ players, onPlayerSelect, stat, label, canEditScouts, onPl
         </Accordion>
     );
 };
+
+const StaticRankingTable = ({ title, data, headers }: { title: string, data: (Ranking | GoalieRanking)[], headers: string[] }) => (
+    <Card>
+        <CardContent className="p-4">
+            <h3 className="font-bold text-lg mb-4">{title}</h3>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        {headers.map(header => <TableHead key={header}>{header}</TableHead>)}
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {data.map((item, index) => (
+                        <TableRow key={index}>
+                            <TableCell className="font-medium">{index + 1}º</TableCell>
+                            <TableCell>{item.name}</TableCell>
+                            <TableCell>{item.games}</TableCell>
+                            {'goalsConceded' in item ? (
+                                <>
+                                    <TableCell>{item.goalsConceded}</TableCell>
+                                    <TableCell>{item.avgGoalsConceded.toFixed(2)}</TableCell>
+                                </>
+                            ) : (
+                                <>
+                                    <TableCell>{item.resultsDifference}</TableCell>
+                                    <TableCell>{item.avgDifference.toFixed(2)}</TableCell>
+                                </>
+                            )}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </CardContent>
+    </Card>
+);
+
 
 export default function StatisticsView({ players, onBack, onPlayerSelect, canEditScouts, onSave }: StatisticsViewProps) {
     const [editablePlayers, setEditablePlayers] = useState<Record<string, Player>>({});
@@ -193,14 +246,18 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
 
             <main className="p-4">
                  <Tabs defaultValue="general" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4 bg-muted mb-4">
-                        <TabsTrigger value="general"><Star className="w-4 h-4 mr-2"/> Geral</TabsTrigger>
-                        <TabsTrigger value="scorers"><Award className="w-4 h-4 mr-2"/>Gols</TabsTrigger>
-                        <TabsTrigger value="assists"><Footprints className="w-4 h-4 mr-2"/> Assists</TabsTrigger>
-                        <TabsTrigger value="defense"><Shield className="w-4 h-4 mr-2"/>Defesa</TabsTrigger>
-                    </TabsList>
+                    <ScrollArea className="w-full whitespace-nowrap pb-4">
+                        <TabsList className="grid grid-cols-1 md:grid-cols-6 h-auto" style={{ gridTemplateColumns: 'repeat(6, minmax(0, 1fr))' }}>
+                            <TabsTrigger value="general"><Star className="w-4 h-4 mr-1"/>Geral</TabsTrigger>
+                            <TabsTrigger value="scorers"><Target className="w-4 h-4 mr-1"/>Artilharia</TabsTrigger>
+                            <TabsTrigger value="assists"><Footprints className="w-4 h-4 mr-1"/>Assists</TabsTrigger>
+                            <TabsTrigger value="avgGoals"><Percent className="w-4 h-4 mr-1"/>Média Gols</TabsTrigger>
+                            <TabsTrigger value="scalers"><Trophy className="w-4 h-4 mr-1"/>Escalantes</TabsTrigger>
+                            <TabsTrigger value="defense"><Shield className="w-4 h-4 mr-1"/>Goleiros</TabsTrigger>
+                        </TabsList>
+                    </ScrollArea>
                     
-                    <ScrollArea className="h-[calc(100vh-200px)] pr-2">
+                    <ScrollArea className="h-[calc(100vh-220px)] pr-2">
                         <TabsContent value="general">
                             <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos" canEditScouts={canEditScouts} onPlayersChange={handlePlayerChange} />
                         </TabsContent>
@@ -210,8 +267,22 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
                         <TabsContent value="assists">
                            <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="assists" label="Assist." canEditScouts={canEditScouts} onPlayersChange={handlePlayerChange} />
                         </TabsContent>
+                        <TabsContent value="avgGoals">
+                           <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="avgGoals" label="Média" canEditScouts={canEditScouts} onPlayersChange={handlePlayerChange} />
+                        </TabsContent>
+                         <TabsContent value="scalers">
+                           <StaticRankingTable 
+                             title="Ranking Melhores Escalantes 2025" 
+                             data={data.scalersRanking} 
+                             headers={['Posição', 'Nome', 'Jogos', 'Diferença Resultados', 'Diferença Média por Jogo']}
+                            />
+                        </TabsContent>
                         <TabsContent value="defense">
-                           <RankingList players={goalkeepers} onPlayerSelect={onPlayerSelect} stat="saves" label="Gols Sofridos" canEditScouts={canEditScouts} onPlayersChange={handlePlayerChange} />
+                           <StaticRankingTable 
+                             title="Goleiro Menos Vazado 2025"
+                             data={data.goalieRanking}
+                             headers={['Posição', 'Nome', 'Jogos', 'Gols Sofridos', 'Média de Gol Sofrido por Jogo']}
+                           />
                         </TabsContent>
                     </ScrollArea>
                 </Tabs>
