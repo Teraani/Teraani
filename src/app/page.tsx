@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import { useState, useMemo } from 'react';
-import type { Player, User } from '@/lib/data';
+import type { Player, User, Ranking, GoalieRanking } from '@/lib/data';
 import { data } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
@@ -184,14 +185,16 @@ export default function Home() {
     }));
   };
 
-  const handleUpdatePlayerStats = (updatedPlayers: Record<string, Player>) => {
+  const handleUpdateStats = (updatedPlayers: Record<string, Player>, updatedScalers?: Record<string, Ranking>, updatedGoalies?: Record<string, GoalieRanking>) => {
     setAppData(prevData => ({
       ...prevData,
-      players: updatedPlayers
+      players: updatedPlayers,
+      ...(updatedScalers && { scalersRanking: updatedScalers }),
+      ...(updatedGoalies && { goalieRanking: updatedGoalies }),
     }));
     toast({
       title: "Estatísticas Salvas!",
-      description: "Os dados dos jogadores foram atualizados.",
+      description: "Os dados foram atualizados com sucesso.",
     });
   };
 
@@ -360,9 +363,9 @@ export default function Home() {
       case 'games':
         return <GamesView onBack={goBack} />;
       case 'friends-score':
-        return <FriendsScoreView onBack={goBack} friends={appData.friends} user={userForViews!} players={appData.players} userAvatar={userAvatar} />;
+        return <FriendsScoreView onBack={goBack} friends={Object.values(appData.players).map(p => ({ id: `p-${p.name}`, name: p.name, teamName: `${p.name} FC`, score: p.points, playersPlayed: p.games, totalPlayers: 11, isPro: false, crest: 'https://placehold.co/40x40/cccccc/000000', avatar: p.img }))} user={userForViews!} players={appData.players} userAvatar={userAvatar} />;
       case 'statistics':
-        return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdatePlayerStats} />;
+        return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} />;
       case 'admin':
         return <AdminView 
                   onBack={goBack} 

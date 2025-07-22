@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -14,31 +15,23 @@ import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from '../ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table"
 
 interface StatisticsViewProps {
   players: Record<string, Player>;
   onBack: () => void;
   onPlayerSelect: (playerId: string) => void;
   canEditScouts: boolean;
-  onSave: (updatedPlayers: Record<string, Player>) => void;
+  onSave: (updatedPlayers: Record<string, Player>, updatedScalers?: Record<string, Ranking>, updatedGoalies?: Record<string, GoalieRanking>) => void;
 }
 
 const RankingListItem = ({ player, rank, statValue, statLabel, onPlayerSelect }: {
-    player: {id: string} & Player,
+    player: {id: string} & (Player | Ranking | GoalieRanking),
     rank: number,
     statValue: string | number,
     statLabel: string,
     onPlayerSelect: (id: string) => void,
 }) => (
-     <div className="flex items-center gap-4 w-full" onClick={() => onPlayerSelect(player.id)}>
+     <div className="flex items-center gap-4 w-full" onClick={() => 'pos' in player && onPlayerSelect(player.id)}>
         <span className={cn(
             "font-bold text-lg w-6 text-center",
             rank === 1 && "text-amber-400",
@@ -48,12 +41,12 @@ const RankingListItem = ({ player, rank, statValue, statLabel, onPlayerSelect }:
             {rank}
         </span>
         <Avatar>
-            <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" />
+            <AvatarImage src={'img' in player ? player.img : undefined} alt={player.name} data-ai-hint="player portrait" />
             <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 text-left">
             <p className="font-bold text-base text-foreground">{player.name}</p>
-            <p className="text-sm text-muted-foreground">{player.team} • {player.pos}</p>
+            {'pos' in player && <p className="text-sm text-muted-foreground">{player.pos}</p>}
         </div>
         <div className="text-right">
             <p className="font-extrabold text-xl text-primary">{statValue}</p>
@@ -104,61 +97,89 @@ const PlayerStatsEditor = ({ player, canEditScouts, onPlayerChange }: { player: 
             </div>
         </div>
     );
-}
+};
 
-const RankingList = ({ players, onPlayerSelect, stat, label, canEditScouts, onPlayersChange }: {
-    players: ({id: string} & Player)[],
+const ScalerStatsEditor = ({ scaler, canEditScouts, onScalerChange }: { scaler: Ranking, canEditScouts: boolean, onScalerChange: (updatedScaler: Ranking) => void}) => (
+    <div className="p-4 bg-muted/30 rounded-b-lg">
+        <div className="grid grid-cols-2 gap-4">
+            <EditableStat label="Jogos" value={scaler.games} onChange={(v) => onScalerChange({...scaler, games: v})} disabled={canEditScouts} />
+            <EditableStat label="Diferença de Resultados" value={scaler.resultsDifference} onChange={(v) => onScalerChange({...scaler, resultsDifference: v})} disabled={canEditScouts} />
+        </div>
+    </div>
+);
+
+const GoalieStatsEditor = ({ goalie, canEditScouts, onGoalieChange }: { goalie: GoalieRanking, canEditScouts: boolean, onGoalieChange: (updatedGoalie: GoalieRanking) => void}) => (
+    <div className="p-4 bg-muted/30 rounded-b-lg">
+        <div className="grid grid-cols-2 gap-4">
+            <EditableStat label="Jogos" value={goalie.games} onChange={(v) => onGoalieChange({...goalie, games: v})} disabled={canEditScouts} />
+            <EditableStat label="Gols Sofridos" value={goalie.goalsConceded} onChange={(v) => onGoalieChange({...goalie, goalsConceded: v})} disabled={canEditScouts} />
+        </div>
+    </div>
+);
+
+
+const GenericRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts, onItemsChange, type }: {
+    items: any[],
     onPlayerSelect: (playerId: string) => void,
-    stat: 'points' | 'goals' | 'assists' | 'saves' | 'avgGoals',
+    stat: string,
     label: string,
     canEditScouts: boolean,
-    onPlayersChange: (playerId: string, updatedPlayer: Player) => void
+    onItemsChange: (itemId: string, updatedItem: any) => void,
+    type: 'player' | 'scaler' | 'goalie'
 }) => {
     
-    const sortedPlayers = useMemo(() => {
-        return [...players].sort((a, b) => {
-            if (stat === 'points') return (b.points ?? 0) - (a.points ?? 0);
-            if (stat === 'saves') return (a.stats?.goalsAgainst ?? 999) - (b.stats?.goalsAgainst ?? 999);
-            if (stat === 'avgGoals') {
-                 const avgA = a.games > 0 ? (a.stats?.goals ?? 0) / a.games : 0;
-                 const avgB = b.games > 0 ? (b.stats?.goals ?? 0) / b.games : 0;
-                 return avgB - avgA;
+    const sortedItems = useMemo(() => {
+        return [...items].sort((a, b) => {
+            if (type === 'player') {
+                 if (stat === 'points') return (b.points ?? 0) - (a.points ?? 0);
+                 if (stat === 'avgGoals') {
+                    const avgA = a.games > 0 ? (a.stats?.goals ?? 0) / a.games : 0;
+                    const avgB = b.games > 0 ? (b.stats?.goals ?? 0) / b.games : 0;
+                    return avgB - avgA;
+                 }
+                 const statKey = stat as keyof PlayerStats;
+                 return (b.stats?.[statKey] ?? 0) - (a.stats?.[statKey] ?? 0);
             }
-            const statKey = stat as keyof PlayerStats;
-            return (b.stats?.[statKey] ?? 0) - (a.stats?.[statKey] ?? 0);
+            if (type === 'scaler') {
+                 return b.avgDifference - a.avgDifference;
+            }
+             if (type === 'goalie') {
+                 return a.avgGoalsConceded - b.avgGoalsConceded;
+            }
+            return 0;
         });
-    }, [players, stat]);
+    }, [items, stat, type]);
 
-    const getStatValue = (player: Player) => {
-        if (stat === 'points') return player.points.toFixed(1);
-        if (stat === 'saves') return player.stats?.goalsAgainst ?? 0;
-        if (stat === 'avgGoals') {
-            return player.games > 0 ? ((player.stats?.goals ?? 0) / player.games).toFixed(2) : '0.00';
-        }
-        const statKey = stat as keyof PlayerStats;
-        return player.stats?.[statKey] ?? 0;
-    }
+    const getStatValue = (item: any) => {
+       if (type === 'player') {
+            if (stat === 'points') return item.points.toFixed(1);
+            if (stat === 'avgGoals') return item.games > 0 ? ((item.stats?.goals ?? 0) / item.games).toFixed(2) : '0.00';
+            const statKey = stat as keyof PlayerStats;
+            return item.stats?.[statKey] ?? 0;
+       }
+       if (type === 'scaler') return item.avgDifference.toFixed(2);
+       if (type === 'goalie') return item.avgGoalsConceded.toFixed(2);
+       return '';
+    };
 
     return (
         <Accordion type="single" collapsible className="w-full space-y-2">
-            {sortedPlayers.map((p, index) => (
-                <AccordionItem value={p.id} key={p.id} className="border-b-0">
+            {sortedItems.map((item, index) => (
+                <AccordionItem value={item.id} key={item.id} className="border-b-0">
                     <Card className="bg-card shadow-sm p-3 rounded-lg overflow-hidden">
                          <AccordionTrigger className="p-0 hover:no-underline">
                              <RankingListItem 
-                                player={p}
+                                player={item}
                                 rank={index + 1}
-                                statValue={getStatValue(p)}
+                                statValue={getStatValue(item)}
                                 statLabel={label}
                                 onPlayerSelect={onPlayerSelect}
                             />
                          </AccordionTrigger>
                          <AccordionContent>
-                             <PlayerStatsEditor 
-                                player={p} 
-                                canEditScouts={canEditScouts} 
-                                onPlayerChange={(updatedData) => onPlayersChange(p.id, updatedData)} 
-                             />
+                            {type === 'player' && <PlayerStatsEditor player={item} canEditScouts={canEditScouts} onPlayerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                            {type === 'scaler' && <ScalerStatsEditor scaler={item} canEditScouts={canEditScouts} onScalerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                            {type === 'goalie' && <GoalieStatsEditor goalie={item} canEditScouts={canEditScouts} onGoalieChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
                          </AccordionContent>
                     </Card>
                 </AccordionItem>
@@ -167,72 +188,46 @@ const RankingList = ({ players, onPlayerSelect, stat, label, canEditScouts, onPl
     );
 };
 
-const StaticRankingTable = ({ title, data, headers }: { title: string, data: (Ranking | GoalieRanking)[], headers: string[] }) => (
-    <Card>
-        <CardContent className="p-4">
-            <h3 className="font-bold text-lg mb-4">{title}</h3>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        {headers.map(header => <TableHead key={header}>{header}</TableHead>)}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {data.map((item, index) => (
-                        <TableRow key={index}>
-                            <TableCell className="font-medium">{index + 1}º</TableCell>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>{item.games}</TableCell>
-                            {'goalsConceded' in item ? (
-                                <>
-                                    <TableCell>{item.goalsConceded}</TableCell>
-                                    <TableCell>{item.avgGoalsConceded.toFixed(2)}</TableCell>
-                                </>
-                            ) : (
-                                <>
-                                    <TableCell>{item.resultsDifference}</TableCell>
-                                    <TableCell>{item.avgDifference.toFixed(2)}</TableCell>
-                                </>
-                            )}
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-    </Card>
-);
 
-
-export default function StatisticsView({ players, onBack, onPlayerSelect, canEditScouts, onSave }: StatisticsViewProps) {
+export default function StatisticsView({ players, onBack, onPlayerSelect, canEditScouts, onSave: onSaveProp }: StatisticsViewProps) {
     const [editablePlayers, setEditablePlayers] = useState<Record<string, Player>>({});
+    const [editableScalers, setEditableScalers] = useState<Record<string, Ranking>>({});
+    const [editableGoalies, setEditableGoalies] = useState<Record<string, GoalieRanking>>({});
+
     const [hasChanges, setHasChanges] = useState(false);
     
     useEffect(() => {
         setEditablePlayers(JSON.parse(JSON.stringify(players)));
+        setEditableScalers(JSON.parse(JSON.stringify(data.scalersRanking)));
+        setEditableGoalies(JSON.parse(JSON.stringify(data.goalieRanking)));
         setHasChanges(false);
     }, [players]);
 
     const handlePlayerChange = (playerId: string, updatedData: Player) => {
         setHasChanges(true);
-        setEditablePlayers(prev => ({
-            ...prev,
-            [playerId]: updatedData,
-        }));
+        setEditablePlayers(prev => ({ ...prev, [playerId]: updatedData }));
+    };
+
+    const handleScalerChange = (scalerId: string, updatedData: Ranking) => {
+        const avgDifference = updatedData.games > 0 ? updatedData.resultsDifference / updatedData.games : 0;
+        setHasChanges(true);
+        setEditableScalers(prev => ({ ...prev, [scalerId]: {...updatedData, avgDifference} }));
+    };
+
+    const handleGoalieChange = (goalieId: string, updatedData: GoalieRanking) => {
+        const avgGoalsConceded = updatedData.games > 0 ? updatedData.goalsConceded / updatedData.games : 0;
+        setHasChanges(true);
+        setEditableGoalies(prev => ({ ...prev, [goalieId]: {...updatedData, avgGoalsConceded} }));
     };
 
     const handleSaveClick = () => {
-        onSave(editablePlayers);
+        onSaveProp(editablePlayers, editableScalers, editableGoalies);
         setHasChanges(false);
     };
 
-    const allPlayers = useMemo(() => {
-        if (!editablePlayers) return [];
-        return Object.entries(editablePlayers).map(([id, player]) => ({...player, id}));
-    }, [editablePlayers]);
-
-    const goalkeepers = useMemo(() => {
-        return allPlayers.filter(p => p.pos === 'GOL');
-    }, [allPlayers]);
+    const allPlayersMemo = useMemo(() => Object.values(editablePlayers), [editablePlayers]);
+    const scalersMemo = useMemo(() => Object.values(editableScalers), [editableScalers]);
+    const goaliesMemo = useMemo(() => Object.values(editableGoalies), [editableGoalies]);
 
     return (
         <div className={cn(canEditScouts && "pb-40")}>
@@ -247,7 +242,7 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
             <main className="p-4">
                  <Tabs defaultValue="general" className="w-full">
                     <ScrollArea className="w-full whitespace-nowrap pb-4">
-                        <TabsList className="grid grid-cols-1 md:grid-cols-6 h-auto" style={{ gridTemplateColumns: 'repeat(6, minmax(0, 1fr))' }}>
+                        <TabsList className="grid grid-cols-1 md:grid-cols-6 h-auto" style={{ gridTemplateColumns: 'repeat(6, minmax(120px, 1fr))' }}>
                             <TabsTrigger value="general"><Star className="w-4 h-4 mr-1"/>Geral</TabsTrigger>
                             <TabsTrigger value="scorers"><Target className="w-4 h-4 mr-1"/>Artilharia</TabsTrigger>
                             <TabsTrigger value="assists"><Footprints className="w-4 h-4 mr-1"/>Assists</TabsTrigger>
@@ -259,30 +254,22 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
                     
                     <ScrollArea className="h-[calc(100vh-220px)] pr-2">
                         <TabsContent value="general">
-                            <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos" canEditScouts={canEditScouts} onPlayersChange={handlePlayerChange} />
+                            <GenericRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
                         </TabsContent>
                         <TabsContent value="scorers">
-                            <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="goals" label="Gols" canEditScouts={canEditScouts} onPlayersChange={handlePlayerChange} />
+                            <GenericRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="goals" label="Gols" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
                         </TabsContent>
                         <TabsContent value="assists">
-                           <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="assists" label="Assist." canEditScouts={canEditScouts} onPlayersChange={handlePlayerChange} />
+                           <GenericRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="assists" label="Assist." canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
                         </TabsContent>
                         <TabsContent value="avgGoals">
-                           <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="avgGoals" label="Média" canEditScouts={canEditScouts} onPlayersChange={handlePlayerChange} />
+                           <GenericRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="avgGoals" label="Média" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
                         </TabsContent>
                          <TabsContent value="scalers">
-                           <StaticRankingTable 
-                             title="Ranking Melhores Escalantes 2025" 
-                             data={data.scalersRanking} 
-                             headers={['Posição', 'Nome', 'Jogos', 'Diferença Resultados', 'Diferença Média por Jogo']}
-                            />
+                           <GenericRankingList items={scalersMemo} onPlayerSelect={onPlayerSelect} stat="avgDifference" label="Diferença Média" canEditScouts={canEditScouts} onItemsChange={handleScalerChange} type="scaler" />
                         </TabsContent>
                         <TabsContent value="defense">
-                           <StaticRankingTable 
-                             title="Goleiro Menos Vazado 2025"
-                             data={data.goalieRanking}
-                             headers={['Posição', 'Nome', 'Jogos', 'Gols Sofridos', 'Média de Gol Sofrido por Jogo']}
-                           />
+                           <GenericRankingList items={goaliesMemo} onPlayerSelect={onPlayerSelect} stat="avgGoalsConceded" label="Média Gols Sofridos" canEditScouts={canEditScouts} onItemsChange={handleGoalieChange} type="goalie" />
                         </TabsContent>
                     </ScrollArea>
                 </Tabs>
@@ -298,3 +285,4 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
         </div>
     );
 }
+

@@ -54,6 +54,7 @@ export interface Friend {
 }
 
 export interface Ranking {
+    id: string;
     name: string;
     games: number;
     resultsDifference: number;
@@ -61,6 +62,7 @@ export interface Ranking {
 }
 
 export interface GoalieRanking {
+    id: string;
     name: string;
     games: number;
     goalsConceded: number;
@@ -75,8 +77,8 @@ interface AppData {
   paymentEditor: string | null;
   players: Record<string, Player>;
   friends: Friend[];
-  scalersRanking: Ranking[];
-  goalieRanking: GoalieRanking[];
+  scalersRanking: Record<string, Ranking>;
+  goalieRanking: Record<string, GoalieRanking>;
 }
 
 export const data: AppData = {
@@ -162,19 +164,19 @@ export const data: AppData = {
       'p30': { name: 'Pedro Roberto', team: 'SAN', pos: 'ATA', value: 4.5, points: 4.5, last_val: 0.5, games: 9, img: 'https://placehold.co/60x60', stats: { wins: 1, losses: 7, draws: 1, goalsFor: 15, goalsAgainst: 28, goalDifference: -13, performance: 16.67, points: 4.5, goals: 3, assists: 0, yellowCards: 0, redCards: 0 } }
     },
     friends: [],
-    scalersRanking: [
-        { name: 'Gustavo', games: 5, resultsDifference: 5, avgDifference: 1.00 },
-        { name: 'Rafael', games: 2, resultsDifference: 2, avgDifference: 1.00 },
-        { name: 'Cabanhas', games: 3, resultsDifference: 4, avgDifference: 1.33 },
-        { name: 'Pizza', games: 2, resultsDifference: 3, avgDifference: 1.50 },
-        { name: 'André', games: 4, resultsDifference: 8, avgDifference: 2.00 },
-        { name: 'Isaías', games: 6, resultsDifference: 13, avgDifference: 2.17 },
-        { name: 'Deca', games: 3, resultsDifference: 7, avgDifference: 2.33 },
-        { name: 'Juliano', games: 2, resultsDifference: 6, avgDifference: 3.00 },
-    ],
-    goalieRanking: [
-        { name: 'Vinícius Conceição', games: 14, goalsConceded: 29, avgGoalsConceded: 2.07 },
-        { name: 'Walex Leek', games: 19, goalsConceded: 44, avgGoalsConceded: 2.32 },
-        { name: 'Tom', games: 13, goalsConceded: 34, avgGoalsConceded: 2.62 },
-    ]
+    scalersRanking: {
+        'scaler1': { id: 'scaler1', name: 'Gustavo', games: 5, resultsDifference: 5, avgDifference: 1.00 },
+        'scaler2': { id: 'scaler2', name: 'Rafael', games: 2, resultsDifference: 2, avgDifference: 1.00 },
+        'scaler3': { id: 'scaler3', name: 'Cabanhas', games: 3, resultsDifference: 4, avgDifference: 1.33 },
+        'scaler4': { id: 'scaler4', name: 'Pizza', games: 2, resultsDifference: 3, avgDifference: 1.50 },
+        'scaler5': { id: 'scaler5', name: 'André', games: 4, resultsDifference: 8, avgDifference: 2.00 },
+        'scaler6': { id: 'scaler6', name: 'Isaías', games: 6, resultsDifference: 13, avgDifference: 2.17 },
+        'scaler7': { id: 'scaler7', name: 'Deca', games: 3, resultsDifference: 7, avgDifference: 2.33 },
+        'scaler8': { id: 'scaler8', name: 'Juliano', games: 2, resultsDifference: 6, avgDifference: 3.00 },
+    },
+    goalieRanking: {
+        'goalie1': { id: 'goalie1', name: 'Vinícius Conceição', games: 14, goalsConceded: 29, avgGoalsConceded: 2.07 },
+        'goalie2': { id: 'goalie2', name: 'Walex Leek', games: 19, goalsConceded: 44, avgGoalsConceded: 2.32 },
+        'goalie3': { id: 'goalie3', name: 'Tom', games: 13, goalsConceded: 34, avgGoalsConceded: 2.62 },
+    }
 };
