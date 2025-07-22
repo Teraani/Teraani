@@ -163,16 +163,18 @@ const EditableRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts
             {sortedItems.map((item, index) => (
                 <AccordionItem value={item.id} key={`${type}-${item.id}`} className="border-b-0">
                     <Card className="bg-card shadow-sm p-3 rounded-lg overflow-hidden">
-                         <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div>svg]:rotate-180">
-                             <div className="flex w-full items-center">
-                                <RankingListItem 
-                                    player={item}
-                                    rank={index + 1}
-                                    statValue={getStatValue(item)}
-                                    label={label}
-                                />
-                                <ChevronDown className="h-5 w-5 shrink-0 transition-transform duration-200 text-muted-foreground ml-2" />
-                             </div>
+                         <AccordionTrigger className="p-0 hover:no-underline w-full" onClick={(e) => {
+                             if (canEditScouts) {
+                                 e.preventDefault();
+                             }
+                         }}>
+                             <RankingListItem 
+                                 player={item}
+                                 rank={index + 1}
+                                 statValue={getStatValue(item)}
+                                 label={label}
+                                 onClick={() => !canEditScouts && 'pos' in item ? onPlayerSelect(item.id) : undefined}
+                             />
                          </AccordionTrigger>
                          <AccordionContent>
                             {type === 'player' && <PlayerStatsEditor player={item} canEditScouts={canEditScouts} onPlayerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
