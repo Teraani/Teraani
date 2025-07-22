@@ -117,7 +117,7 @@ const GoalieStatsEditor = ({ goalie, canEditScouts, onGoalieChange }: { goalie: 
 );
 
 
-const GenericRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts, onItemsChange, type }: {
+const EditableRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts, onItemsChange, type }: {
     items: any[],
     onPlayerSelect: (playerId: string) => void,
     stat: string,
@@ -129,36 +129,14 @@ const GenericRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts,
     
     const sortedItems = useMemo(() => {
         return [...items].sort((a, b) => {
-            if (type === 'player') {
-                 if (stat === 'points') return (b.points ?? 0) - (a.points ?? 0);
-                 if (stat === 'avgGoals') {
-                    const avgA = a.games > 0 ? (a.stats?.goals ?? 0) / a.games : 0;
-                    const avgB = b.games > 0 ? (b.stats?.goals ?? 0) / b.games : 0;
-                    return avgB - avgA;
-                 }
-                 const statKey = stat as keyof PlayerStats;
-                 return (b.stats?.[statKey] ?? 0) - (a.stats?.[statKey] ?? 0);
-            }
-            if (type === 'scaler') {
-                 return b.avgDifference - a.avgDifference;
-            }
-             if (type === 'goalie') {
-                 return a.avgGoalsConceded - b.avgGoalsConceded;
-            }
-            return 0;
+             if (stat === 'points') return (b.points ?? 0) - (a.points ?? 0);
+             return 0;
         });
     }, [items, stat, type]);
 
     const getStatValue = (item: any) => {
-       if (type === 'player') {
-            if (stat === 'points') return item.points.toFixed(1);
-            if (stat === 'avgGoals') return item.games > 0 ? ((item.stats?.goals ?? 0) / item.games).toFixed(2) : '0.00';
-            const statKey = stat as keyof PlayerStats;
-            return item.stats?.[statKey] ?? 0;
-       }
-       if (type === 'scaler') return item.avgDifference.toFixed(2);
-       if (type === 'goalie') return item.avgGoalsConceded.toFixed(2);
-       return '';
+        if (stat === 'points') return item.points.toFixed(1);
+        return '';
     };
 
     return (
@@ -184,6 +162,63 @@ const GenericRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts,
                 </AccordionItem>
             ))}
         </Accordion>
+    );
+};
+
+const SimpleRankingList = ({ items, onPlayerSelect, stat, label, type }: {
+    items: any[],
+    onPlayerSelect: (playerId: string) => void,
+    stat: string,
+    label: string,
+    type: 'player' | 'scaler' | 'goalie'
+}) => {
+    
+    const sortedItems = useMemo(() => {
+        return [...items].sort((a, b) => {
+            if (type === 'player') {
+                 if (stat === 'avgGoals') {
+                    const avgA = a.games > 0 ? (a.stats?.goals ?? 0) / a.games : 0;
+                    const avgB = b.games > 0 ? (b.stats?.goals ?? 0) / b.games : 0;
+                    return avgB - avgA;
+                 }
+                 const statKey = stat as keyof PlayerStats;
+                 return (b.stats?.[statKey] ?? 0) - (a.stats?.[statKey] ?? 0);
+            }
+            if (type === 'scaler') {
+                 return b.avgDifference - a.avgDifference;
+            }
+             if (type === 'goalie') {
+                 return a.avgGoalsConceded - b.avgGoalsConceded;
+            }
+            return 0;
+        });
+    }, [items, stat, type]);
+
+    const getStatValue = (item: any) => {
+       if (type === 'player') {
+            if (stat === 'avgGoals') return item.games > 0 ? ((item.stats?.goals ?? 0) / item.games).toFixed(2) : '0.00';
+            const statKey = stat as keyof PlayerStats;
+            return item.stats?.[statKey] ?? 0;
+       }
+       if (type === 'scaler') return item.avgDifference.toFixed(2);
+       if (type === 'goalie') return item.avgGoalsConceded.toFixed(2);
+       return '';
+    };
+
+    return (
+        <div className="w-full space-y-2">
+            {sortedItems.map((item, index) => (
+                <Card key={`${type}-${item.id}-${stat}`} className="bg-card shadow-sm p-3 rounded-lg overflow-hidden">
+                    <RankingListItem 
+                        player={item}
+                        rank={index + 1}
+                        statValue={getStatValue(item)}
+                        label={label}
+                        onPlayerSelect={onPlayerSelect}
+                    />
+                </Card>
+            ))}
+        </div>
     );
 };
 
@@ -254,22 +289,22 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
                     
                     <ScrollArea className="h-[calc(100vh-220px)] pr-2">
                         <TabsContent value="general">
-                            <GenericRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
+                            <EditableRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
                         </TabsContent>
                         <TabsContent value="scorers">
-                            <GenericRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="goals" label="Gols" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
+                            <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="goals" label="Gols" type="player" />
                         </TabsContent>
                         <TabsContent value="assists">
-                           <GenericRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="assists" label="Assist." canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
+                           <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="assists" label="Assist." type="player" />
                         </TabsContent>
                         <TabsContent value="avgGoals">
-                           <GenericRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="avgGoals" label="Média" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />
+                           <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="avgGoals" label="Média" type="player" />
                         </TabsContent>
                          <TabsContent value="scalers">
-                           <GenericRankingList items={scalersMemo} onPlayerSelect={onPlayerSelect} stat="avgDifference" label="Diferença Média" canEditScouts={canEditScouts} onItemsChange={handleScalerChange} type="scaler" />
+                           <SimpleRankingList items={scalersMemo} onPlayerSelect={onPlayerSelect} stat="avgDifference" label="Diferença Média" type="scaler" />
                         </TabsContent>
                         <TabsContent value="defense">
-                           <GenericRankingList items={goaliesMemo} onPlayerSelect={onPlayerSelect} stat="avgGoalsConceded" label="Média Gols Sofridos" canEditScouts={canEditScouts} onItemsChange={handleGoalieChange} type="goalie" />
+                           <SimpleRankingList items={goaliesMemo} onPlayerSelect={onPlayerSelect} stat="avgGoalsConceded" label="Média Gols Sofridos" type="goalie" />
                         </TabsContent>
                     </ScrollArea>
                 </Tabs>
