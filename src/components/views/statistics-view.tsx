@@ -4,13 +4,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, PlayerStats } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Shield, Star, Award, Footprints } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Card } from '../ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
+import { Card, CardContent } from '../ui/card';
 import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ScrollArea } from '../ui/scroll-area';
 
 interface StatisticsViewProps {
   players: Record<string, Player>;
@@ -20,157 +21,88 @@ interface StatisticsViewProps {
   onSave: (updatedPlayers: Record<string, Player>) => void;
 }
 
-const StatItem = ({ label, value }: { label: string; value: string | number | undefined }) => (
-    <div className="flex flex-col items-center p-1">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="font-bold text-lg text-foreground">{value ?? '–'}</p>
-    </div>
+type StatCategory = 'points' | 'goals' | 'assists' | 'defense';
+
+const RankingListItem = ({ player, rank, statValue, statLabel }: {
+    player: {id: string} & Player,
+    rank: number,
+    statValue: string | number,
+    statLabel: string,
+}) => (
+    <Card className="bg-card shadow-sm p-3">
+        <div className="flex items-center gap-4 w-full">
+            <span className={cn(
+                "font-bold text-lg w-6 text-center",
+                rank === 1 && "text-amber-400",
+                rank === 2 && "text-slate-400",
+                rank === 3 && "text-amber-600"
+            )}>
+                {rank}
+            </span>
+            <Avatar>
+                <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" />
+                <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 text-left">
+                <p className="font-bold text-base text-foreground">{player.name}</p>
+                <p className="text-sm text-muted-foreground">{player.team} • {player.pos}</p>
+            </div>
+            <div className="text-right">
+                <p className="font-extrabold text-xl text-primary">{statValue}</p>
+                <p className="text-xs text-muted-foreground">{statLabel}</p>
+            </div>
+        </div>
+    </Card>
 );
 
-const EditableStatInput = ({ label, value, onChange }: { label: string, value: number, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-  <div className="flex flex-col items-center text-center p-1">
-    <Label className="text-xs text-muted-foreground mb-1">{label}</Label>
-    <Input
-      type="number"
-      value={value}
-      onChange={onChange}
-      className="h-9 w-20 text-center bg-background border-border"
-      onClick={(e) => e.stopPropagation()}
-    />
-  </div>
-);
-
-const PlayerStatsCard = ({ player, rank, onPlayerSelect, canEditScouts, onStatChange }: { 
-    player: {id: string} & Player, 
-    rank: number, 
+const RankingList = ({ players, onPlayerSelect, stat, valueKey, label }: {
+    players: ({id: string} & Player)[],
     onPlayerSelect: (playerId: string) => void,
-    canEditScouts: boolean,
-    onStatChange: (playerId: string, field: keyof (PlayerStats & {games: number, points: number}), value: number) => void
+    stat: 'points' | 'goals' | 'assists' | 'saves',
+    valueKey?: keyof PlayerStats,
+    label: string,
 }) => {
-    const playerStats = player.stats || {
-        wins: 0, losses: 0, draws: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0,
-        performance: 0, points: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0
-    };
     
+    const sortedPlayers = useMemo(() => {
+        return [...players].sort((a, b) => {
+            if (stat === 'points') return (b.points ?? 0) - (a.points ?? 0);
+            if (stat === 'saves') return (a.stats?.goalsAgainst ?? 999) - (b.stats?.goalsAgainst ?? 999);
+            return (b.stats?.[stat] ?? 0) - (a.stats?.[stat] ?? 0);
+        });
+    }, [players, stat]);
+
+    const getStatValue = (player: Player) => {
+        if (stat === 'points') return player.points.toFixed(1);
+        if (stat === 'saves') return player.stats?.goalsAgainst ?? 'N/A';
+        return player.stats?.[stat] ?? 'N/A';
+    }
+
     return (
-        <Card className="bg-card shadow-sm">
-            <AccordionItem value={`item-${rank}`} className="border-b-0">
-                <AccordionTrigger className="p-4 hover:no-underline">
-                    <div className="flex items-center gap-4 w-full">
-                        <span className={cn(
-                            "font-bold text-lg w-6 text-center",
-                            rank === 1 && "text-amber-400",
-                            rank === 2 && "text-slate-400",
-                            rank === 3 && "text-amber-600"
-                        )}>
-                            {rank}
-                        </span>
-                        <Avatar onClick={(e) => { e.stopPropagation(); onPlayerSelect(player.id)}}>
-                            <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" />
-                            <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 text-left">
-                            <p className="font-bold text-base text-foreground">{player.name}</p>
-                            <p className="text-sm text-muted-foreground">{player.pos}</p>
-                        </div>
-                        <div className="text-right">
-                           {canEditScouts ? (
-                             <div onClick={(e) => e.stopPropagation()}>
-                                <EditableStatInput
-                                  label="Pontos"
-                                  value={player.points}
-                                  onChange={(e) => onStatChange(player.id, 'points', Number(e.target.value))}
-                                />
-                              </div>
-                           ) : (
-                             <>
-                               <p className="font-extrabold text-xl text-primary">{player.points?.toFixed(1) ?? 'N/A'}</p>
-                               <p className="text-xs text-muted-foreground">Pontos</p>
-                             </>
-                           )}
-                        </div>
-                    </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4" onClick={(e) => e.stopPropagation()}>
-                    <div className="bg-muted/50 dark:bg-muted/20 p-4 rounded-lg grid grid-cols-3 sm:grid-cols-4 gap-y-4 text-center">
-                        {canEditScouts ? (
-                            <>
-                                <EditableStatInput label="Jogos" value={player.games} onChange={(e) => onStatChange(player.id, 'games', Number(e.target.value))} />
-                                <EditableStatInput label="Gols" value={playerStats.goals} onChange={(e) => onStatChange(player.id, 'goals', Number(e.target.value))} />
-                                <EditableStatInput label="Assist." value={playerStats.assists} onChange={(e) => onStatChange(player.id, 'assists', Number(e.target.value))} />
-                                <EditableStatInput label="SG" value={playerStats.goalDifference} onChange={(e) => onStatChange(player.id, 'goalDifference', Number(e.target.value))} />
-                                <EditableStatInput label="CA" value={playerStats.yellowCards} onChange={(e) => onStatChange(player.id, 'yellowCards', Number(e.target.value))} />
-                                <EditableStatInput label="CV" value={playerStats.redCards} onChange={(e) => onStatChange(player.id, 'redCards', Number(e.target.value))} />
-                                <EditableStatInput label="Vitórias" value={playerStats.wins} onChange={(e) => onStatChange(player.id, 'wins', Number(e.target.value))} />
-                                <EditableStatInput label="Derrotas" value={playerStats.losses} onChange={(e) => onStatChange(player.id, 'losses', Number(e.target.value))} />
-                                <EditableStatInput label="Empates" value={playerStats.draws} onChange={(e) => onStatChange(player.id, 'draws', Number(e.target.value))} />
-                            </>
-                        ) : (
-                            <>
-                                <StatItem label="Jogos" value={player.games} />
-                                <StatItem label="Vitórias" value={playerStats.wins} />
-                                <StatItem label="Derrotas" value={playerStats.losses} />
-                                <StatItem label="Empates" value={playerStats.draws} />
-                                <StatItem label="Gols" value={playerStats.goals} />
-                                <StatItem label="Assist." value={playerStats.assists} />
-                                <StatItem label="SG" value={playerStats.goalDifference} />
-                                <StatItem label="Aprov." value={`${playerStats.performance?.toFixed(0) ?? '0'}%`} />
-                                <StatItem label="CA" value={playerStats.yellowCards} />
-                                <StatItem label="CV" value={playerStats.redCards} />
-                            </>
-                        )}
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-        </Card>
+        <div className="space-y-2">
+            {sortedPlayers.map((p, index) => (
+                <div key={p.id} onClick={() => onPlayerSelect(p.id)} className="cursor-pointer">
+                    <RankingListItem 
+                        player={p}
+                        rank={index + 1}
+                        statValue={getStatValue(p)}
+                        statLabel={label}
+                    />
+                </div>
+            ))}
+        </div>
     );
 };
 
 export default function StatisticsView({ players, onBack, onPlayerSelect, canEditScouts, onSave }: StatisticsViewProps) {
-    const [editablePlayers, setEditablePlayers] = useState<Record<string, Player>>({});
-    const [hasChanges, setHasChanges] = useState(false);
-
-    useEffect(() => {
-        // Deep copy to avoid mutating the original state directly
-        setEditablePlayers(JSON.parse(JSON.stringify(players)));
-        setHasChanges(false);
+    
+    const allPlayers = useMemo(() => {
+        if (!players) return [];
+        return Object.entries(players).map(([id, player]) => ({...player, id}));
     }, [players]);
 
-    const handleStatChange = (playerId: string, field: keyof (PlayerStats & {games: number, points: number}), value: number) => {
-        setHasChanges(true);
-        setEditablePlayers(prev => {
-            const playerToUpdate = prev[playerId];
-            if (!playerToUpdate) return prev;
-    
-            const updatedPlayer = { ...playerToUpdate };
-    
-            if (field === 'points' || field === 'games') {
-                updatedPlayer[field] = value;
-            } else {
-                 updatedPlayer.stats = {
-                    ...(updatedPlayer.stats || { wins: 0, losses: 0, draws: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, performance: 0, points: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0 }),
-                    [field]: value
-                 };
-            }
-            
-            return {
-                ...prev,
-                [playerId]: updatedPlayer
-            };
-        });
-    };
-
-    const handleSaveClick = () => {
-        onSave(editablePlayers);
-        setHasChanges(false);
-    };
-
-    const sortedPlayers = useMemo(() => {
-        if (!editablePlayers) return [];
-        return Object.entries(editablePlayers)
-            .map(([id, player]) => ({...player, id}))
-            .sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
-    }, [editablePlayers]);
+    const goalkeepers = useMemo(() => {
+        return allPlayers.filter(p => p.pos === 'GOL');
+    }, [allPlayers]);
 
     return (
         <div className={cn(canEditScouts && "pb-40")}>
@@ -182,29 +114,31 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
                 <div className="w-9 h-9" />
             </header>
 
-            <main className="p-4 space-y-3">
-                <Accordion type="single" collapsible className="w-full space-y-2">
-                    {sortedPlayers.map((player, index) => (
-                        <PlayerStatsCard 
-                            key={player.id} 
-                            player={player} 
-                            rank={index + 1} 
-                            onPlayerSelect={onPlayerSelect} 
-                            canEditScouts={canEditScouts}
-                            onStatChange={handleStatChange}
-                        />
-                    ))}
-                </Accordion>
+            <main className="p-4">
+                 <Tabs defaultValue="general" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4 bg-muted mb-4">
+                        <TabsTrigger value="general"><Star className="w-4 h-4 mr-2"/> Geral</TabsTrigger>
+                        <TabsTrigger value="scorers"><Award className="w-4 h-4 mr-2"/>Gols</TabsTrigger>
+                        <TabsTrigger value="assists"><Footprints className="w-4 h-4 mr-2"/> Assists</TabsTrigger>
+                        <TabsTrigger value="defense"><Shield className="w-4 h-4 mr-2"/>Defesa</TabsTrigger>
+                    </TabsList>
+                    
+                    <ScrollArea className="h-[calc(100vh-200px)]">
+                        <TabsContent value="general">
+                            <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos"/>
+                        </TabsContent>
+                        <TabsContent value="scorers">
+                            <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="goals" label="Gols" />
+                        </TabsContent>
+                        <TabsContent value="assists">
+                           <RankingList players={allPlayers} onPlayerSelect={onPlayerSelect} stat="assists" label="Assist." />
+                        </TabsContent>
+                        <TabsContent value="defense">
+                           <RankingList players={goalkeepers} onPlayerSelect={onPlayerSelect} stat="saves" label="Gols Sofridos"/>
+                        </TabsContent>
+                    </ScrollArea>
+                </Tabs>
             </main>
-
-            {canEditScouts && hasChanges && (
-                <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-30">
-                    <Button className="w-full bg-green-600 text-white hover:bg-green-700 h-12 text-lg" onClick={handleSaveClick}>
-                        <Save className="mr-2 h-5 w-5"/>
-                        Salvar Estatísticas
-                    </Button>
-                </div>
-            )}
         </div>
     );
 }
