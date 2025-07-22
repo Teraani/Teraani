@@ -118,19 +118,21 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                         />
                     </div>
                     <ScrollArea className="h-[calc(100vh-320px)]">
-                        <div className="space-y-2 pr-2">
+                        <div className="space-y-3 pr-2">
                         {sortedUsers.map(user => (
-                            <div key={user.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <Avatar>
-                                        <AvatarImage src={user.avatar} alt={user.name} />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold">{user.name}</p>
-                                        <p className={cn("text-xs font-semibold", getStatus(user.paymentDueDate).color)}>
-                                            {getStatus(user.paymentDueDate).text}
-                                        </p>
+                            <div key={user.id} className="p-3 bg-muted/30 rounded-lg space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar>
+                                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="player avatar"/>
+                                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold">{user.name}</p>
+                                        </div>
+                                    </div>
+                                    <div className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", getStatus(user.paymentDueDate).bg, getStatus(user.paymentDueDate).color)}>
+                                       {getStatus(user.paymentDueDate).text}
                                     </div>
                                 </div>
                                 <Popover>
@@ -138,12 +140,12 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                                         <Button
                                             variant={"outline"}
                                             className={cn(
-                                                "w-[180px] justify-start text-left font-normal",
+                                                "w-full justify-start text-left font-normal",
                                                 !user.paymentDueDate && "text-muted-foreground"
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {format(parseISO(user.paymentDueDate), "PPP", { locale: ptBR })}
+                                            Vence em: {format(parseISO(user.paymentDueDate), "dd/MM/yyyy", { locale: ptBR })}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
