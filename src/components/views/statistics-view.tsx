@@ -307,7 +307,7 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
             <main className="p-4">
                  <Tabs defaultValue="general" className="w-full">
                     <ScrollArea className="w-full whitespace-nowrap pb-4">
-                        <TabsList className="grid grid-cols-1 md:grid-cols-6 h-auto" style={{ gridTemplateColumns: 'repeat(6, minmax(120px, 1fr))' }}>
+                        <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-full">
                             <TabsTrigger value="general"><Star className="w-4 h-4 mr-1"/>Geral</TabsTrigger>
                             <TabsTrigger value="scorers"><Target className="w-4 h-4 mr-1"/>Artilharia</TabsTrigger>
                             <TabsTrigger value="assists"><Footprints className="w-4 h-4 mr-1"/>Assists</TabsTrigger>
