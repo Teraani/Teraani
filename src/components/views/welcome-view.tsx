@@ -28,10 +28,12 @@ export default function WelcomeView({ onEnter }: WelcomeViewProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-primary p-8 text-primary-foreground text-center">
       <div className="flex-1 flex flex-col items-center justify-center">
+        <h2 className="text-3xl font-bold mb-4">Amistoso FC</h2>
         <div className="w-32 h-32 flex items-center justify-center mb-6">
             <SignalIcon className="w-full h-full" />
         </div>
-        <h1 className="text-4xl font-extrabold mb-4">Bem-vindo!</h1>
+        <h1 className="text-4xl font-extrabold mb-2">Bem-vindo!</h1>
+        <p className="max-w-md">Futebol de verdade, entre amigos. Porque aqui, todo jogo é clássico!</p>
       </div>
       
       <div className="w-full">
@@ -45,3 +47,4 @@ export default function WelcomeView({ onEnter }: WelcomeViewProps) {
     </div>
   );
 }
+
