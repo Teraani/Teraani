@@ -1,75 +1,68 @@
 
+
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { ArrowLeft, Mail, User } from 'lucide-react';
-import React from 'react';
+import { Chrome } from 'lucide-react';
+
+const SignalIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg 
+        viewBox="0 0 100 100" 
+        xmlns="http://www.w3.org/2000/svg" 
+        {...props}
+    >
+        <defs>
+            <rect id="signal-icon-bg" width="100" height="100" rx="20" fill="rgba(255, 255, 255, 0.2)" />
+        </defs>
+        <use href="#signal-icon-bg" />
+        <rect x="30" y="55" width="8" height="15" rx="3" fill="white" />
+        <rect x="46" y="45" width="8" height="25" rx="3" fill="white" />
+        <rect x="62" y="30" width="8" height="40" rx="3" fill="white" />
+    </svg>
+);
+
 
 interface RegisterViewProps {
   onRegisterSuccess: () => void;
-  onNavigateToLogin: () => void;
+  onNavigateToLogin: () => void; // This prop might be obsolete now
 }
 
-export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: RegisterViewProps) {
+export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // In a real app, you would handle form data, validation, and API calls here.
-    // For this simulation, we'll just call the success function.
+  const handleGoogleSignIn = () => {
+    // Here you would add the Firebase Google Sign-In logic
+    // For now, we'll just simulate a successful registration/login
+    console.log("Signing in with Google...");
     onRegisterSuccess();
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-       <header className="bg-card p-4 shadow-sm flex items-center">
-         <Button variant="ghost" size="icon" onClick={onNavigateToLogin} className="hover:bg-accent">
-          <ArrowLeft className="h-6 w-6" />
+    <div className="flex flex-col min-h-screen bg-primary p-8 text-primary-foreground text-center">
+       <main className="flex-1 flex flex-col items-center justify-center">
+         <div className="w-24 h-24 mb-4">
+            <SignalIcon className="w-full h-full" />
+        </div>
+        <h1 className="text-3xl font-bold mb-2">Amistosos FC</h1>
+        <p className="max-w-md mb-8">
+            Faça login para escalar seu time, acompanhar as parciais e disputar com seus amigos.
+        </p>
+
+        <Button 
+          onClick={handleGoogleSignIn}
+          className="w-full max-w-sm bg-white text-primary hover:bg-gray-200 h-14 text-lg font-bold rounded-xl shadow-lg"
+        >
+            <Chrome className="mr-3 h-6 w-6"/>
+            Entrar com Google
         </Button>
-        <h1 className="text-xl font-bold text-center flex-1 pr-10">Cadastro</h1>
-      </header>
-      
-      <main className="flex-1 p-8 flex flex-col justify-center">
-        <form onSubmit={handleSubmit} className="w-full max-w-sm mx-auto">
-            <div className="space-y-4">
-                 <div>
-                    <Label htmlFor="name">Nome</Label>
-                     <div className="relative mt-1">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input id="name" type="text" placeholder="Seu nome" className="pl-10" required/>
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor="email">E-mail</Label>
-                    <div className="relative mt-1">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                        <Input id="email" type="email" placeholder="seuemail@exemplo.com" className="pl-10" required/>
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor="password">Senha</Label>
-                    <Input id="password" type="password" placeholder="Crie uma senha forte" className="mt-1" required/>
-                </div>
-                 <div>
-                    <Label htmlFor="confirm-password">Confirmar Senha</Label>
-                    <Input id="confirm-password" type="password" placeholder="Confirme sua senha" className="mt-1" required/>
-                </div>
-                <Button type="submit" className="w-full bg-primary h-12 text-lg">
-                    Cadastrar
-                </Button>
-            </div>
             
-            <div className="mt-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                    Já tem uma conta?{' '}
-                    <button type="button" onClick={onNavigateToLogin} className="font-medium text-primary hover:underline">
-                        Faça login
-                    </button>
-                </p>
-            </div>
-        </form>
-      </main>
+        <div className="mt-8 text-center text-xs text-primary-foreground/80">
+            <p>
+                Ao continuar, você concorda com nossos{' '}
+                <a href="#" className="font-semibold underline">Termos de Uso</a> e{' '}
+                <a href="#" className="font-semibold underline">Política de Privacidade</a>.
+            </p>
+        </div>
+       </main>
     </div>
   );
 }
