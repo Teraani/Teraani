@@ -15,25 +15,27 @@ const SoccerBallIcon = (props: React.SVGProps<SVGSVGElement>) => (
         </clipPath>
       </defs>
       <g clipPath="url(#circle-clip)">
-        <circle cx="100" cy="100" r="100" fill="black" />
+        <circle cx="100" cy="100" r="100" fill="white" />
         {/* Central Pentagon */}
-        <polygon points="100,70 128.5,89 117,121 83,121 71.5,89" fill="#333333" stroke="black" strokeWidth="3"/>
+        <polygon points="100,70 128.5,89 117,121 83,121 71.5,89" fill="black" stroke="black" strokeWidth="1"/>
         {/* Top Hexagon */}
-        <polygon points="100,70 71.5,89 71.5,55 100,40 128.5,55 128.5,89" fill="white" stroke="black" strokeWidth="3"/>
+        <polygon points="100,70 71.5,89 71.5,55 100,40 128.5,55 128.5,89" fill="white" stroke="black" strokeWidth="1"/>
         {/* Top-right Hexagon */}
-        <polygon points="128.5,89 128.5,55 157,70 170,100 157,121 117,121" fill="white" stroke="black" strokeWidth="3"/>
+        <polygon points="128.5,89 128.5,55 157,70 170,100 157,121 117,121" fill="white" stroke="black" strokeWidth="1"/>
         {/* Bottom-right Hexagon */}
-        <polygon points="117,121 157,121 157,155 128.5,170 100,155 83,170" fill="white" stroke="black" strokeWidth="3"/>
-        <polygon points="117,121 157,121 157,155 128.5,170 100,155" fill="white" stroke="black" strokeWidth="3"/>
+        <polygon points="117,121 157,121 157,155 128.5,170 100,155 83,170" fill="white" stroke="black" strokeWidth="1"/>
+        <polygon points="117,121 157,121 157,155 128.5,170 100,155" fill="white" stroke="black" strokeWidth="1"/>
          {/* Bottom-left Hexagon */}
-        <polygon points="83,121 43,121 43,155 71.5,170 100,155" fill="white" stroke="black" strokeWidth="3"/>
+        <polygon points="83,121 43,121 43,155 71.5,170 100,155" fill="white" stroke="black" strokeWidth="1"/>
         {/* Top-left Hexagon */}
-        <polygon points="71.5,89 71.5,55 43,70 30,100 43,121 83,121" fill="white" stroke="black" strokeWidth="3"/>
-        {/* Shaded parts */}
-        <polygon points="157,70 170,100 185,90 185,70" fill="#CCCCCC" stroke="black" strokeWidth="3"/>
-        <polygon points="43,70 30,100 15,90 15,70" fill="#CCCCCC" stroke="black" strokeWidth="3"/>
-        <polygon points="157,155 128.5,170 140,185 170,180" fill="#CCCCCC" stroke="black" strokeWidth="3"/>
-        <polygon points="43,155 71.5,170 60,185 30,180" fill="#CCCCCC" stroke="black" strokeWidth="3"/>
+        <polygon points="71.5,89 71.5,55 43,70 30,100 43,121 83,121" fill="white" stroke="black" strokeWidth="1"/>
+        {/* Shaded parts to give 3D illusion */}
+        <polygon points="157,70 170,100 185,90 185,70" fill="#f0f0f0" stroke="black" strokeWidth="1"/>
+        <polygon points="43,70 30,100 15,90 15,70" fill="#f0f0f0" stroke="black" strokeWidth="1"/>
+        <polygon points="157,155 128.5,170 140,185 170,180" fill="#f0f0f0" stroke="black" strokeWidth="1"/>
+        <polygon points="43,155 71.5,170 60,185 30,180" fill="#f0f0f0" stroke="black" strokeWidth="1"/>
+         <polygon points="100,40 71.5,55 60,40" fill="#f0f0f0" stroke="black" strokeWidth="1"/>
+         <polygon points="100,40 128.5,55 140,40" fill="#f0f0f0" stroke="black" strokeWidth="1"/>
       </g>
     </svg>
 );
