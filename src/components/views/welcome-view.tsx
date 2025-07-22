@@ -9,22 +9,12 @@ const SoccerBallIcon = (props: React.SVGProps<SVGSVGElement>) => (
         viewBox="0 0 100 100"
         {...props}
     >
-        <circle cx="50" cy="50" r="50" fill="white" />
-        <g stroke="black" strokeWidth="1.5">
-            {/* Central Pentagon */}
-            <polygon fill="black" points="50,35 65,46 59,64 41,64 35,46" />
-            {/* Top Hexagon */}
-            <polygon fill="white" points="50,35 35,46 35,25 50,15 65,25 65,46" />
-            {/* Top Right Hexagon */}
-            <polygon fill="white" points="65,46 65,25 81,35 88,54 81,72 59,64" />
-            {/* Bottom Right Hexagon */}
-            <polygon fill="white" points="59,64 81,72 81,90 65,100 50,90 41,100" />
-            <polygon fill="white" points="59,64 81,72 81,90 65,98 50,90" />
-             {/* Bottom Left Hexagon */}
-            <polygon fill="white" points="41,64 19,72 19,90 35,98 50,90" />
-            {/* Top Left Hexagon */}
-            <polygon fill="white" points="35,46 35,25 19,35 12,54 19,72 41,64" />
-        </g>
+        <circle cx="50" cy="50" r="48" fill="white" stroke="black" strokeWidth="1" />
+        <polygon points="50,30 65,42 58,60 42,60 35,42" fill="black" />
+        <polygon points="50,30 35,42 30,25 50,15 70,25 65,42" fill="white" stroke="black" strokeWidth="1" />
+        <polygon points="65,42 70,25 85,35 85,65 70,75 58,60" fill="white" stroke="black" strokeWidth="1" />
+        <polygon points="58,60 70,75 50,85 30,75 42,60" fill="white" stroke="black" strokeWidth="1" />
+        <polygon points="42,60 30,75 15,65 15,35 30,25 35,42" fill="white" stroke="black" strokeWidth="1" />
     </svg>
 );
 
