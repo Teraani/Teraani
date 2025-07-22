@@ -23,13 +23,13 @@ import { ptBR } from 'date-fns/locale';
 interface DashboardViewProps {
   user: User;
   players: Record<string, Player>;
-  onNavigate: (view: View) => void;
+  onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void;
   onPlayerSelect: (playerId: string) => void;
   userAvatar: string | null;
   onAvatarChange: (image: string) => void;
 }
 
-function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: View) => void }) {
+function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void }) {
   const { toast } = useToast();
   const [notificationShown, setNotificationShown] = useState(false);
 
@@ -80,14 +80,14 @@ function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: Vi
                     </p>
                 </div>
             </div>
-            <Button size="sm" onClick={() => onNavigate('payments')}>Ver detalhes</Button>
+            <Button size="sm" onClick={() => onNavigate('payments', { isPersonalPayments: true })}>Ver detalhes</Button>
         </div>
     </Card>
   );
 }
 
 
-function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }: { user: User, players: Record<string, Player>, onNavigate: (view: View) => void, userAvatar: string | null, onAvatarChange: (image: string) => void }) {
+function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void, userAvatar: string | null, onAvatarChange: (image: string) => void }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {

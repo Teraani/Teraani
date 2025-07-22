@@ -50,6 +50,7 @@ export default function Home() {
   const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(11).fill(null));
   const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
   const [lineupsSaved, setLineupsSaved] = useState(false);
+  const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -96,7 +97,10 @@ export default function Home() {
     });
   }
 
-  const navigateTo = (view: View) => {
+  const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
+    if (view === 'payments') {
+      setIsPersonalPaymentsView(options?.isPersonalPayments || false);
+    }
     setPreviousView(currentView);
     setCurrentView(view);
     window.scrollTo(0, 0);
@@ -361,7 +365,7 @@ export default function Home() {
                   onBack={goBack}
                   currentUser={currentUser!}
                   users={appData.users}
-                  canEdit={canEditPayments}
+                  canEdit={canEditPayments && !isPersonalPaymentsView}
                   onSave={handleUpdateUserPayments}
                 />;
       default:
