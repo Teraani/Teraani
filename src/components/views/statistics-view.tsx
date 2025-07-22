@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Player, PlayerStats, Ranking, GoalieRanking } from '@/lib/data';
+import type { Player, PlayerStats, Ranking, GoalieRanking, User } from '@/lib/data';
 import { data } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, Shield, Star, Award, Footprints, Target, Percent, Trophy } from 'lucide-react';
@@ -18,6 +18,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '..
 
 interface StatisticsViewProps {
   players: Record<string, Player>;
+  users: Record<string, User>;
   onBack: () => void;
   onPlayerSelect: (playerId: string) => void;
   canEditScouts: boolean;
@@ -25,7 +26,7 @@ interface StatisticsViewProps {
 }
 
 const RankingListItem = ({ player, rank, statValue, statLabel, onPlayerSelect }: {
-    player: {id: string} & (Player | Ranking | GoalieRanking),
+    player: {id: string; avatar?: string} & (Player | Ranking | GoalieRanking | User),
     rank: number,
     statValue: string | number,
     statLabel: string,
@@ -41,7 +42,7 @@ const RankingListItem = ({ player, rank, statValue, statLabel, onPlayerSelect }:
             {rank}
         </span>
         <Avatar>
-            <AvatarImage src={'img' in player ? player.img : undefined} alt={player.name} data-ai-hint="player portrait" />
+            <AvatarImage src={'img' in player ? player.img : player.avatar} alt={player.name} data-ai-hint="player portrait" />
             <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 text-left">
@@ -223,7 +224,7 @@ const SimpleRankingList = ({ items, onPlayerSelect, stat, label, type }: {
 };
 
 
-export default function StatisticsView({ players, onBack, onPlayerSelect, canEditScouts, onSave: onSaveProp }: StatisticsViewProps) {
+export default function StatisticsView({ players, users, onBack, onPlayerSelect, canEditScouts, onSave: onSaveProp }: StatisticsViewProps) {
     const [editablePlayers, setEditablePlayers] = useState<Record<string, Player>>({});
     const [editableScalers, setEditableScalers] = useState<Record<string, Ranking>>({});
     const [editableGoalies, setEditableGoalies] = useState<Record<string, GoalieRanking>>({});
@@ -259,9 +260,38 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
         setHasChanges(false);
     };
 
-    const allPlayersMemo = useMemo(() => Object.values(editablePlayers).map(p => ({ ...p, id: Object.keys(editablePlayers).find(key => editablePlayers[key] === p)! })), [editablePlayers]);
-    const scalersMemo = useMemo(() => Object.values(editableScalers).map(s => ({ ...s, id: Object.keys(editableScalers).find(key => editableScalers[key] === s)! })), [editableScalers]);
-    const goaliesMemo = useMemo(() => Object.values(editableGoalies).map(g => ({ ...g, id: Object.keys(editableGoalies).find(key => editableGoalies[key] === g)! })), [editableGoalies]);
+    const allPlayersMemo = useMemo(() => {
+      return Object.entries(editablePlayers).map(([id, p]) => {
+          const user = Object.values(users).find(u => u.name.toLowerCase().includes(p.name.split(' ')[0].toLowerCase()))
+          return {
+              ...p,
+              id,
+              avatar: user?.avatar || p.img
+          }
+      })
+    }, [editablePlayers, users]);
+
+    const scalersMemo = useMemo(() => {
+      return Object.entries(editableScalers).map(([id, s]) => {
+          const user = Object.values(users).find(u => u.name.toLowerCase().includes(s.name.split(' ')[0].toLowerCase()))
+          return {
+              ...s,
+              id,
+              avatar: user?.avatar
+          }
+      })
+    }, [editableScalers, users]);
+
+    const goaliesMemo = useMemo(() => {
+        return Object.entries(editableGoalies).map(([id, g]) => {
+            const user = Object.values(users).find(u => u.name.toLowerCase().includes(g.name.split(' ')[0].toLowerCase()))
+            return {
+                ...g,
+                id,
+                avatar: user?.avatar
+            }
+        })
+    }, [editableGoalies, users]);
 
 
     return (

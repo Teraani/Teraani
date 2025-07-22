@@ -1,11 +1,11 @@
 
+
 "use client";
 
 import { useState, useMemo } from 'react';
 import type { Friend, Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, UserPlus, Search, Trash2 } from 'lucide-react';
-import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +36,6 @@ interface FriendsScoreViewProps {
   friends: Friend[]; // This will be used as the initial list of all possible players to add
   user: User;
   players: Record<string, Player>;
-  userAvatar: string | null;
 }
 
 const AddFriendDialog = ({ players, onSelect, competitors }: { players: Record<string, Player>, onSelect: (friend: Friend) => void, competitors: Friend[] }) => {
@@ -154,7 +153,7 @@ const CompetitorCard = ({ competitor, isUser, onClick }: { competitor: Friend, i
     </Card>
 )
 
-export default function FriendsScoreView({ onBack, user, players, userAvatar }: FriendsScoreViewProps) {
+export default function FriendsScoreView({ onBack, user, players }: FriendsScoreViewProps) {
   const userAsPlayer = useMemo(() => {
      const nameToSearch = user.name.split(' ')[0].toLowerCase();
      return Object.values(players).find(p => p.name.toLowerCase().includes(nameToSearch)) || null;
@@ -169,7 +168,7 @@ export default function FriendsScoreView({ onBack, user, players, userAvatar }: 
     totalPlayers: 11,
     isPro: true,
     crest: 'https://placehold.co/40x40/4ade80/000000',
-    avatar: userAvatar || 'https://placehold.co/32x32',
+    avatar: user.avatar || 'https://placehold.co/32x32',
   };
 
   const [competitors, setCompetitors] = useState<Friend[]>([]);

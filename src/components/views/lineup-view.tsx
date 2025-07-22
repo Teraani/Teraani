@@ -1,4 +1,5 @@
 
+
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
@@ -32,7 +33,6 @@ interface LineupViewProps {
   onPlayerSelect: (playerId: string) => void;
   onNavigate: (view: View) => void;
   onAddPlayer: (slot: AddPlayerSlot) => void;
-  userAvatar: string | null;
   currentUser: User;
   canEdit: boolean;
   team1Lineup: (string | null)[];
@@ -186,7 +186,7 @@ const TeamDisplay = ({
 export default function LineupView(props: LineupViewProps) {
   const { 
     players, onPlayerSelect, onNavigate, onAddPlayer,
-    userAvatar, currentUser, canEdit,
+    currentUser, canEdit,
     team1Lineup, setTeam1Lineup, team1Reserves, setTeam1Reserves,
     team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves,
     onSaveLineups, lineupsSaved
@@ -450,7 +450,7 @@ export default function LineupView(props: LineupViewProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={userAvatar ?? undefined} alt="Avatar do Usuário" />
+                    <AvatarImage src={currentUser.avatar ?? undefined} alt="Avatar do Usuário" />
                     <AvatarFallback>
                       <Users />
                     </AvatarFallback>

@@ -54,7 +54,19 @@ export default function Home() {
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>(currentUser?.avatar || null);
+  
+  const handleAvatarChange = (userId: string, image: string) => {
+    setAppData(prevData => ({
+      ...prevData,
+      users: {
+        ...prevData.users,
+        [userId]: {
+          ...prevData.users[userId],
+          avatar: image,
+        }
+      }
+    }));
+  };
 
   const canEditLineup = useMemo(() => {
     if (!currentUser) return false;
@@ -84,8 +96,6 @@ export default function Home() {
       return;
     }
     setLoggedInUserId(userId);
-    // User lineup is now derived from the global teams, not individual state
-    setUserAvatar(user.avatar || null);
     navigateTo('dashboard');
     toast({
       title: `Bem-vindo, ${user.name}!`,
@@ -323,14 +333,13 @@ export default function Home() {
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
       case 'lineup':
         return <LineupView 
                  players={appData.players} 
                  onPlayerSelect={selectPlayerForDetails} 
                  onNavigate={navigateTo} 
                  onAddPlayer={handleOpenMarket} 
-                 userAvatar={userAvatar} 
                  currentUser={currentUser!}
                  canEdit={canEditLineup}
                  team1Lineup={team1Lineup}
@@ -345,7 +354,7 @@ export default function Home() {
                  lineupsSaved={lineupsSaved}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
       case 'market':
         return <MarketView 
                  players={appData.players} 
@@ -363,9 +372,9 @@ export default function Home() {
       case 'games':
         return <GamesView onBack={goBack} />;
       case 'friends-score':
-        return <FriendsScoreView onBack={goBack} friends={Object.values(appData.players).map(p => ({ id: `p-${p.name}`, name: p.name, teamName: `${p.name} FC`, score: p.points, playersPlayed: p.games, totalPlayers: 11, isPro: false, crest: 'https://placehold.co/40x40/cccccc/000000', avatar: p.img }))} user={userForViews!} players={appData.players} userAvatar={userAvatar} />;
+        return <FriendsScoreView onBack={goBack} friends={Object.values(appData.players).map(p => ({ id: `p-${p.name}`, name: p.name, teamName: `${p.name} FC`, score: p.points, playersPlayed: p.games, totalPlayers: 11, isPro: false, crest: 'https://placehold.co/40x40/cccccc/000000', avatar: p.img }))} user={userForViews!} players={appData.players} />;
       case 'statistics':
-        return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} />;
+        return <StatisticsView players={appData.players} users={appData.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} />;
       case 'admin':
         return <AdminView 
                   onBack={goBack} 
@@ -396,13 +405,13 @@ export default function Home() {
                   onSave={handleUpdateUserPayments}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
     }
   };
 
   return (
     <div>
-      <main className={cn(showBottomNav && "pb-20")}>
+      <main className={cn(showBottomNav && currentView !== 'welcome' && currentView !== 'register' && "pb-20")}>
         {renderView()}
       </main>
       {showBottomNav && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments} />}

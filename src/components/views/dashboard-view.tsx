@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { View } from '@/app/page';
@@ -32,8 +33,7 @@ interface DashboardViewProps {
   players: Record<string, Player>;
   onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void;
   onPlayerSelect: (playerId: string) => void;
-  userAvatar: string | null;
-  onAvatarChange: (image: string) => void;
+  onAvatarChange: (userId: string, image: string) => void;
 }
 
 function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void }) {
@@ -94,7 +94,7 @@ function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: Vi
 }
 
 
-function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void, userAvatar: string | null, onAvatarChange: (image: string) => void }) {
+function PlayerSummary({ user, players, onNavigate, onAvatarChange }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void, onAvatarChange: (userId: string, image: string) => void }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,7 +102,7 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
             const file = event.target.files[0];
             const reader = new FileReader();
             reader.onloadend = () => {
-                onAvatarChange(reader.result as string);
+                onAvatarChange(user.id, reader.result as string);
             };
             reader.readAsDataURL(file);
         }
@@ -136,12 +136,12 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
                 <div className="flex items-center gap-4">
                      <div className="relative">
                         <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
-                            <AvatarImage src={userAvatar ?? undefined} alt="Foto do Jogador" />
+                            <AvatarImage src={user.avatar ?? undefined} alt="Foto do Jogador" />
                             <AvatarFallback className="text-3xl">
                                 <Upload className="h-8 w-8"/>
                             </AvatarFallback>
                         </Avatar>
-                        {userAvatar && (
+                        {user.avatar && (
                           <div
                             className="absolute bottom-0 right-0 bg-primary rounded-full p-1 cursor-pointer"
                             onClick={handleAvatarClick}
@@ -221,7 +221,7 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange }: DashboardViewProps) {
+export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, onAvatarChange }: DashboardViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const sortedUsers = useMemo(() => {
     return Object.values(allUsers)
@@ -236,7 +236,7 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={userAvatar ?? undefined} alt="Avatar do Usuário" />
+                <AvatarImage src={user.avatar ?? undefined} alt="Avatar do Usuário" />
                 <AvatarFallback>
                   <Users />
                 </AvatarFallback>
@@ -300,7 +300,7 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
         <div className="w-10 h-10" />
       </header>
       <div className="p-4 space-y-8">
-        <PlayerSummary user={user} players={players} onNavigate={onNavigate} userAvatar={userAvatar} onAvatarChange={onAvatarChange} />
+        <PlayerSummary user={user} players={players} onNavigate={onNavigate} onAvatarChange={onAvatarChange} />
         <QuickAccess onNavigate={onNavigate} />
         <ConnectSection />
       </div>
