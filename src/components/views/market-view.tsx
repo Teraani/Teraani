@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import type { Player } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowLeft, UserPlus, Trash2 } from 'lucide-react';
+import { Search, ArrowLeft, UserPlus, Trash2, Upload } from 'lucide-react';
 import PlayerListItem from '@/components/market/player-list-item';
 import type { Position } from '@/app/page';
 import { useToast } from '@/hooks/use-toast';
@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 
 interface MarketViewProps {
@@ -47,21 +48,32 @@ interface MarketViewProps {
 const AddPlayerForm = ({ onAddPlayer, canEdit }: { onAddPlayer: (player: Omit<Player, 'last_val' | 'games'>) => void, canEdit: boolean }) => {
   const [name, setName] = useState('');
   const [pos, setPos] = useState<Player['pos'] | ''>('');
-  const [value, setValue] = useState('');
   const [team, setTeam] = useState('');
   const [img, setImg] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImg(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !pos || !value || !team) {
-      alert('Por favor, preencha todos os campos.');
+    if (!name || !pos || !team) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
     onAddPlayer({
       name,
       pos: pos as Player['pos'],
-      value: parseFloat(value),
+      value: 5.0, // Default value
       points: 0,
       team,
       img: img || 'https://placehold.co/60x60',
@@ -69,7 +81,6 @@ const AddPlayerForm = ({ onAddPlayer, canEdit }: { onAddPlayer: (player: Omit<Pl
     // Reset form and close dialog
     setName('');
     setPos('');
-    setValue('');
     setTeam('');
     setImg('');
     setIsOpen(false);
@@ -92,6 +103,20 @@ const AddPlayerForm = ({ onAddPlayer, canEdit }: { onAddPlayer: (player: Omit<Pl
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex flex-col items-center gap-4">
+            <Avatar className="w-24 h-24">
+              <AvatarImage src={img} alt="Pré-visualização" data-ai-hint="player avatar"/>
+              <AvatarFallback className="text-4xl">
+                <UserPlus />
+              </AvatarFallback>
+            </Avatar>
+            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="mr-2 h-4 w-4" />
+              Anexar Imagem
+            </Button>
+            <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+          </div>
+
           <div>
             <Label htmlFor="playerName">Nome</Label>
             <Input id="playerName" value={name} onChange={e => setName(e.target.value)} required />
@@ -116,14 +141,7 @@ const AddPlayerForm = ({ onAddPlayer, canEdit }: { onAddPlayer: (player: Omit<Pl
                 </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label htmlFor="playerValue">Valor (C$)</Label>
-            <Input id="playerValue" type="number" step="0.1" value={value} onChange={e => setValue(e.target.value)} required />
-          </div>
-          <div>
-            <Label htmlFor="playerImg">URL da Imagem (Opcional)</Label>
-            <Input id="playerImg" value={img} onChange={e => setImg(e.target.value)} placeholder="https://..." />
-          </div>
+          
           <DialogFooter>
             <DialogClose asChild>
                 <Button type="button" variant="secondary">Cancelar</Button>
