@@ -26,6 +26,7 @@ interface PaymentsViewProps {
 const getStatus = (dueDate: string) => {
   const date = parseISO(dueDate);
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
   const daysDiff = differenceInDays(date, today);
 
   if (daysDiff < 0) return { text: 'Vencido', color: 'text-destructive', bg: 'bg-destructive/10' };
@@ -61,6 +62,7 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
   };
 
   const sortedUsers = useMemo(() => {
+    if (!editableUsers) return [];
     return Object.values(editableUsers)
       .filter(user => user.role === 'player' && user.name.toLowerCase().includes(searchTerm.toLowerCase()))
       .sort((a, b) => differenceInDays(parseISO(a.paymentDueDate), parseISO(b.paymentDueDate)));
@@ -89,7 +91,7 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                         <div>
                             <p className="text-lg font-bold">{currentUser.name}</p>
                             <p className="text-sm text-muted-foreground">
-                                Vencimento: {format(parseISO(currentUser.paymentDueDate), 'dd/MM/yyyy')}
+                                Vencimento: {format(parseISO(currentUser.paymentDueDate), "PPP", { locale: ptBR })}
                             </p>
                         </div>
                         <div className={cn("px-3 py-1 rounded-full text-xs font-bold", getStatus(currentUser.paymentDueDate).bg, getStatus(currentUser.paymentDueDate).color)}>
@@ -141,7 +143,7 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                                             )}
                                         >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
-                                            {format(parseISO(user.paymentDueDate), 'dd/MM/yyyy')}
+                                            {format(parseISO(user.paymentDueDate), "PPP", { locale: ptBR })}
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0">
@@ -150,6 +152,7 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                                             selected={parseISO(user.paymentDueDate)}
                                             onSelect={(date) => handleDateChange(user.id, date)}
                                             initialFocus
+                                            locale={ptBR}
                                         />
                                     </PopoverContent>
                                 </Popover>

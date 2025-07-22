@@ -38,28 +38,35 @@ function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: Vi
 
     const dueDate = parseISO(user.paymentDueDate);
     const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
     const daysUntilDue = differenceInDays(dueDate, today);
+
+    let toastShownThisSession = sessionStorage.getItem(`notified_${user.id}_${user.paymentDueDate}`);
+
+    if (toastShownThisSession) return;
 
     if (daysUntilDue <= 1 && daysUntilDue >= 0) {
       toast({
         title: "Aviso de Vencimento",
-        description: `Sua mensalidade vence amanhã! (${format(dueDate, 'dd/MM/yyyy')})`,
+        description: `Sua mensalidade vence amanhã! (${format(dueDate, 'dd/MM/yyyy', { locale: ptBR })})`,
         variant: "destructive",
       });
-      setNotificationShown(true);
+       sessionStorage.setItem(`notified_${user.id}_${user.paymentDueDate}`, 'true');
     } else if (daysUntilDue < 0) {
         toast({
             title: "Mensalidade Vencida",
-            description: `Sua mensalidade venceu em ${format(dueDate, 'dd/MM/yyyy')}.`,
+            description: `Sua mensalidade venceu em ${format(dueDate, 'dd/MM/yyyy', { locale: ptBR })}.`,
             variant: "destructive",
         });
-        setNotificationShown(true);
+        sessionStorage.setItem(`notified_${user.id}_${user.paymentDueDate}`, 'true');
     }
-  }, [user.paymentDueDate, toast, notificationShown]);
+  }, [user.id, user.paymentDueDate, toast, notificationShown]);
 
   const dueDate = parseISO(user.paymentDueDate);
   const today = new Date();
-  const isOverdue = differenceInDays(dueDate, today) < 0;
+  today.setHours(0, 0, 0, 0);
+  const daysDiff = differenceInDays(dueDate, today);
+  const isOverdue = daysDiff < 0;
 
   return (
     <Card className="bg-card p-4 mt-4 border-l-4 border-primary">
