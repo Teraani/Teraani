@@ -22,9 +22,10 @@ import LiveView from '@/components/views/live-view';
 import type { LiveEvent } from '@/components/views/live-view';
 import PaymentsView from '@/components/views/payments-view';
 import { cn } from '@/lib/utils';
+import ModalitySelectionView from '@/components/views/modality-selection-view';
 
 
-export type View = 'welcome' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
+export type View = 'welcome' | 'register' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -105,7 +106,8 @@ export default function Home() {
 
   const handleRegistrationSuccess = () => {
     // For now, just log in the default user (Admin) after "Google Sign-In"
-    handleLoginSuccess('user27');
+    setLoggedInUserId('user27');
+    navigateTo('modality-selection');
   }
 
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
@@ -320,7 +322,7 @@ export default function Home() {
     return Array.from(scaledIds);
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
-  const showBottomNav = currentView !== 'welcome' && currentView !== 'register';
+  const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection';
 
   const renderView = () => {
     if (!userForViews && showBottomNav) {
@@ -332,6 +334,8 @@ export default function Home() {
         return <WelcomeView onEnter={() => navigateTo('register')} />;
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
+      case 'modality-selection':
+        return <ModalitySelectionView onModalitySelect={() => navigateTo('dashboard')} />;
       case 'dashboard':
         return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
       case 'lineup':
@@ -411,7 +415,7 @@ export default function Home() {
 
   return (
     <div>
-      <main className={cn(showBottomNav && currentView !== 'welcome' && currentView !== 'register' && "pb-20")}>
+      <main className={cn(showBottomNav && "pb-20")}>
         {renderView()}
       </main>
       {showBottomNav && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments} />}
