@@ -71,8 +71,8 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
   if (!currentUser) return null;
 
   const userItemContent = (user: User) => (
-    <div className="p-3 bg-muted/30 rounded-lg space-y-2">
-        <div className="flex items-center justify-between">
+    <div className="p-3 bg-muted/30 rounded-lg">
+        <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
                 <Avatar>
                     <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="player avatar"/>
@@ -85,7 +85,7 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                     </p>
                 </div>
             </div>
-            <div className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", getStatus(user.paymentDueDate).bg, getStatus(user.paymentDueDate).color)}>
+            <div className={cn("px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap", getStatus(user.paymentDueDate).bg, getStatus(user.paymentDueDate).color)}>
                {getStatus(user.paymentDueDate).text}
             </div>
         </div>
@@ -133,7 +133,7 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                         <div className="space-y-3 pr-2">
                         {sortedUsers.map(user => (
                             <Popover key={user.id}>
-                                <PopoverTrigger asChild>
+                                <PopoverTrigger asChild disabled={!canEdit}>
                                     <div className="cursor-pointer">
                                         {userItemContent(user)}
                                     </div>
