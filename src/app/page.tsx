@@ -197,6 +197,44 @@ export default function Home() {
     setLiveEvents(prevEvents => [newEvent, ...prevEvents]);
   };
 
+  const handleAddPlayerToMarket = (newPlayer: Omit<Player, 'last_val' | 'games'>) => {
+    setAppData(prevData => {
+      const newPlayerId = `p${Object.keys(prevData.players).length + 1}`;
+      const fullNewPlayer: Player = {
+        ...newPlayer,
+        last_val: 0,
+        games: 0,
+      }
+      return {
+        ...prevData,
+        players: {
+          ...prevData.players,
+          [newPlayerId]: fullNewPlayer,
+        }
+      };
+    });
+    toast({
+      title: "Jogador Adicionado!",
+      description: `${newPlayer.name} agora está disponível no mercado.`,
+    });
+  };
+
+  const handleRemovePlayerFromMarket = (playerId: string) => {
+    setAppData(prevData => {
+      const newPlayers = { ...prevData.players };
+      const playerName = newPlayers[playerId]?.name;
+      delete newPlayers[playerId];
+      return {
+        ...prevData,
+        players: newPlayers,
+      };
+    });
+     toast({
+      title: "Jogador Removido!",
+      variant: "destructive",
+    });
+  };
+
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
@@ -261,6 +299,9 @@ export default function Home() {
                  onBack={goBack} 
                  position={slotToAddPlayer?.position ?? null}
                  scaledPlayerIds={allScaledPlayerIds}
+                 canEdit={canEditScouts}
+                 onAddPlayerToMarket={handleAddPlayerToMarket}
+                 onRemovePlayerFromMarket={handleRemovePlayerFromMarket}
                />;
       case 'partial-score':
         return <PartialScoreView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
