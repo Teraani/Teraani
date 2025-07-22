@@ -34,7 +34,7 @@ export default function PlayerListItem({ player, onPlayerSelect, isScaled }: Pla
         </div>
       </div>
       <div className="text-right">
-        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{player.value.toFixed(2)}</p>
+        <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{player.points.toFixed(2)}</p>
         <p className={cn("text-sm font-semibold", valColor)}>{valSign}{player.last_val.toFixed(2)}</p>
       </div>
     </Card>

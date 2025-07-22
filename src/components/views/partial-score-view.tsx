@@ -9,12 +9,36 @@ import { ArrowLeft, Search } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface PartialScoreViewProps {
   players: Record<string, Player>;
   onBack: () => void;
   onPlayerSelect: (playerId: string) => void;
 }
+
+const PlayerScoreItem = ({ player, onPlayerSelect }: { player: { id: string } & Player, onPlayerSelect: (id: string) => void}) => {
+    return (
+        <Card 
+            className="p-3 flex items-center justify-between cursor-pointer bg-card hover:bg-muted/50"
+            onClick={() => onPlayerSelect(player.id)}
+        >
+            <div className="flex items-center space-x-3">
+                <Avatar className="w-10 h-10">
+                    <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" className="object-cover"/>
+                    <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-bold">{player.name}</p>
+                    <p className="text-sm text-muted-foreground">{player.pos}</p>
+                </div>
+            </div>
+            <div className="text-right">
+                <p className="font-bold text-lg text-primary">{player.points.toFixed(2)}</p>
+            </div>
+        </Card>
+    );
+};
 
 export default function PartialScoreView({ players, onBack, onPlayerSelect }: PartialScoreViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,25 +76,11 @@ export default function PartialScoreView({ players, onBack, onPlayerSelect }: Pa
         <ScrollArea className="h-[calc(100vh-180px)]">
             <div className="space-y-2 pr-2">
             {allPlayersSorted.map((player) => (
-                <Card 
-                key={player.id} 
-                className="p-3 flex items-center justify-between cursor-pointer bg-card hover:bg-muted/50"
-                onClick={() => onPlayerSelect(player.id)}
-                >
-                <div className="flex items-center space-x-3">
-                    <Avatar className="w-10 h-10">
-                        <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" className="object-cover"/>
-                        <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                    <p className="font-bold">{player.name}</p>
-                    <p className="text-sm text-muted-foreground">{player.pos}</p>
-                    </div>
-                </div>
-                <div className="text-right">
-                    <p className="font-bold text-lg text-primary">{player.points.toFixed(2)}</p>
-                </div>
-                </Card>
+                <PlayerScoreItem 
+                    key={player.id} 
+                    player={player}
+                    onPlayerSelect={onPlayerSelect}
+                />
             ))}
             </div>
         </ScrollArea>
