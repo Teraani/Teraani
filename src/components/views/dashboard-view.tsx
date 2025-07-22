@@ -6,7 +6,7 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check } from 'lucide-react';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -15,6 +15,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu"
 import { useToast } from '@/hooks/use-toast';
 import { differenceInDays, parseISO, format } from 'date-fns';
@@ -22,6 +26,8 @@ import { ptBR } from 'date-fns/locale';
 
 interface DashboardViewProps {
   user: User;
+  allUsers: Record<string, User>;
+  onUserSelect: (userId: string) => void;
   players: Record<string, Player>;
   onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void;
   onPlayerSelect: (playerId: string) => void;
@@ -214,7 +220,9 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange }: DashboardViewProps) {
+export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange }: DashboardViewProps) {
+  const sortedUsers = useMemo(() => Object.values(allUsers).sort((a, b) => a.name.localeCompare(b.name)), [allUsers]);
+
   return (
     <div>
       <header className="bg-card p-4 shadow-sm flex items-center justify-between">
@@ -239,12 +247,30 @@ export default function DashboardView({ user, players, onNavigate, onPlayerSelec
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>Trocar de Usuário</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="max-h-[300px] overflow-y-auto">
+                    {sortedUsers.map(u => (
+                      <DropdownMenuItem key={u.id} onClick={() => onUserSelect(u.id)}>
+                        {u.name}
+                        {u.role === 'admin' && <Crown className="ml-2 h-4 w-4 text-amber-400" />}
+                        {user.id === u.id && <Check className="ml-auto h-4 w-4" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
             {user.role === 'admin' && (
               <DropdownMenuItem onClick={() => onNavigate('admin')}>
                 <ShieldCheck className="mr-2 h-4 w-4" />
                 <span>Admin</span>
               </DropdownMenuItem>
             )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onNavigate('welcome')}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sair</span>

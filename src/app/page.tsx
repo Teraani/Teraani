@@ -16,7 +16,7 @@ import FriendsScoreView from '@/components/views/friends-score-view';
 import StatisticsView from '@/components/views/statistics-view';
 import AdminView from '@/components/views/admin-view';
 import BottomNav from '@/components/bottom-nav';
-import LoginView from '@/components/views/login-view';
+import RegisterView from '@/components/views/register-view';
 import { useToast } from '@/hooks/use-toast';
 import LiveView from '@/components/views/live-view';
 import type { LiveEvent } from '@/components/views/live-view';
@@ -24,7 +24,7 @@ import PaymentsView from '@/components/views/payments-view';
 import { cn } from '@/lib/utils';
 
 
-export type View = 'welcome' | 'login' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
+export type View = 'welcome' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -42,7 +42,7 @@ export default function Home() {
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
 
   // Simulate a logged-in user. By default, it's the admin.
-  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
   const currentUser = loggedInUserId ? appData.users[loggedInUserId] : null;
 
   // State for the two teams the editor can manage
@@ -54,7 +54,7 @@ export default function Home() {
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(currentUser?.avatar || null);
 
   const canEditLineup = useMemo(() => {
     if (!currentUser) return false;
@@ -92,6 +92,11 @@ export default function Home() {
       description: "Login realizado com sucesso.",
     });
   };
+
+  const handleRegistrationSuccess = () => {
+    // For now, just log in the default user (Admin) after "Google Sign-In"
+    handleLoginSuccess('user27');
+  }
 
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
@@ -305,20 +310,20 @@ export default function Home() {
     return Array.from(scaledIds);
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
-  const showBottomNav = currentView !== 'welcome' && currentView !== 'login';
+  const showBottomNav = currentView !== 'welcome' && currentView !== 'register';
 
   const renderView = () => {
     if (!userForViews && showBottomNav) {
-      return <LoginView users={Object.values(appData.users)} onLogin={handleLoginSuccess} />;
+      return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
     }
 
     switch (currentView) {
       case 'welcome':
-        return <WelcomeView onEnter={() => navigateTo('login')} />;
-      case 'login':
-        return <LoginView users={Object.values(appData.users)} onLogin={handleLoginSuccess} />;
+        return <WelcomeView onEnter={() => navigateTo('register')} />;
+      case 'register':
+        return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'lineup':
         return <LineupView 
                  players={appData.players} 
@@ -340,7 +345,7 @@ export default function Home() {
                  lineupsSaved={lineupsSaved}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
       case 'market':
         return <MarketView 
                  players={appData.players} 
@@ -391,7 +396,7 @@ export default function Home() {
                   onSave={handleUpdateUserPayments}
                 />;
       default:
-        return <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
+        return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;
     }
   };
 

@@ -64,4 +64,3 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
     </div>
   );
 }
-
