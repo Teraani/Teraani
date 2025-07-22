@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ interface WelcomeViewProps {
 
 export default function WelcomeView({ onEnter }: WelcomeViewProps) {
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-primary p-8 text-primary-foreground text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-primary p-8 text-primary-foreground text-center">
       <div className="flex-1 flex flex-col items-center justify-center">
         <h2 className="text-3xl font-bold mb-4">Amistoso FC</h2>
         <div className="w-32 h-32 flex items-center justify-center mb-6">
@@ -47,5 +48,6 @@ export default function WelcomeView({ onEnter }: WelcomeViewProps) {
     </div>
   );
 }
+
 
 

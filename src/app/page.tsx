@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import LiveView from '@/components/views/live-view';
 import type { LiveEvent } from '@/components/views/live-view';
 import PaymentsView from '@/components/views/payments-view';
+import { cn } from '@/lib/utils';
 
 
 export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
@@ -310,8 +311,10 @@ export default function Home() {
     return Array.from(scaledIds);
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
+  const showBottomNav = currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register';
+
   const renderView = () => {
-    if (!userForViews && currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register') {
+    if (!userForViews && showBottomNav) {
       return <LoginView onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => navigateTo('register')} onBack={() => navigateTo('welcome')} users={appData.users} />;
     }
 
@@ -402,10 +405,10 @@ export default function Home() {
 
   return (
     <div>
-      <main className="pb-20">
+      <main className={cn(showBottomNav && "pb-20")}>
         {renderView()}
       </main>
-      {currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register' && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments} />}
+      {showBottomNav && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments} />}
     </div>
   );
 }
