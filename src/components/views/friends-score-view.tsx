@@ -39,16 +39,6 @@ interface FriendsScoreViewProps {
   userAvatar: string | null;
 }
 
-const TeamCrest = ({ crest, avatar, name }: { crest: string; avatar: string; name: string; }) => (
-  <div className="relative">
-    <Image src={crest} alt="" width={48} height={48} className="rounded-md" data-ai-hint="team crest" />
-    <Avatar className="absolute bottom-[-8px] right-[-8px] h-8 w-8 border-2 border-background">
-      <AvatarImage src={avatar} alt={name} data-ai-hint="player avatar" />
-      <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-    </Avatar>
-  </div>
-);
-
 const AddFriendDialog = ({ players, onSelect, competitors }: { players: Record<string, Player>, onSelect: (friend: Friend) => void, competitors: Friend[] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -143,12 +133,11 @@ const CompetitorCard = ({ competitor, isUser, onClick }: { competitor: Friend, i
     >
       <CardContent className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <TeamCrest
-            crest={competitor.crest}
-            avatar={competitor.avatar}
-            name={competitor.name}
-          />
-          <div className="ml-4">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={competitor.avatar} alt={competitor.name} data-ai-hint="player avatar" />
+              <AvatarFallback>{competitor.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+          <div>
             <p className="font-bold text-foreground">{competitor.teamName}</p>
             <div className="flex items-center gap-2">
                 {competitor.isPro && <Badge className="bg-yellow-400 text-yellow-900 px-1.5 py-0 text-[10px] h-4">PRO</Badge>}
