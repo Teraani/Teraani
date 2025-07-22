@@ -374,7 +374,7 @@ export default function Home() {
       <main className="pb-20">
         {renderView()}
       </main>
-      {currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register' && <BottomNav currentView={currentView} onNavigate={navigateTo} />}
+      {currentView !== 'welcome' && currentView !== 'login' && currentView !== 'register' && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments} />}
     </div>
   );
 }

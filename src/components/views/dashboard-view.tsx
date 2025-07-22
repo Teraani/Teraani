@@ -29,7 +29,7 @@ interface DashboardViewProps {
   onAvatarChange: (image: string) => void;
 }
 
-function PaymentStatus({ user }: { user: User }) {
+function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: View) => void }) {
   const { toast } = useToast();
   const [notificationShown, setNotificationShown] = useState(false);
 
@@ -73,7 +73,7 @@ function PaymentStatus({ user }: { user: User }) {
                     </p>
                 </div>
             </div>
-            <Button size="sm" onClick={() => { /* Navigate to payment screen */ }}>Ver detalhes</Button>
+            <Button size="sm" onClick={() => onNavigate('payments')}>Ver detalhes</Button>
         </div>
     </Card>
   );
@@ -159,7 +159,7 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
                         <p className="font-bold text-lg">{performancePercentage}</p>
                     </div>
                 </div>
-                <PaymentStatus user={user} />
+                <PaymentStatus user={user} onNavigate={onNavigate} />
                 <Button className="w-full mt-4" onClick={() => onNavigate('lineup')}>
                     Ver Times da Rodada
                 </Button>
