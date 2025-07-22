@@ -46,7 +46,6 @@ const RankingListItem = ({ player, rank, statValue, statLabel, onPlayerSelect }:
         </Avatar>
         <div className="flex-1 text-left">
             <p className="font-bold text-base text-foreground">{player.name}</p>
-            {'pos' in player && <p className="text-sm text-muted-foreground">{player.pos}</p>}
         </div>
         <div className="text-right">
             <p className="font-extrabold text-xl text-primary">{statValue}</p>
