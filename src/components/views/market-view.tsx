@@ -104,12 +104,14 @@ const PlayerForm = ({
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col items-center gap-4">
-          <Avatar className="w-24 h-24">
-            <AvatarImage src={img} alt="Pré-visualização" data-ai-hint="player avatar"/>
-            <AvatarFallback className="text-4xl">
-              <UserPlus />
-            </AvatarFallback>
-          </Avatar>
+           {img && (
+            <Avatar className="w-24 h-24">
+                <AvatarImage src={img} alt="Pré-visualização" data-ai-hint="player avatar"/>
+                <AvatarFallback className="text-4xl">
+                <UserPlus />
+                </AvatarFallback>
+            </Avatar>
+           )}
           <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
             <Upload className="mr-2 h-4 w-4" />
             Anexar Imagem
