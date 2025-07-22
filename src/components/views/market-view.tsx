@@ -5,7 +5,7 @@ import { useState, useMemo, useRef } from 'react';
 import type { Player } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, ArrowLeft, UserPlus, Trash2, Upload } from 'lucide-react';
+import { Search, ArrowLeft, UserPlus, Trash2, Upload, Edit } from 'lucide-react';
 import PlayerListItem from '@/components/market/player-list-item';
 import type { Position } from '@/app/page';
 import { useToast } from '@/hooks/use-toast';
@@ -43,14 +43,24 @@ interface MarketViewProps {
   canEdit: boolean;
   onAddPlayerToMarket: (player: Omit<Player, 'last_val' | 'games'>) => void;
   onRemovePlayerFromMarket: (playerId: string) => void;
+  onUpdatePlayerInMarket: (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => void;
 }
 
-const AddPlayerForm = ({ onAddPlayer, canEdit }: { onAddPlayer: (player: Omit<Player, 'last_val' | 'games'>) => void, canEdit: boolean }) => {
-  const [name, setName] = useState('');
-  const [pos, setPos] = useState<Player['pos'] | ''>('');
-  const [team, setTeam] = useState('');
-  const [img, setImg] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
+const PlayerForm = ({
+  player,
+  onSave,
+  onClose,
+  formType
+}: {
+  player?: Player & { id: string };
+  onSave: (data: any, id?: string) => void;
+  onClose: () => void;
+  formType: 'add' | 'edit';
+}) => {
+  const [name, setName] = useState(player?.name || '');
+  const [pos, setPos] = useState<Player['pos'] | ''>(player?.pos || '');
+  const [team, setTeam] = useState(player?.team || '');
+  const [img, setImg] = useState(player?.img || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,106 +80,96 @@ const AddPlayerForm = ({ onAddPlayer, canEdit }: { onAddPlayer: (player: Omit<Pl
       alert('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
-    onAddPlayer({
+    const data = {
       name,
       pos: pos as Player['pos'],
-      value: 5.0, // Default value
-      points: 0,
       team,
       img: img || 'https://placehold.co/60x60',
-    });
-    // Reset form and close dialog
-    setName('');
-    setPos('');
-    setTeam('');
-    setImg('');
-    setIsOpen(false);
+      ...(formType === 'add' && { value: 5.0, points: 0 }),
+    };
+    onSave(data, player?.id);
+    onClose();
   };
 
-  if (!canEdit) return null;
-
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <UserPlus className="h-6 w-6" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Adicionar Novo Jogador</DialogTitle>
-          <DialogDescription>
-            Preencha os dados para adicionar um novo atleta ao mercado.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="w-24 h-24">
-              <AvatarImage src={img} alt="Pré-visualização" data-ai-hint="player avatar"/>
-              <AvatarFallback className="text-4xl">
-                <UserPlus />
-              </AvatarFallback>
-            </Avatar>
-            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="mr-2 h-4 w-4" />
-              Anexar Imagem
-            </Button>
-            <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
-          </div>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{formType === 'add' ? 'Adicionar Novo Jogador' : 'Editar Jogador'}</DialogTitle>
+        <DialogDescription>
+          {formType === 'add' 
+            ? 'Preencha os dados para adicionar um novo atleta ao mercado.' 
+            : 'Atualize os dados do atleta.'
+          }
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex flex-col items-center gap-4">
+          <Avatar className="w-24 h-24">
+            <AvatarImage src={img} alt="Pré-visualização" data-ai-hint="player avatar"/>
+            <AvatarFallback className="text-4xl">
+              <UserPlus />
+            </AvatarFallback>
+          </Avatar>
+          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Anexar Imagem
+          </Button>
+          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+        </div>
 
-          <div>
-            <Label htmlFor="playerName">Nome</Label>
-            <Input id="playerName" value={name} onChange={e => setName(e.target.value)} required />
-          </div>
-          <div>
-            <Label htmlFor="playerTeam">Time</Label>
-            <Select onValueChange={setTeam} value={team}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Selecione a cor/time" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="Verde">Verde</SelectItem>
-                    <SelectItem value="Amarelo">Amarelo</SelectItem>
-                    <SelectItem value="Preto">Preto</SelectItem>
-                    <SelectItem value="Vermelho">Vermelho</SelectItem>
-                    <SelectItem value="Branco">Branco</SelectItem>
-                    <SelectItem value="Azul">Azul</SelectItem>
-                </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="playerPos">Posição</Label>
-             <Select onValueChange={(v) => setPos(v as Player['pos'])} value={pos}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Selecione a posição" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="GOL">Goleiro (GOL)</SelectItem>
-                    <SelectItem value="LAT">Lateral (LAT)</SelectItem>
-                    <SelectItem value="ZAG">Zagueiro (ZAG)</SelectItem>
-                    <SelectItem value="MEI">Meio-campo (MEI)</SelectItem>
-                    <SelectItem value="VOL">Volante (VOL)</SelectItem>
-                    <SelectItem value="ATA">Atacante (ATA)</SelectItem>
-                </SelectContent>
-            </Select>
-          </div>
-          
-          <DialogFooter>
-            <DialogClose asChild>
-                <Button type="button" variant="secondary">Cancelar</Button>
-            </DialogClose>
-            <Button type="submit">Adicionar Jogador</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div>
+          <Label htmlFor="playerName">Nome</Label>
+          <Input id="playerName" value={name} onChange={e => setName(e.target.value)} required />
+        </div>
+        <div>
+          <Label htmlFor="playerTeam">Time</Label>
+          <Select onValueChange={setTeam} value={team}>
+              <SelectTrigger>
+                  <SelectValue placeholder="Selecione a cor/time" />
+              </SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="Verde">Verde</SelectItem>
+                  <SelectItem value="Amarelo">Amarelo</SelectItem>
+                  <SelectItem value="Preto">Preto</SelectItem>
+                  <SelectItem value="Vermelho">Vermelho</SelectItem>
+                  <SelectItem value="Branco">Branco</SelectItem>
+                  <SelectItem value="Azul">Azul</SelectItem>
+              </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="playerPos">Posição</Label>
+           <Select onValueChange={(v) => setPos(v as Player['pos'])} value={pos}>
+              <SelectTrigger>
+                  <SelectValue placeholder="Selecione a posição" />
+              </SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="GOL">Goleiro (GOL)</SelectItem>
+                  <SelectItem value="LAT">Lateral (LAT)</SelectItem>
+                  <SelectItem value="ZAG">Zagueiro (ZAG)</SelectItem>
+                  <SelectItem value="MEI">Meio-campo (MEI)</SelectItem>
+                  <SelectItem value="VOL">Volante (VOL)</SelectItem>
+                  <SelectItem value="ATA">Atacante (ATA)</SelectItem>
+              </SelectContent>
+          </Select>
+        </div>
+        
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
+          <Button type="submit">{formType === 'add' ? 'Adicionar Jogador' : 'Salvar Alterações'}</Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }
 
 
-export default function MarketView({ players, onPlayerSelect, onBack, position, scaledPlayerIds, canEdit, onAddPlayerToMarket, onRemovePlayerFromMarket }: MarketViewProps) {
+export default function MarketView({ players, onPlayerSelect, onBack, position, scaledPlayerIds, canEdit, onAddPlayerToMarket, onRemovePlayerFromMarket, onUpdatePlayerInMarket }: MarketViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [playerToRemove, setPlayerToRemove] = useState<string | null>(null);
+  const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
+  const [playerToEdit, setPlayerToEdit] = useState<(Player & {id: string}) | null>(null);
+
   const { toast } = useToast();
 
   const scaledIdsSet = useMemo(() => new Set(scaledPlayerIds), [scaledPlayerIds]);
@@ -250,12 +250,40 @@ export default function MarketView({ players, onPlayerSelect, onBack, position, 
         </AlertDialogContent>
       </AlertDialog>
 
+       <Dialog open={isAddPlayerOpen} onOpenChange={setIsAddPlayerOpen}>
+        {canEdit && <DialogTrigger asChild>
+           <div />
+        </DialogTrigger>}
+        <PlayerForm
+            formType="add"
+            onSave={(data) => onAddPlayerToMarket(data)}
+            onClose={() => setIsAddPlayerOpen(false)}
+        />
+       </Dialog>
+
+       <Dialog open={!!playerToEdit} onOpenChange={(open) => !open && setPlayerToEdit(null)}>
+         {playerToEdit && (
+          <PlayerForm
+            formType="edit"
+            player={playerToEdit}
+            onSave={onUpdatePlayerInMarket}
+            onClose={() => setPlayerToEdit(null)}
+          />
+         )}
+       </Dialog>
+
       <header className="bg-card p-4 shadow-md flex items-center sticky top-0 z-20">
          <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
         </Button>
         <h2 className="text-xl font-bold text-center flex-1">Mercado de Atletas</h2>
-        <AddPlayerForm onAddPlayer={onAddPlayerToMarket} canEdit={canEdit} />
+        {canEdit ? (
+            <Button variant="ghost" size="icon" onClick={() => setIsAddPlayerOpen(true)}>
+              <UserPlus className="h-6 w-6" />
+            </Button>
+        ) : (
+           <div className="w-9 h-9" />
+        )}
       </header>
       <div className="p-4">
         <p className="text-center text-muted-foreground mb-4">
@@ -281,15 +309,22 @@ export default function MarketView({ players, onPlayerSelect, onBack, position, 
                 <div className="space-y-2">
                   {playerList.map((player) => (
                     <div key={player.id} className="flex items-center gap-2">
-                      <PlayerListItem 
-                        player={player} 
-                        onPlayerSelect={() => handleSelectPlayer(player.id)}
-                        isScaled={scaledIdsSet.has(player.id)}
-                      />
+                      <div className="flex-grow">
+                        <PlayerListItem 
+                          player={player} 
+                          onPlayerSelect={() => handleSelectPlayer(player.id)}
+                          isScaled={scaledIdsSet.has(player.id)}
+                        />
+                      </div>
                       {canEdit && (
-                        <Button variant="destructive" size="icon" onClick={() => setPlayerToRemove(player.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                           <Button variant="outline" size="icon" onClick={() => setPlayerToEdit(player)}>
+                              <Edit className="h-4 w-4" />
+                           </Button>
+                           <Button variant="destructive" size="icon" onClick={() => setPlayerToRemove(player.id)}>
+                              <Trash2 className="h-4 w-4" />
+                           </Button>
+                        </div>
                       )}
                     </div>
                   ))}

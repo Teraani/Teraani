@@ -263,6 +263,29 @@ export default function Home() {
     });
   };
 
+  const handleUpdatePlayerInMarket = (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => {
+    setAppData(prevData => {
+      if (!prevData.players[playerId]) {
+        return prevData;
+      }
+      const updatedPlayer = {
+        ...prevData.players[playerId],
+        ...updatedData
+      };
+      return {
+        ...prevData,
+        players: {
+          ...prevData.players,
+          [playerId]: updatedPlayer
+        }
+      };
+    });
+    toast({
+      title: "Jogador Atualizado!",
+      description: `Os dados de ${updatedData.name} foram salvos.`,
+    });
+  };
+
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
@@ -330,6 +353,7 @@ export default function Home() {
                  canEdit={canEditScouts}
                  onAddPlayerToMarket={handleAddPlayerToMarket}
                  onRemovePlayerFromMarket={handleRemovePlayerFromMarket}
+                 onUpdatePlayerInMarket={handleUpdatePlayerInMarket}
                />;
       case 'partial-score':
         return <PartialScoreView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
