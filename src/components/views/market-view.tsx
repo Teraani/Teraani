@@ -123,7 +123,19 @@ const AddPlayerForm = ({ onAddPlayer, canEdit }: { onAddPlayer: (player: Omit<Pl
           </div>
           <div>
             <Label htmlFor="playerTeam">Time</Label>
-            <Input id="playerTeam" value={team} onChange={e => setTeam(e.target.value)} required />
+            <Select onValueChange={setTeam} value={team}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Selecione a cor/time" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Verde">Verde</SelectItem>
+                    <SelectItem value="Amarelo">Amarelo</SelectItem>
+                    <SelectItem value="Preto">Preto</SelectItem>
+                    <SelectItem value="Vermelho">Vermelho</SelectItem>
+                    <SelectItem value="Branco">Branco</SelectItem>
+                    <SelectItem value="Azul">Azul</SelectItem>
+                </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="playerPos">Posição</Label>
