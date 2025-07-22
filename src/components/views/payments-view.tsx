@@ -70,6 +70,28 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
   
   if (!currentUser) return null;
 
+  const userItemContent = (user: User) => (
+    <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <Avatar>
+                    <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="player avatar"/>
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-semibold">{user.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                        Vencimento: {format(parseISO(user.paymentDueDate), "PPP", { locale: ptBR })}
+                    </p>
+                </div>
+            </div>
+            <div className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", getStatus(user.paymentDueDate).bg, getStatus(user.paymentDueDate).color)}>
+               {getStatus(user.paymentDueDate).text}
+            </div>
+        </div>
+    </div>
+  );
+
   return (
     <div>
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
@@ -87,17 +109,7 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                     <CardTitle>Sua Mensalidade</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                        <div>
-                            <p className="text-lg font-bold">{currentUser.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                                Vencimento: {format(parseISO(currentUser.paymentDueDate), "PPP", { locale: ptBR })}
-                            </p>
-                        </div>
-                        <div className={cn("px-3 py-1 rounded-full text-xs font-bold", getStatus(currentUser.paymentDueDate).bg, getStatus(currentUser.paymentDueDate).color)}>
-                           {getStatus(currentUser.paymentDueDate).text}
-                        </div>
-                    </div>
+                    {userItemContent(currentUser)}
                 </CardContent>
             </Card>
         )}
@@ -120,45 +132,22 @@ export default function PaymentsView({ onBack, currentUser, users, canEdit, onSa
                     <ScrollArea className="h-[calc(100vh-320px)]">
                         <div className="space-y-3 pr-2">
                         {sortedUsers.map(user => (
-                            <div key={user.id} className="p-3 bg-muted/30 rounded-lg space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar>
-                                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="player avatar"/>
-                                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-semibold">{user.name}</p>
-                                        </div>
+                            <Popover key={user.id}>
+                                <PopoverTrigger asChild>
+                                    <div className="cursor-pointer">
+                                        {userItemContent(user)}
                                     </div>
-                                    <div className={cn("px-2 py-0.5 rounded-full text-xs font-semibold", getStatus(user.paymentDueDate).bg, getStatus(user.paymentDueDate).color)}>
-                                       {getStatus(user.paymentDueDate).text}
-                                    </div>
-                                </div>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn(
-                                                "w-full justify-start text-left font-normal",
-                                                !user.paymentDueDate && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                            Vence em: {format(parseISO(user.paymentDueDate), "dd/MM/yyyy", { locale: ptBR })}
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0">
-                                        <Calendar
-                                            mode="single"
-                                            selected={parseISO(user.paymentDueDate)}
-                                            onSelect={(date) => handleDateChange(user.id, date)}
-                                            initialFocus
-                                            locale={ptBR}
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                            </div>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                        mode="single"
+                                        selected={parseISO(user.paymentDueDate)}
+                                        onSelect={(date) => handleDateChange(user.id, date)}
+                                        initialFocus
+                                        locale={ptBR}
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         ))}
                         </div>
                     </ScrollArea>
