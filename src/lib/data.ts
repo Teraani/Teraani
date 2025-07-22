@@ -38,6 +38,7 @@ export interface User {
   reserves: string[];
   role: 'admin' | 'player';
   avatar?: string;
+  paymentDueDate: string; // YYYY-MM-DD
 }
 
 export interface Friend {
@@ -56,6 +57,7 @@ interface AppData {
   users: Record<string, User>;
   editorOfTheRound: string | null;
   scoutEditor: string | null;
+  paymentEditor: string | null;
   players: Record<string, Player>;
   friends: Friend[];
 }
@@ -73,41 +75,43 @@ export const data: AppData = {
             lineup: ['p9', 'p6', 'p14', 'p15', 'p16', 'p1', 'p5', 'p7', 'p12', 'p4', 'p17'],
             reserves: ['p2', 'p3', 'p8', 'p10', 'p13'],
             role: 'player',
-            avatar: 'https://placehold.co/128x128.png'
+            avatar: 'https://placehold.co/128x128.png',
+            paymentDueDate: '2025-08-01',
         },
-        'user2': { id: 'user2', name: 'Renan Ropeiro', email: 'user2@example.com', teamName: 'User 2 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user3': { id: 'user3', name: 'André Corsini', email: 'user3@example.com', teamName: 'User 3 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user4': { id: 'user4', name: 'Rossi', email: 'user4@example.com', teamName: 'User 4 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user5': { id: 'user5', name: 'Gustavo Rodrigues', email: 'user5@example.com', teamName: 'User 5 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user6': { id: 'user6', name: 'Vinícius Simão', email: 'user6@example.com', teamName: 'User 6 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user7': { id: 'user7', name: 'Adriano Carvalho', email: 'user7@example.com', teamName: 'User 7 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user8': { id: 'user8', name: 'Deyvid Gontarczik Deca', email: 'user8@example.com', teamName: 'User 8 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user9': { id: 'user9', name: 'Felipe Ropeiro (Cabanhas)', email: 'user9@example.com', teamName: 'User 9 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user10': { id: 'user10', name: 'Vinícius Abreu', email: 'user10@example.com', teamName: 'User 10 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user11': { id: 'user11', name: 'Bruno Costa (Bruneca)', email: 'user11@example.com', teamName: 'User 11 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user12': { id: 'user12', name: 'Felipe Correa', email: 'user12@example.com', teamName: 'User 12 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user13': { id: 'user13', name: 'Alexandre Santos', email: 'user13@example.com', teamName: 'User 13 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user14': { id: 'user14', name: 'Vicente Gagliardi (Pizza)', email: 'user14@example.com', teamName: 'User 14 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user15': { id: 'user15', name: 'Gustavo Reis (Titânio)', email: 'user15@example.com', teamName: 'User 15 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user16': { id: 'user16', name: 'Isaias Souza', email: 'user16@example.com', teamName: 'User 16 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user17': { id: 'user17', name: 'Beto', email: 'user17@example.com', teamName: 'User 17 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user18': { id: 'user18', name: 'Diego Nunes', email: 'user18@example.com', teamName: 'User 18 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user19': { id: 'user19', name: 'Thiago Santos', email: 'user19@example.com', teamName: 'User 19 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user20': { id: 'user20', name: 'Carlos Souza', email: 'user20@example.com', teamName: 'User 20 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user21': { id: 'user21', name: 'Heitor (Totti)', email: 'user21@example.com', teamName: 'User 21 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user22': { id: 'user22', name: 'Juliano Vello', email: 'user22@example.com', teamName: 'User 22 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user23': { id: 'user23', name: 'Paulo Fogaça', email: 'user23@example.com', teamName: 'User 23 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user24': { id: 'user24', name: 'Érico', email: 'user24@example.com', teamName: 'User 24 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user25': { id: 'user25', name: 'Lucas Limone', email: 'user25@example.com', teamName: 'User 25 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user26': { id: 'user26', name: 'Lupo', email: 'user26@example.com', teamName: 'User 26 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user27': { id: 'user27', name: 'Jason (Admin)', email: 'jason.teraani@gmail.com', teamName: 'User 27 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'admin', avatar: 'https://placehold.co/128x128.png' },
-        'user28': { id: 'user28', name: 'Giovani', email: 'user28@example.com', teamName: 'User 28 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user29': { id: 'user29', name: 'Lucca', email: 'user29@example.com', teamName: 'User 29 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user30': { id: 'user30', name: 'Pedro Roberto', email: 'user30@example.com', teamName: 'User 30 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
-        'user31': { id: 'user31', name: 'Rafael Ohy', email: 'user31@example.com', teamName: 'User 31 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png' },
+        'user2': { id: 'user2', name: 'Renan Ropeiro', email: 'user2@example.com', teamName: 'User 2 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user3': { id: 'user3', name: 'André Corsini', email: 'user3@example.com', teamName: 'User 3 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user4': { id: 'user4', name: 'Rossi', email: 'user4@example.com', teamName: 'User 4 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user5': { id: 'user5', name: 'Gustavo Rodrigues', email: 'user5@example.com', teamName: 'User 5 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user6': { id: 'user6', name: 'Vinícius Simão', email: 'user6@example.com', teamName: 'User 6 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user7': { id: 'user7', name: 'Adriano Carvalho', email: 'user7@example.com', teamName: 'User 7 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user8': { id: 'user8', name: 'Deyvid Gontarczik Deca', email: 'user8@example.com', teamName: 'User 8 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user9': { id: 'user9', name: 'Felipe Ropeiro (Cabanhas)', email: 'user9@example.com', teamName: 'User 9 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user10': { id: 'user10', name: 'Vinícius Abreu', email: 'user10@example.com', teamName: 'User 10 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user11': { id: 'user11', name: 'Bruno Costa (Bruneca)', email: 'user11@example.com', teamName: 'User 11 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user12': { id: 'user12', name: 'Felipe Correa', email: 'user12@example.com', teamName: 'User 12 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user13': { id: 'user13', name: 'Alexandre Santos', email: 'user13@example.com', teamName: 'User 13 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user14': { id: 'user14', name: 'Vicente Gagliardi (Pizza)', email: 'user14@example.com', teamName: 'User 14 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user15': { id: 'user15', name: 'Gustavo Reis (Titânio)', email: 'user15@example.com', teamName: 'User 15 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user16': { id: 'user16', name: 'Isaias Souza', email: 'user16@example.com', teamName: 'User 16 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user17': { id: 'user17', name: 'Beto', email: 'user17@example.com', teamName: 'User 17 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user18': { id: 'user18', name: 'Diego Nunes', email: 'user18@example.com', teamName: 'User 18 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user19': { id: 'user19', name: 'Thiago Santos', email: 'user19@example.com', teamName: 'User 19 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user20': { id: 'user20', name: 'Carlos Souza', email: 'user20@example.com', teamName: 'User 20 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user21': { id: 'user21', name: 'Heitor (Totti)', email: 'user21@example.com', teamName: 'User 21 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user22': { id: 'user22', name: 'Juliano Vello', email: 'user22@example.com', teamName: 'User 22 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user23': { id: 'user23', name: 'Paulo Fogaça', email: 'user23@example.com', teamName: 'User 23 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user24': { id: 'user24', name: 'Érico', email: 'user24@example.com', teamName: 'User 24 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user25': { id: 'user25', name: 'Lucas Limone', email: 'user25@example.com', teamName: 'User 25 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user26': { id: 'user26', name: 'Lupo', email: 'user26@example.com', teamName: 'User 26 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user27': { id: 'user27', name: 'Jason (Admin)', email: 'jason.teraani@gmail.com', teamName: 'User 27 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'admin', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2099-12-31' },
+        'user28': { id: 'user28', name: 'Giovani', email: 'user28@example.com', teamName: 'User 28 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user29': { id: 'user29', name: 'Lucca', email: 'user29@example.com', teamName: 'User 29 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user30': { id: 'user30', name: 'Pedro Roberto', email: 'user30@example.com', teamName: 'User 30 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
+        'user31': { id: 'user31', name: 'Rafael Ohy', email: 'user31@example.com', teamName: 'User 31 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01' },
     },
     editorOfTheRound: null,
     scoutEditor: null,
+    paymentEditor: null,
     players: {
       'p1': { name: 'Rafael Ohy', team: 'AVA', pos: 'MEI', value: 49.5, points: 49.5, last_val: 0.5, games: 21, img: 'https://placehold.co/60x60', stats: { wins: 15, losses: 3, draws: 3, goalsFor: 60, goalsAgainst: 46, goalDifference: 14, performance: 78.57, points: 49.5, goals: 10, assists: 9, yellowCards: 1, redCards: 0 } },
       'p2': { name: 'Renan Ropeiro', team: 'BOT', pos: 'MEI', value: 27, points: 27, last_val: 0.5, games: 13, img: 'https://placehold.co/60x60', stats: { wins: 9, losses: 3, draws: 2, goalsFor: 35, goalsAgainst: 28, goalDifference: 7, performance: 69.23, points: 27, goals: 1, assists: 0, yellowCards: 0, redCards: 0 } },

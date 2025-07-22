@@ -6,8 +6,8 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio } from 'lucide-react';
-import React, { useState, useRef, useMemo } from 'react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useToast } from '@/hooks/use-toast';
+import { differenceInDays, parseISO, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface DashboardViewProps {
   user: User;
@@ -25,6 +28,57 @@ interface DashboardViewProps {
   userAvatar: string | null;
   onAvatarChange: (image: string) => void;
 }
+
+function PaymentStatus({ user }: { user: User }) {
+  const { toast } = useToast();
+  const [notificationShown, setNotificationShown] = useState(false);
+
+  useEffect(() => {
+    if (notificationShown) return;
+
+    const dueDate = parseISO(user.paymentDueDate);
+    const today = new Date();
+    const daysUntilDue = differenceInDays(dueDate, today);
+
+    if (daysUntilDue <= 1 && daysUntilDue >= 0) {
+      toast({
+        title: "Aviso de Vencimento",
+        description: `Sua mensalidade vence amanhã! (${format(dueDate, 'dd/MM/yyyy')})`,
+        variant: "destructive",
+      });
+      setNotificationShown(true);
+    } else if (daysUntilDue < 0) {
+        toast({
+            title: "Mensalidade Vencida",
+            description: `Sua mensalidade venceu em ${format(dueDate, 'dd/MM/yyyy')}.`,
+            variant: "destructive",
+        });
+        setNotificationShown(true);
+    }
+  }, [user.paymentDueDate, toast, notificationShown]);
+
+  const dueDate = parseISO(user.paymentDueDate);
+  const today = new Date();
+  const isOverdue = differenceInDays(dueDate, today) < 0;
+
+  return (
+    <Card className="bg-card p-4 mt-4 border-l-4 border-primary">
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                {isOverdue ? <AlertCircle className="w-6 h-6 text-destructive" /> : <CalendarClock className="w-6 h-6 text-primary"/>}
+                <div>
+                    <h4 className="font-bold">Situação da Mensalidade</h4>
+                    <p className="text-sm text-muted-foreground">
+                        {isOverdue ? "Vencida desde" : "Vence em"}: {format(dueDate, 'dd MMMM, yyyy', { locale: ptBR })}
+                    </p>
+                </div>
+            </div>
+            <Button size="sm" onClick={() => { /* Navigate to payment screen */ }}>Ver detalhes</Button>
+        </div>
+    </Card>
+  );
+}
+
 
 function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }: { user: User, players: Record<string, Player>, onNavigate: (view: View) => void, userAvatar: string | null, onAvatarChange: (image: string) => void }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,6 +159,7 @@ function PlayerSummary({ user, players, onNavigate, userAvatar, onAvatarChange }
                         <p className="font-bold text-lg">{performancePercentage}</p>
                     </div>
                 </div>
+                <PaymentStatus user={user} />
                 <Button className="w-full mt-4" onClick={() => onNavigate('lineup')}>
                     Ver Times da Rodada
                 </Button>

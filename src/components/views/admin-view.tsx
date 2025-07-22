@@ -4,7 +4,7 @@
 import { useState, useMemo } from 'react';
 import type { User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check } from 'lucide-react';
+import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -26,9 +26,11 @@ interface AdminViewProps {
   onSetEditor: (userId: string | null) => void;
   scoutEditor: string | null;
   onSetScoutEditor: (userId: string | null) => void;
+  paymentEditor: string | null;
+  onSetPaymentEditor: (userId: string | null) => void;
 }
 
-export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor, scoutEditor, onSetScoutEditor }: AdminViewProps) {
+export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor, scoutEditor, onSetScoutEditor, paymentEditor, onSetPaymentEditor }: AdminViewProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -65,6 +67,24 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
       });
     }
   };
+
+  const handleSetPaymentEditorClick = (user: User) => {
+    if (paymentEditor === user.id) {
+      onSetPaymentEditor(null);
+      toast({
+        title: 'Permissão de Pagamentos Removida!',
+        description: `${user.name} não pode mais editar pagamentos.`,
+        variant: 'destructive'
+      });
+    } else {
+      onSetPaymentEditor(user.id);
+      toast({
+        title: 'Permissão de Pagamentos Concedida!',
+        description: `${user.name} agora pode editar as datas de vencimento.`,
+      });
+    }
+  };
+
 
   const filteredUsers = useMemo(() => {
     return users
@@ -105,6 +125,7 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
                     {filteredUsers.map((user) => {
                         const isLineupEditor = editorOfTheRound === user.id;
                         const isScoutEditor = scoutEditor === user.id;
+                        const isPaymentEditor = paymentEditor === user.id;
 
                         return (
                         <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
@@ -137,6 +158,11 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
                                   <FilePenLine className="mr-2 h-4 w-4" />
                                   <span>Editar Scouts</span>
                                   {isScoutEditor && <Check className="ml-auto h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSetPaymentEditorClick(user)}>
+                                  <DollarSign className="mr-2 h-4 w-4" />
+                                  <span>Editar Pagamentos</span>
+                                  {isPaymentEditor && <Check className="ml-auto h-4 w-4 text-primary" />}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>

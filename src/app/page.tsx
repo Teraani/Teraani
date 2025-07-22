@@ -20,9 +20,10 @@ import RegisterView from '@/components/views/register-view';
 import { useToast } from '@/hooks/use-toast';
 import LiveView from '@/components/views/live-view';
 import type { LiveEvent } from '@/components/views/live-view';
+import PaymentsView from '@/components/views/payments-view';
 
 
-export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live';
+export type View = 'welcome' | 'login' | 'register' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -62,6 +63,11 @@ export default function Home() {
     if (!currentUser) return false;
     return currentUser.role === 'admin' || currentUser.id === appData.scoutEditor;
   }, [currentUser, appData.scoutEditor]);
+
+  const canEditPayments = useMemo(() => {
+    if (!currentUser) return false;
+    return currentUser.role === 'admin' || currentUser.id === appData.paymentEditor;
+  }, [currentUser, appData.paymentEditor]);
   
   const handleLoginSuccess = (userId: string) => {
     const user = appData.users[userId];
@@ -166,6 +172,13 @@ export default function Home() {
         scoutEditor: userId,
     }));
   };
+  
+  const handleSetPaymentEditor = (userId: string | null) => {
+    setAppData(prevData => ({
+        ...prevData,
+        paymentEditor: userId,
+    }));
+  };
 
   const handleUpdatePlayerStats = (updatedPlayers: Record<string, Player>) => {
     setAppData(prevData => ({
@@ -175,6 +188,17 @@ export default function Home() {
     toast({
       title: "Estatísticas Salvas!",
       description: "Os dados dos jogadores foram atualizados.",
+    });
+  };
+
+  const handleUpdateUserPayments = (updatedUsers: Record<string, User>) => {
+    setAppData(prevData => ({
+      ...prevData,
+      users: updatedUsers
+    }));
+    toast({
+      title: "Pagamentos Salvos!",
+      description: "As datas de vencimento foram atualizadas.",
     });
   };
 
@@ -312,7 +336,16 @@ export default function Home() {
       case 'statistics':
         return <StatisticsView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdatePlayerStats} />;
       case 'admin':
-        return <AdminView onBack={goBack} users={Object.values(appData.users)} editorOfTheRound={appData.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={appData.scoutEditor} onSetScoutEditor={handleSetScoutEditor} />;
+        return <AdminView 
+                  onBack={goBack} 
+                  users={Object.values(appData.users)} 
+                  editorOfTheRound={appData.editorOfTheRound} 
+                  onSetEditor={handleSetEditor} 
+                  scoutEditor={appData.scoutEditor} 
+                  onSetScoutEditor={handleSetScoutEditor}
+                  paymentEditor={appData.paymentEditor}
+                  onSetPaymentEditor={handleSetPaymentEditor}
+                />;
        case 'live':
         return <LiveView 
                   onBack={goBack} 
@@ -322,6 +355,14 @@ export default function Home() {
                   liveEvents={liveEvents}
                   onAddLiveEvent={handleAddLiveEvent}
                   allPlayers={Object.values(appData.players).map(p => ({...p, id: Object.keys(appData.players).find(key => appData.players[key] === p)!}))}
+                />;
+      case 'payments':
+        return <PaymentsView
+                  onBack={goBack}
+                  currentUser={currentUser!}
+                  users={appData.users}
+                  canEdit={canEditPayments}
+                  onSave={handleUpdateUserPayments}
                 />;
       default:
         return <DashboardView user={userForViews!} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} userAvatar={userAvatar} onAvatarChange={setUserAvatar} />;

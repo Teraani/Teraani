@@ -1,6 +1,7 @@
+
 "use client";
 
-import { Home, Shirt, Trophy, BarChart2 } from 'lucide-react';
+import { Home, Shirt, Trophy, BarChart2, DollarSign } from 'lucide-react';
 import type { View } from '@/app/page';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +14,7 @@ const navItems = [
   { view: 'dashboard' as View, icon: Home, label: 'Início', disabled: false },
   { view: 'lineup' as View, icon: Shirt, label: 'Escalação', disabled: false },
   { view: 'statistics' as View, icon: BarChart2, label: 'Estatísticas', disabled: false },
-  { view: 'leagues' as View, icon: Trophy, label: 'Ligas (em breve)', disabled: true },
+  { view: 'payments' as View, icon: DollarSign, label: 'Pagamentos', disabled: false },
 ];
 
 export default function BottomNav({ currentView, onNavigate }: BottomNavProps) {
