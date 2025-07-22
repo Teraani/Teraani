@@ -42,7 +42,7 @@ const RankingListItem = ({ player, rank, statValue, statLabel, onPlayerSelect }:
             {rank}
         </span>
         <Avatar>
-            <AvatarImage src={'img' in player ? player.img : player.avatar} alt={player.name} data-ai-hint="player portrait" />
+            <AvatarImage src={player.avatar || ('img' in player ? player.img : undefined)} alt={player.name} data-ai-hint="player portrait" />
             <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 text-left">
@@ -266,7 +266,7 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
           return {
               ...p,
               id,
-              avatar: user?.avatar || p.img
+              avatar: user?.avatar
           }
       })
     }, [editablePlayers, users]);
