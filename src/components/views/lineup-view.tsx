@@ -328,13 +328,13 @@ export default function LineupView(props: LineupViewProps) {
       text += "*Titulares:*\n";
       lineup.forEach((id, index) => {
         if (id && players[id]) {
-          text += `${index + 1}. ${players[id].name}\n`;
+          text += `${index + 1}. ${players[id].name} (${players[id].pos})\n`;
         }
       });
       text += "\n*Reservas:*\n";
       reserves.forEach((id, index) => {
         if (id && players[id]) {
-          text += `${index + 1}. ${players[id].name}\n`;
+          text += `${index + 1}. ${players[id].name} (${players[id].pos})\n`;
         }
       });
       return text;
