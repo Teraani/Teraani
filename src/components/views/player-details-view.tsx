@@ -111,10 +111,10 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
         <Card className="bg-card border-none">
            <CardContent className="p-0">
              <Tabs defaultValue="resumo" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-transparent p-0">
-                    <TabsTrigger value="resumo" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Resumo</TabsTrigger>
-                    <TabsTrigger value="detalhes" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Detalhes</TabsTrigger>
-                    <TabsTrigger value="heatmap" className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Mapa de Calor (em breve)</TabsTrigger>
+                <TabsList className="w-full flex bg-transparent p-0">
+                    <TabsTrigger value="resumo" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Resumo</TabsTrigger>
+                    <TabsTrigger value="detalhes" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent">Detalhes</TabsTrigger>
+                    <TabsTrigger value="heatmap" className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary rounded-none data-[state=active]:shadow-none bg-transparent text-center">Mapa de Calor (em breve)</TabsTrigger>
                 </TabsList>
                 <TabsContent value="resumo">
                      <div className="mt-4 p-4">
