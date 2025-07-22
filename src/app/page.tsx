@@ -368,11 +368,11 @@ export default function Home() {
                  onUpdatePlayerInMarket={handleUpdatePlayerInMarket}
                />;
       case 'partial-score':
-        return <PartialScoreView players={appData.players} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
+        return <PartialScoreView players={appData.players} users={appData.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'games':
         return <GamesView onBack={goBack} />;
       case 'friends-score':
-        return <FriendsScoreView onBack={goBack} friends={Object.values(appData.players).map(p => ({ id: `p-${p.name}`, name: p.name, teamName: `${p.name} FC`, score: p.points, playersPlayed: p.games, totalPlayers: 11, isPro: false, crest: 'https://placehold.co/40x40/cccccc/000000', avatar: p.img }))} user={userForViews!} players={appData.players} allUsers={appData.users} />;
+        return <FriendsScoreView onBack={goBack} user={userForViews!} players={appData.players} allUsers={appData.users} />;
       case 'statistics':
         return <StatisticsView players={appData.players} users={appData.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} />;
       case 'admin':

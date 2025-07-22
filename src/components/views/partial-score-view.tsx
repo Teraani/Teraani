@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import type { Player } from '@/lib/data';
+import type { Player, User } from '@/lib/data';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Search } from 'lucide-react';
@@ -11,13 +11,19 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
+interface ExtendedPlayer extends Player {
+    id: string;
+    avatar?: string;
+}
+
 interface PartialScoreViewProps {
   players: Record<string, Player>;
+  users: Record<string, User>;
   onBack: () => void;
   onPlayerSelect: (playerId: string) => void;
 }
 
-const PlayerScoreItem = ({ player, onPlayerSelect }: { player: { id: string } & Player, onPlayerSelect: (id: string) => void}) => {
+const PlayerScoreItem = ({ player, onPlayerSelect }: { player: ExtendedPlayer, onPlayerSelect: (id: string) => void}) => {
     return (
         <Card 
             className="p-3 flex items-center justify-between cursor-pointer bg-card hover:bg-muted/50"
@@ -25,7 +31,7 @@ const PlayerScoreItem = ({ player, onPlayerSelect }: { player: { id: string } & 
         >
             <div className="flex items-center space-x-3">
                 <Avatar className="w-10 h-10">
-                    <AvatarImage src={player.img} alt={player.name} data-ai-hint="player portrait" className="object-cover"/>
+                    <AvatarImage src={player.avatar || player.img} alt={player.name} data-ai-hint="player portrait" className="object-cover"/>
                     <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>
@@ -40,16 +46,25 @@ const PlayerScoreItem = ({ player, onPlayerSelect }: { player: { id: string } & 
     );
 };
 
-export default function PartialScoreView({ players, onBack, onPlayerSelect }: PartialScoreViewProps) {
+export default function PartialScoreView({ players, users, onBack, onPlayerSelect }: PartialScoreViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const allPlayersSorted = useMemo(() => {
     const lowerCaseSearch = searchTerm.toLowerCase();
-    return Object.entries(players)
-      .map(([id, player]) => ({ ...player, id }))
+    
+    const extendedPlayers = Object.entries(players).map(([id, player]) => {
+      const user = Object.values(users).find(u => u.name.toLowerCase().includes(player.name.split(' ')[0].toLowerCase()));
+      return {
+        ...player,
+        id,
+        avatar: user?.avatar,
+      };
+    });
+
+    return extendedPlayers
       .filter(player => player.name.toLowerCase().includes(lowerCaseSearch))
       .sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
-  }, [searchTerm, players]);
+  }, [searchTerm, players, users]);
 
   return (
     <div>
