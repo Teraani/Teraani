@@ -36,9 +36,10 @@ interface FriendsScoreViewProps {
   friends: Friend[]; // This will be used as the initial list of all possible players to add
   user: User;
   players: Record<string, Player>;
+  allUsers: Record<string, User>;
 }
 
-const AddFriendDialog = ({ players, onSelect, competitors }: { players: Record<string, Player>, onSelect: (friend: Friend) => void, competitors: Friend[] }) => {
+const AddFriendDialog = ({ players, allUsers, onSelect, competitors }: { players: Record<string, Player>, allUsers: Record<string, User>, onSelect: (friend: Friend) => void, competitors: Friend[] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const competitorIds = useMemo(() => new Set(competitors.map(c => c.id)), [competitors]);
@@ -55,16 +56,18 @@ const AddFriendDialog = ({ players, onSelect, competitors }: { players: Record<s
   }, [searchTerm, players, competitorIds]);
 
   const handleSelect = (player: Player & { id: string }) => {
+     const user = Object.values(allUsers).find(u => u.name.toLowerCase().includes(player.name.split(' ')[0].toLowerCase()))
+
     const newFriend: Friend = {
       id: `player-${player.id}`,
       name: player.name,
-      teamName: `${player.name} FC`,
+      teamName: `${player.name.split(' ')[0]} FC`,
       score: player.points,
       playersPlayed: player.games,
       totalPlayers: 11,
       isPro: false,
       crest: 'https://placehold.co/40x40/cccccc/000000',
-      avatar: player.img,
+      avatar: user?.avatar || player.img,
     };
     onSelect(newFriend);
     setSearchTerm('');
@@ -153,7 +156,7 @@ const CompetitorCard = ({ competitor, isUser, onClick }: { competitor: Friend, i
     </Card>
 )
 
-export default function FriendsScoreView({ onBack, user, players }: FriendsScoreViewProps) {
+export default function FriendsScoreView({ onBack, user, players, allUsers }: FriendsScoreViewProps) {
   const userAsPlayer = useMemo(() => {
      const nameToSearch = user.name.split(' ')[0].toLowerCase();
      return Object.values(players).find(p => p.name.toLowerCase().includes(nameToSearch)) || null;
@@ -186,13 +189,6 @@ export default function FriendsScoreView({ onBack, user, players }: FriendsScore
     setFriendToRemove(null);
   }
 
-  const allPossibleFriends = useMemo(() => {
-    return Object.entries(players).map(([id, p]) => ({
-      ...p,
-      id: `player-${id}`
-    }));
-  }, [players]);
-
   return (
     <div>
       <AlertDialog open={!!friendToRemove} onOpenChange={(open) => !open && setFriendToRemove(null)}>
@@ -218,7 +214,7 @@ export default function FriendsScoreView({ onBack, user, players }: FriendsScore
           <ArrowLeft className="h-6 w-6 text-foreground" />
         </Button>
         <h2 className="text-xl font-bold text-foreground">Amigos</h2>
-        <AddFriendDialog players={players} onSelect={handleAddCompetitor} competitors={[userAsFriend, ...competitors]} />
+        <AddFriendDialog players={players} allUsers={allUsers} onSelect={handleAddCompetitor} competitors={[userAsFriend, ...competitors]} />
       </header>
 
       <main className="p-4 space-y-4">
