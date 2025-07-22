@@ -43,14 +43,14 @@ const statCategories: { key: StatCategory; label: string; icon: React.ElementTyp
 ];
 
 
-const RankingListItem = ({ player, rank, statValue, statLabel, onPlayerSelect }: {
+const RankingListItem = ({ player, rank, statValue, statLabel, onClick }: {
     player: {id: string; avatar?: string} & (Player | Ranking | GoalieRanking | User),
     rank: number,
     statValue: string | number,
     statLabel: string,
-    onPlayerSelect: (id: string) => void,
+    onClick?: () => void,
 }) => (
-     <div className="flex items-center gap-4 w-full" onClick={() => 'pos' in player && onPlayerSelect(player.id)}>
+     <div className="flex items-center gap-4 w-full" onClick={onClick}>
         <span className={cn(
             "font-bold text-lg w-6 text-center",
             rank === 1 && "text-amber-400",
@@ -163,14 +163,16 @@ const EditableRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts
             {sortedItems.map((item, index) => (
                 <AccordionItem value={item.id} key={`${type}-${item.id}`} className="border-b-0">
                     <Card className="bg-card shadow-sm p-3 rounded-lg overflow-hidden">
-                         <AccordionTrigger className="p-0 hover:no-underline">
-                             <RankingListItem 
-                                player={item}
-                                rank={index + 1}
-                                statValue={getStatValue(item)}
-                                label={label}
-                                onPlayerSelect={onPlayerSelect}
-                            />
+                         <AccordionTrigger className="p-0 hover:no-underline [&[data-state=open]>div>svg]:rotate-180">
+                             <div className="flex w-full items-center">
+                                <RankingListItem 
+                                    player={item}
+                                    rank={index + 1}
+                                    statValue={getStatValue(item)}
+                                    label={label}
+                                />
+                                <ChevronDown className="h-5 w-5 shrink-0 transition-transform duration-200 text-muted-foreground ml-2" />
+                             </div>
                          </AccordionTrigger>
                          <AccordionContent>
                             {type === 'player' && <PlayerStatsEditor player={item} canEditScouts={canEditScouts} onPlayerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
@@ -233,7 +235,7 @@ const SimpleRankingList = ({ items, onPlayerSelect, stat, label, type }: {
                         rank={index + 1}
                         statValue={getStatValue(item)}
                         label={label}
-                        onPlayerSelect={onPlayerSelect}
+                        onClick={() => 'pos' in item && onPlayerSelect(item.id)}
                     />
                 </Card>
             ))}
