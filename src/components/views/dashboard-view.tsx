@@ -6,7 +6,7 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search } from 'lucide-react';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -23,6 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { differenceInDays, parseISO, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Input } from '../ui/input';
 
 interface DashboardViewProps {
   user: User;
@@ -221,7 +222,12 @@ function ConnectSection() {
 
 
 export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, userAvatar, onAvatarChange }: DashboardViewProps) {
-  const sortedUsers = useMemo(() => Object.values(allUsers).sort((a, b) => a.name.localeCompare(b.name)), [allUsers]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const sortedUsers = useMemo(() => {
+    return Object.values(allUsers)
+      .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [allUsers, searchTerm]);
 
   return (
     <div>
@@ -253,7 +259,18 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
                   <span>Trocar de Usuário</span>
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
-                  <DropdownMenuSubContent className="max-h-[300px] overflow-y-auto">
+                  <DropdownMenuSubContent className="p-2 max-h-[300px] overflow-y-auto">
+                    <div className="relative mb-2">
+                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar usuário..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-8 h-8"
+                            // Prevent dropdown from closing when clicking input
+                            onClick={(e) => e.stopPropagation()} 
+                        />
+                    </div>
                     {sortedUsers.map(u => (
                       <DropdownMenuItem key={u.id} onClick={() => onUserSelect(u.id)}>
                         {u.name}
