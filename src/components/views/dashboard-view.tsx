@@ -161,7 +161,7 @@ function PlayerSummary({ user, players, onNavigate, onAvatarChange }: { user: Us
                 </div>
                 <div className="grid grid-cols-3 text-center mt-4">
                     <div>
-                        <p className="text-sm text-muted-foreground">Partidas Jogadas</p>
+                        <p className="text-sm text-muted-foreground">Partidas</p>
                         <p className="font-bold text-lg">{totalGames}</p>
                     </div>
                     <div>
