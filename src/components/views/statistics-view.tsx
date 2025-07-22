@@ -164,14 +164,14 @@ const GenericRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts,
     return (
         <Accordion type="single" collapsible className="w-full space-y-2">
             {sortedItems.map((item, index) => (
-                <AccordionItem value={item.id} key={item.id} className="border-b-0">
+                <AccordionItem value={item.id} key={`${type}-${item.id}`} className="border-b-0">
                     <Card className="bg-card shadow-sm p-3 rounded-lg overflow-hidden">
                          <AccordionTrigger className="p-0 hover:no-underline">
                              <RankingListItem 
                                 player={item}
                                 rank={index + 1}
                                 statValue={getStatValue(item)}
-                                statLabel={label}
+                                label={label}
                                 onPlayerSelect={onPlayerSelect}
                             />
                          </AccordionTrigger>
@@ -224,9 +224,10 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
         setHasChanges(false);
     };
 
-    const allPlayersMemo = useMemo(() => Object.values(editablePlayers), [editablePlayers]);
-    const scalersMemo = useMemo(() => Object.values(editableScalers), [editableScalers]);
-    const goaliesMemo = useMemo(() => Object.values(editableGoalies), [editableGoalies]);
+    const allPlayersMemo = useMemo(() => Object.values(editablePlayers).map(p => ({ ...p, id: Object.keys(editablePlayers).find(key => editablePlayers[key] === p)! })), [editablePlayers]);
+    const scalersMemo = useMemo(() => Object.values(editableScalers).map(s => ({ ...s, id: Object.keys(editableScalers).find(key => editableScalers[key] === s)! })), [editableScalers]);
+    const goaliesMemo = useMemo(() => Object.values(editableGoalies).map(g => ({ ...g, id: Object.keys(editableGoalies).find(key => editableGoalies[key] === g)! })), [editableGoalies]);
+
 
     return (
         <div className={cn(canEditScouts && "pb-40")}>
@@ -284,4 +285,3 @@ export default function StatisticsView({ players, onBack, onPlayerSelect, canEdi
         </div>
     );
 }
-
