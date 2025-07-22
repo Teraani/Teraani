@@ -9,7 +9,6 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   Dialog, 
@@ -34,13 +33,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface FriendsScoreViewProps {
   onBack: () => void;
-  friends: Friend[];
+  friends: Friend[]; // This will be used as the initial list of all possible players to add
   user: User;
   players: Record<string, Player>;
   userAvatar: string | null;
 }
 
-const TeamCrest = ({ crest, avatar, name, teamName }: { crest: string; avatar: string; name: string; teamName: string; }) => (
+const TeamCrest = ({ crest, avatar, name }: { crest: string; avatar: string; name: string; }) => (
   <div className="relative">
     <Image src={crest} alt="" width={48} height={48} className="rounded-md" data-ai-hint="team crest" />
     <Avatar className="absolute bottom-[-8px] right-[-8px] h-8 w-8 border-2 border-background">
@@ -50,17 +49,21 @@ const TeamCrest = ({ crest, avatar, name, teamName }: { crest: string; avatar: s
   </div>
 );
 
-const AddFriendDialog = ({ players, onSelect }: { players: Record<string, Player>, onSelect: (friend: Friend) => void }) => {
+const AddFriendDialog = ({ players, onSelect, competitors }: { players: Record<string, Player>, onSelect: (friend: Friend) => void, competitors: Friend[] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const competitorIds = useMemo(() => new Set(competitors.map(c => c.id)), [competitors]);
 
   const filteredPlayers = useMemo(() => {
     const lowerCaseSearch = searchTerm.toLowerCase();
     if (!lowerCaseSearch) return [];
     return Object.entries(players)
-      .filter(([_, player]) => player.name.toLowerCase().includes(lowerCaseSearch))
+      .filter(([id, player]) => 
+          player.name.toLowerCase().includes(lowerCaseSearch) &&
+          !competitorIds.has(`player-${id}`)
+      )
       .map(([id, player]) => ({...player, id}));
-  }, [searchTerm, players]);
+  }, [searchTerm, players, competitorIds]);
 
   const handleSelect = (player: Player & { id: string }) => {
     const newFriend: Friend = {
@@ -69,12 +72,13 @@ const AddFriendDialog = ({ players, onSelect }: { players: Record<string, Player
       teamName: `${player.name} FC`,
       score: player.points,
       playersPlayed: player.games,
-      totalPlayers: 11, // Assume 11 for now
+      totalPlayers: 11,
       isPro: false,
       crest: 'https://placehold.co/40x40/cccccc/000000',
       avatar: player.img,
     };
     onSelect(newFriend);
+    setSearchTerm('');
     setIsOpen(false);
   };
 
@@ -115,10 +119,13 @@ const AddFriendDialog = ({ players, onSelect }: { players: Record<string, Player
                 </Avatar>
                 <div>
                   <p className="font-semibold">{player.name}</p>
-                  <p className="text-sm text-muted-foreground">{player.team}</p>
+                  <p className="text-sm text-muted-foreground">{player.pos}</p>
                 </div>
               </div>
             ))}
+             {searchTerm && filteredPlayers.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground py-4">Nenhum jogador encontrado ou já adicionado.</p>
+            )}
           </div>
         </ScrollArea>
       </DialogContent>
@@ -126,28 +133,56 @@ const AddFriendDialog = ({ players, onSelect }: { players: Record<string, Player
   );
 };
 
+const CompetitorCard = ({ competitor, isUser, onClick }: { competitor: Friend, isUser: boolean, onClick?: () => void }) => (
+   <Card 
+      className={cn(
+        "bg-card shadow-sm border-b border-border/50 rounded-lg",
+        isUser ? "border-2 border-primary" : "cursor-pointer hover:bg-muted/50"
+      )}
+      onClick={onClick}
+    >
+      <CardContent className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <TeamCrest
+            crest={competitor.crest}
+            avatar={competitor.avatar}
+            name={competitor.name}
+          />
+          <div className="ml-4">
+            <p className="font-bold text-foreground">{competitor.teamName}</p>
+            <div className="flex items-center gap-2">
+                {competitor.isPro && <Badge className="bg-yellow-400 text-yellow-900 px-1.5 py-0 text-[10px] h-4">PRO</Badge>}
+                <span className="text-sm text-muted-foreground">{competitor.name}</span>
+            </div>
+          </div>
+        </div>
 
-export default function FriendsScoreView({ onBack, friends, user, players, userAvatar }: FriendsScoreViewProps) {
-  const userScore = useMemo(() => {
-    return user.lineup.reduce((sum, playerId) => {
-      const player = players[playerId];
-      return sum + (player?.points ?? 0);
-    }, 0);
+        <div className="text-right">
+            <p className="font-bold text-lg text-green-500">{competitor.score?.toFixed(2) ?? '---'}</p>
+            <p className="text-xs text-muted-foreground">JOG. PONT. {competitor.playersPlayed}/{competitor.totalPlayers}</p>
+        </div>
+      </CardContent>
+    </Card>
+)
+
+export default function FriendsScoreView({ onBack, user, players, userAvatar }: FriendsScoreViewProps) {
+  const userAsPlayer = useMemo(() => {
+     return Object.values(players).find(p => p.name.toLowerCase().includes(user.name.split(' ')[0].toLowerCase())) || null;
   }, [user, players]);
 
   const userAsFriend: Friend = {
-    id: 'user',
-    name: 'Felipe', // Assuming the user's name is Felipe as per previous context
+    id: user.id,
+    name: user.name,
     teamName: user.teamName,
-    score: userScore,
-    playersPlayed: user.lineup.filter(p => p !== null).length,
+    score: userAsPlayer?.points ?? 0,
+    playersPlayed: userAsPlayer?.games ?? 0,
     totalPlayers: 11,
     isPro: true,
-    crest: 'https://placehold.co/40x40/4ade80/000000', // Different crest for user
+    crest: 'https://placehold.co/40x40/4ade80/000000',
     avatar: userAvatar || 'https://placehold.co/32x32',
   };
 
-  const [competitors, setCompetitors] = useState<Friend[]>([userAsFriend, ...friends]);
+  const [competitors, setCompetitors] = useState<Friend[]>([]);
   const [friendToRemove, setFriendToRemove] = useState<Friend | null>(null);
   
   const handleAddCompetitor = (newFriend: Friend) => {
@@ -162,18 +197,19 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
     setFriendToRemove(null);
   }
 
-  const handleCardClick = (competitor: Friend) => {
-    if (competitor.id !== 'user') {
-      setFriendToRemove(competitor);
-    }
-  }
+  const allPossibleFriends = useMemo(() => {
+    return Object.entries(players).map(([id, p]) => ({
+      ...p,
+      id: `player-${id}`
+    }));
+  }, [players]);
 
   return (
     <div>
       <AlertDialog open={!!friendToRemove} onOpenChange={(open) => !open && setFriendToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover Amigo?</AlertDialogTitle>
+            <AlertDialogTitle>Remover Comparação?</AlertDialogTitle>
             <AlertDialogDescription>
               Você tem certeza que deseja remover "{friendToRemove?.teamName}" da sua lista de comparação?
             </AlertDialogDescription>
@@ -193,45 +229,37 @@ export default function FriendsScoreView({ onBack, friends, user, players, userA
           <ArrowLeft className="h-6 w-6 text-foreground" />
         </Button>
         <h2 className="text-xl font-bold text-foreground">Amigos</h2>
-        <AddFriendDialog players={players} onSelect={handleAddCompetitor} />
+        <AddFriendDialog players={players} onSelect={handleAddCompetitor} competitors={[userAsFriend, ...competitors]} />
       </header>
 
-      <main className="p-4">
-        <div className="space-y-3">
-          {competitors.map((competitor) => (
-            <Card 
-              key={competitor.id} 
-              className={cn(
-                "bg-card shadow-none border-b border-border/50 rounded-lg",
-                competitor.id === 'user' ? "border-2 border-primary" : "cursor-pointer hover:bg-muted/50"
-              )}
-              onClick={() => handleCardClick(competitor)}
-            >
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <TeamCrest
-                    crest={competitor.crest}
-                    avatar={competitor.avatar}
-                    name={competitor.name}
-                    teamName={competitor.teamName}
-                  />
-                  <div className="ml-4">
-                    <p className="font-bold text-foreground">{competitor.teamName}</p>
-                    <div className="flex items-center gap-2">
-                       {competitor.isPro && <Badge className="bg-yellow-400 text-yellow-900 px-1.5 py-0 text-[10px] h-4">PRO</Badge>}
-                       <span className="text-sm text-muted-foreground">{competitor.name}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                    <p className="font-bold text-lg text-green-500">{competitor.score?.toFixed(2) ?? '---'}</p>
-                    <p className="text-xs text-muted-foreground">JOG. PONT. {competitor.playersPlayed}/{competitor.totalPlayers}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      <main className="p-4 space-y-4">
+        <div>
+            <h3 className="font-bold text-lg mb-2 px-1">Sua Pontuação</h3>
+            <CompetitorCard competitor={userAsFriend} isUser={true} />
         </div>
+
+        {competitors.length > 0 && (
+            <div>
+                 <h3 className="font-bold text-lg mb-2 px-1">Comparações</h3>
+                <div className="space-y-3">
+                    {competitors.map((competitor) => (
+                        <CompetitorCard 
+                            key={competitor.id} 
+                            competitor={competitor}
+                            isUser={false}
+                            onClick={() => setFriendToRemove(competitor)}
+                        />
+                    ))}
+                </div>
+            </div>
+        )}
+
+        {competitors.length === 0 && (
+            <div className="text-center text-muted-foreground pt-10">
+                <p>Ninguém para comparar ainda.</p>
+                <p className="text-sm">Clique no ícone <UserPlus className="inline h-4 w-4" /> acima para adicionar amigos.</p>
+            </div>
+        )}
       </main>
     </div>
   );

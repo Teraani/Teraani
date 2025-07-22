@@ -95,7 +95,7 @@ export default function Home() {
 
   const handleRegistrationSuccess = () => {
     // For now, just log in the default user (Admin) after "Google Sign-In"
-    handleLoginSuccess('user27');
+    handleLoginSuccess('user1');
   }
 
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
