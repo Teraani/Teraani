@@ -167,13 +167,14 @@ const CompetitorCard = ({ competitor, isUser, onClick }: { competitor: Friend, i
 
 export default function FriendsScoreView({ onBack, user, players, userAvatar }: FriendsScoreViewProps) {
   const userAsPlayer = useMemo(() => {
-     return Object.values(players).find(p => p.name.toLowerCase().includes(user.name.split(' ')[0].toLowerCase())) || null;
+     const nameToSearch = user.name.split(' ')[0].toLowerCase();
+     return Object.values(players).find(p => p.name.toLowerCase().includes(nameToSearch)) || null;
   }, [user, players]);
 
   const userAsFriend: Friend = {
     id: user.id,
     name: user.name,
-    teamName: user.teamName,
+    teamName: `${user.name.split(' ')[0]} FC`,
     score: userAsPlayer?.points ?? 0,
     playersPlayed: userAsPlayer?.games ?? 0,
     totalPlayers: 11,
