@@ -4,31 +4,27 @@
 import { Button } from '@/components/ui/button';
 
 const SoccerBallIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    stroke="currentColor"
-    strokeWidth="1"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <circle cx="12" cy="12" r="10" fill="white" stroke="black" />
-    {/* Center pentagon */}
-    <polygon points="12,9 14.3,12.5 11,15.5 9.7,12.5 12,9" fill="#333" stroke="black" />
-    {/* Top hexagon */}
-    <polygon points="12,9 9.7,12.5 7.7,12.5 7.7,8 9.7,5.5 12,5.5" fill="white" stroke="black" />
-    <polygon points="12,9 14.3,12.5 16.3,12.5 16.3,8 14.3,5.5 12,5.5" fill="white" stroke="black" />
-    {/* Bottom hexagons */}
-    <polygon points="11,15.5 9.7,12.5 7.7,12.5 7.7,17 9.7,18.5 11,18.5" fill="white" stroke="black" />
-    <polygon points="13,15.5 14.3,12.5 16.3,12.5 16.3,17 14.3,18.5 13,18.5" fill="white" stroke="black" />
-    <polygon points="11,15.5 13,15.5 14.3,18.5 12,20 9.7,18.5" fill="white" stroke="black" />
-    {/* Side partial pentagons */}
-    <path d="M7.7,8 L7.7,17 L6,18 L3.5,15 L3.5,10 L6,7 Z" fill="#555" stroke="black" />
-    <path d="M16.3,8 L16.3,17 L18,18 L20.5,15 L20.5,10 L18,7 Z" fill="#555" stroke="black" />
-    <path d="M9.7,5.5 L14.3,5.5 L16,4 L12,2 L8,4 Z" fill="#555" stroke="black" />
-  </svg>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="10" fill="white" stroke="black" />
+      <polygon points="12 5.1 15.9 8.1 14.4 12.9 9.6 12.9 8.1 8.1" fill="black" />
+      <polygon points="12 5.1 8.1 8.1 9.6 12.9" fill="none" stroke="black" />
+      <polygon points="12 5.1 15.9 8.1 14.4 12.9" fill="none" stroke="black" />
+      <polygon points="8.1 8.1 4.2 11.1 5.7 15.9 9.6 12.9" fill="none" stroke="black" />
+      <polygon points="15.9 8.1 19.8 11.1 18.3 15.9 14.4 12.9" fill="none" stroke="black" />
+      <polygon points="9.6 12.9 5.7 15.9 8.1 18.9 12 16.9" fill="none" stroke="black" />
+      <polygon points="14.4 12.9 18.3 15.9 15.9 18.9 12 16.9" fill="none" stroke="black" />
+      <polygon points="12 16.9 8.1 18.9 9.6 22" fill="black" />
+      <polygon points="12 16.9 15.9 18.9 14.4 22" fill="black" />
+    </svg>
 );
 
 
