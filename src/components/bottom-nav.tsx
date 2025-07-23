@@ -4,6 +4,7 @@
 import { Home, Shirt, Trophy, BarChart2, DollarSign, Award } from 'lucide-react';
 import type { View } from '@/app/page';
 import { cn } from '@/lib/utils';
+import { Badge } from './ui/badge';
 
 interface BottomNavProps {
   currentView: View;
@@ -11,10 +12,10 @@ interface BottomNavProps {
   canViewPayments: boolean;
 }
 
-const navItems: { view: View, icon: React.ElementType, label: string, requiresPermission?: 'payments' }[] = [
+const navItems: { view: View, icon: React.ElementType, label: string, requiresPermission?: 'payments', isPro?: boolean }[] = [
   { view: 'dashboard', icon: Home, label: 'Início' },
   { view: 'lineup', icon: Shirt, label: 'Escalação' },
-  { view: 'best-eleven', icon: Award, label: 'Seleção' },
+  { view: 'best-eleven', icon: Award, label: 'Seleção', isPro: true },
   { view: 'statistics', icon: BarChart2, label: 'Estatísticas' },
   { view: 'payments', icon: DollarSign, label: 'Pagamentos', requiresPermission: 'payments' },
 ];
@@ -39,7 +40,10 @@ export default function BottomNav({ currentView, onNavigate, canViewPayments }: 
             aria-current={currentView === item.view ? 'page' : undefined}
           >
             <item.icon className="h-6 w-6" />
-            <span className="text-xs font-medium text-center">{item.label}</span>
+            <div className="flex items-center gap-1">
+                 <span className="text-xs font-medium text-center">{item.label}</span>
+                 {item.isPro && <Badge className="bg-amber-400 text-black text-[9px] px-1 h-4 font-bold">PRO</Badge>}
+            </div>
           </button>
         )
       })}
