@@ -483,6 +483,7 @@ export default function Home() {
                   canEdit={canEditLineup}
                   isVotingReleased={isVotingReleased}
                   onReleaseVoting={handleReleaseBestElevenVoting}
+                  modality={selectedModality}
                 />;
       default:
         return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;

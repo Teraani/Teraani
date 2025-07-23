@@ -34,9 +34,9 @@ import {
 import { Slider } from '../ui/slider';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { BestElevenVote } from '@/app/page';
+import type { BestElevenVote, Modality } from '@/app/page';
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '3-2' | '2-3';
 
 export interface Vote {
   playerId: string;
@@ -53,6 +53,7 @@ interface BestElevenViewProps {
   canEdit: boolean;
   isVotingReleased: boolean;
   onReleaseVoting: () => void;
+  modality: Modality | null;
 }
 
 interface PlayerActionState {
@@ -71,6 +72,28 @@ const getVotingStatus = () => {
   }
   return { isOpen: true, message: "A votação encerra Quinta-feira às 00:00h." };
 };
+
+const getFormationsForModality = (modality: Modality | null): Formation[] => {
+  switch (modality) {
+    case 'society':
+      return ['3-2-1', '2-3-1'];
+    case 'futsal':
+      return ['2-3', '3-2'];
+    case 'campo':
+    default:
+      return ['4-3-3', '4-4-2', '3-5-2'];
+  }
+};
+
+const getLineupSize = (modality: Modality | null) => {
+    switch (modality) {
+        case 'society': return 7;
+        case 'futsal': return 6;
+        case 'campo':
+        default: return 11;
+    }
+}
+
 
 const PlayerSelectionModal = ({ players, onSelectPlayer, currentUserPlayerId, lineup }: { players: Record<string, Player>, onSelectPlayer: (playerId: string) => void, currentUserPlayerId: string | null, lineup: (BestElevenVote | null)[] }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -156,16 +179,24 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, onVote, userLineup, isSaved, canEdit, isVotingReleased, onReleaseVoting }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, onVote, userLineup, isSaved, canEdit, isVotingReleased, onReleaseVoting, modality }: BestElevenViewProps) {
     const { toast } = useToast();
     const [votingStatus, setVotingStatus] = useState(getVotingStatus());
-    const [lineup, setLineup] = useState<(BestElevenVote | null)[]>(userLineup || Array(11).fill(null));
+    const lineupSize = getLineupSize(modality);
+    
+    const [lineup, setLineup] = useState<(BestElevenVote | null)[]>(userLineup || Array(lineupSize).fill(null));
     const [isSelectionModalOpen, setSelectionModalOpen] = useState(false);
     const [slotToFill, setSlotToFill] = useState<number | null>(null);
     const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
     const [playerToRate, setPlayerToRate] = useState<string | null>(null);
-    const [formation, setFormation] = useState<Formation>('4-3-3');
 
+    const availableFormations = useMemo(() => getFormationsForModality(modality), [modality]);
+    const [formation, setFormation] = useState<Formation>(availableFormations[0]);
+    
+    useEffect(() => {
+        setFormation(getFormationsForModality(modality)[0]);
+        setLineup(Array(getLineupSize(modality)).fill(null))
+    }, [modality]);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -238,20 +269,43 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
     };
 
     const { attackers, midfielders, defenders, goalkeeper, atkCount, midCount, defCount } = useMemo(() => {
-        const [parsedDef, parsedMid, parsedAtk] = formation.split('-').map(Number);
-        
-        return { 
-            attackers: lineup.slice(0, parsedAtk), 
-            midfielders: lineup.slice(parsedAtk, parsedAtk + parsedMid), 
-            defenders: lineup.slice(parsedAtk + parsedMid, parsedAtk + parsedMid + parsedDef), 
-            goalkeeper: lineup.slice(parsedAtk + parsedMid + parsedDef, parsedAtk + parsedMid + parsedDef + 1),
+        const formationParts = formation.split('-').map(Number);
+        let parsedDef = 0, parsedMid = 0, parsedAtk = 0;
+
+        if ((modality === 'campo' || modality === 'society') && formationParts.length === 3) {
+            [parsedDef, parsedMid, parsedAtk] = formationParts;
+        } else if (modality === 'futsal' && formationParts.length === 2) {
+            [parsedDef, parsedAtk] = formationParts;
+            parsedMid = 0;
+        } else {
+            // Fallback for default or incorrect formation mapping
+            if (lineupSize === 11) [parsedDef, parsedMid, parsedAtk] = [4, 3, 3];
+            if (lineupSize === 7) [parsedDef, parsedMid, parsedAtk] = [3, 2, 1];
+            if (lineupSize === 6) [parsedDef, parsedAtk] = [2, 3];
+        }
+
+        let playerIndex = 0;
+        const assignedAttackers = lineup.slice(playerIndex, playerIndex + parsedAtk);
+        playerIndex += parsedAtk;
+        const assignedMidfielders = lineup.slice(playerIndex, playerIndex + parsedMid);
+        playerIndex += parsedMid;
+        const assignedDefenders = lineup.slice(playerIndex, playerIndex + parsedDef);
+        playerIndex += parsedDef;
+        const assignedGoalkeeper = lineup.slice(playerIndex, playerIndex + 1);
+
+        return {
+            attackers: assignedAttackers,
+            midfielders: assignedMidfielders,
+            defenders: assignedDefenders,
+            goalkeeper: assignedGoalkeeper,
             atkCount: parsedAtk,
             midCount: parsedMid,
             defCount: parsedDef,
         };
-    }, [lineup, formation]);
+    }, [lineup, formation, modality, lineupSize]);
 
     const renderPlayerRow = (count: number, lineupSlice: (BestElevenVote | null)[], startIndex: number) => {
+      if (count === 0) return null;
       return (
           <div className="flex justify-around z-10 w-full">
               {Array.from({ length: count }).map((_, i) => {
@@ -319,7 +373,7 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
       </header>
 
       <main className="p-4 space-y-4 pb-24">
-        <Pitch modality={'campo'}>
+        <Pitch modality={modality}>
           {renderPlayerRow(atkCount, attackers, 0)}
           {renderPlayerRow(midCount, midfielders, atkCount)}
           {renderPlayerRow(defCount, defenders, atkCount + midCount)}
@@ -354,9 +408,7 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="4-3-3">4-3-3</SelectItem>
-                        <SelectItem value="4-4-2">4-4-2</SelectItem>
-                        <SelectItem value="3-5-2">3-5-2</SelectItem>
+                        {availableFormations.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
