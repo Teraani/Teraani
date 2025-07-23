@@ -1,12 +1,38 @@
 import type { ReactNode } from 'react';
+import type { Modality } from '@/app/page';
+import { cn } from '@/lib/utils';
 
 interface PitchProps {
   children: ReactNode;
+  modality?: Modality | null;
 }
 
-export default function Pitch({ children }: PitchProps) {
+export default function Pitch({ children, modality }: PitchProps) {
+  const getPitchStyles = () => {
+    switch (modality) {
+      case 'futsal':
+        return {
+          className: 'bg-blue-600',
+          gradient: `linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.15)), linear-gradient(to bottom, #3b82f6, #2563eb)`
+        };
+      case 'society':
+         return {
+          className: 'bg-[#068f44]',
+          gradient: `linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.15)), linear-gradient(to bottom, #069b4a, #068f44)`
+        };
+      case 'campo':
+      default:
+        return {
+          className: 'bg-[#057F3A]',
+          gradient: `linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.15)), linear-gradient(to bottom, #059649, #057F3A)`
+        };
+    }
+  };
+
+  const { className, gradient } = getPitchStyles();
+
   return (
-    <div className="pitch w-full h-[600px] rounded-lg mx-auto flex flex-col justify-around items-center relative overflow-hidden bg-[#057F3A] border-2 border-white/30">
+    <div className={cn("pitch w-full h-[600px] rounded-lg mx-auto flex flex-col justify-around items-center relative overflow-hidden border-2 border-white/30", className)}>
       {/* Field Lines */}
       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/30" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-white/30 rounded-full" />
@@ -16,8 +42,7 @@ export default function Pitch({ children }: PitchProps) {
 
       <style jsx>{`
         .pitch {
-          background-image: linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.15)),
-                            linear-gradient(to bottom, #059649, #057F3A);
+          background-image: ${gradient};
         }
       `}</style>
       
