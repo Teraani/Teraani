@@ -163,17 +163,17 @@ const EditableRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts
             {sortedItems.map((item, index) => (
                 <AccordionItem value={item.id} key={`${type}-${item.id}`} className="border-b-0">
                     <Card className="bg-card shadow-sm p-3 rounded-lg overflow-hidden">
-                         <AccordionTrigger className="p-0 hover:no-underline w-full" onClick={(e) => {
-                             if (canEditScouts) {
-                                 e.preventDefault();
-                             }
-                         }}>
+                         <AccordionTrigger className="p-0 hover:no-underline w-full" disabled={!canEditScouts}>
                              <RankingListItem 
                                  player={item}
                                  rank={index + 1}
                                  statValue={getStatValue(item)}
                                  label={label}
-                                 onClick={() => !canEditScouts && 'pos' in item ? onPlayerSelect(item.id) : undefined}
+                                 onClick={() => {
+                                   if (!canEditScouts && 'pos' in item) {
+                                     onPlayerSelect(item.id);
+                                   }
+                                 }}
                              />
                          </AccordionTrigger>
                          <AccordionContent>
