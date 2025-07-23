@@ -37,9 +37,7 @@ const modalities: { name: string; players: string; type: Modality; description: 
 export default function ModalitySelectionView({ onModalitySelect, selectedModality }: ModalitySelectionViewProps) {
 
   const handleSelect = (modalityType: Modality) => {
-    if (!selectedModality) {
-      onModalitySelect(modalityType);
-    }
+    onModalitySelect(modalityType);
   };
   
   return (
@@ -92,9 +90,12 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
                 <Button
                   className="w-full"
                   disabled={isDisabled}
-                  onClick={() => !isDisabled && handleSelect(modality.type)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent double event firing
+                    if (!isDisabled) handleSelect(modality.type);
+                  }}
                 >
-                  {isSelected ? 'Selecionado' : isDisabled ? 'Bloqueado (PRO)' : 'Selecionar'}
+                  {isSelected ? 'Continuar' : isDisabled ? 'Bloqueado (PRO)' : 'Selecionar'}
                 </Button>
               </CardFooter>
             </Card>
