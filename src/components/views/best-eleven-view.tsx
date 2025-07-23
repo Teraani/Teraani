@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star } from 'lucide-react';
+import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star, Send } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '../ui/input';
@@ -50,6 +50,9 @@ interface BestElevenViewProps {
   onVote: (lineup: (BestElevenVote | null)[]) => void;
   userLineup: (BestElevenVote | null)[] | undefined;
   isSaved: boolean;
+  canEdit: boolean;
+  isVotingReleased: boolean;
+  onReleaseVoting: () => void;
 }
 
 interface PlayerActionState {
@@ -153,7 +156,7 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, onVote, userLineup, isSaved }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, onVote, userLineup, isSaved, canEdit, isVotingReleased, onReleaseVoting }: BestElevenViewProps) {
     const { toast } = useToast();
     const [votingStatus, setVotingStatus] = useState(getVotingStatus());
     const [lineup, setLineup] = useState<(BestElevenVote | null)[]>(userLineup || Array(11).fill(null));
@@ -178,10 +181,15 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
       return playerEntry ? playerEntry[0] : null;
     }, [currentUser, players]);
 
+    const isVotingActive = votingStatus.isOpen && isVotingReleased;
 
     const handleAddPlayerClick = (index: number) => {
-      if (!votingStatus.isOpen || isSaved) {
-        toast({ title: "Votação Encerrada", description: "Não é mais possível alterar a seleção.", variant: 'destructive' });
+      if (!isVotingActive || isSaved) {
+        let description = "Não é mais possível alterar a seleção.";
+        if (!isVotingReleased) description = "Aguarde o editor da rodada liberar a votação.";
+        else if (!votingStatus.isOpen) description = "O prazo para votação encerrou.";
+        
+        toast({ title: "Votação Indisponível", description, variant: 'destructive' });
         return;
       }
       setSlotToFill(index);
@@ -189,7 +197,7 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
     }
     
     const handlePlayerCardClick = (state: PlayerActionState) => {
-        if (!votingStatus.isOpen || isSaved) return;
+        if (!isVotingActive || isSaved) return;
         setPlayerActionState(state);
     };
 
@@ -323,10 +331,16 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
                 <Clock className="w-5 h-5" />
                 <span>{votingStatus.message}</span>
             </div>
+            {canEdit && !isVotingReleased && (
+              <Button onClick={onReleaseVoting} className="bg-blue-600 hover:bg-blue-700">
+                <Send className="mr-2 h-4 w-4" />
+                Liberar Votação
+              </Button>
+            )}
         </div>
       </main>
 
-       {votingStatus.isOpen && !isSaved && (
+       {isVotingActive && !isSaved && (
         <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-30 flex items-center gap-4">
             <div className="flex-1">
                  <Button className="w-full bg-green-600 text-white hover:bg-green-700 h-12 text-lg" disabled={!isComplete} onClick={() => onVote(lineup)}>

@@ -49,6 +49,7 @@ export default function Home() {
   // Maps userId -> best eleven lineup
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
   const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
+  const [isBestElevenVotingReleased, setIsBestElevenVotingReleased] = useState(false);
 
 
   // Simulate a logged-in user. By default, it's the admin.
@@ -326,6 +327,14 @@ export default function Home() {
     });
   };
 
+  const handleReleaseBestElevenVoting = () => {
+    setIsBestElevenVotingReleased(true);
+    toast({
+      title: "Votação Liberada!",
+      description: "Os jogadores agora podem votar na Seleção da Rodada.",
+    });
+  };
+
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
 
@@ -441,6 +450,9 @@ export default function Home() {
                   onVote={handleBestElevenVote}
                   userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
+                  canEdit={canEditLineup}
+                  isVotingReleased={isBestElevenVotingReleased}
+                  onReleaseVoting={handleReleaseBestElevenVoting}
                 />;
       default:
         return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
