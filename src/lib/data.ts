@@ -170,7 +170,10 @@ export const data: AppData = {
       'p27': { name: 'Jason', team: 'INT', pos: 'MEI', value: 3, points: 3, last_val: 0.5, games: 2, img: 'https://placehold.co/60x60', stats: { wins: 1, losses: 1, draws: 0, goalsFor: 4, goalsAgainst: 3, goalDifference: 1, performance: 50, points: 3, goals: 0, assists: 0, yellowCards: 0, redCards: 0 } },
       'p28': { name: 'Giovani', team: 'GOI', pos: 'LAT', value: 1.5, points: 1.5, last_val: 0.5, games: 7, img: 'https://placehold.co/60x60', stats: { wins: 1, losses: 6, draws: 0, goalsFor: 12, goalsAgainst: 31, goalDifference: -19, performance: 21.43, points: 1.5, goals: 0, assists: 0, yellowCards: 0, redCards: 0 } },
       'p29': { name: 'Lucca', team: 'JUV', pos: 'ATA', value: 7.5, points: 7.5, last_val: 0.5, games: 5, img: 'https://placehold.co/60x60', stats: { wins: 2, losses: 3, draws: 0, goalsFor: 24, goalsAgainst: 31, goalDifference: -7, performance: 45.83, points: 7.5, goals: 1, assists: 0, yellowCards: 0, redCards: 0 } },
-      'p30': { name: 'Pedro Roberto', team: 'SAN', pos: 'ATA', value: 4.5, points: 4.5, last_val: 0.5, games: 9, img: 'https://placehold.co/60x60', stats: { wins: 1, losses: 7, draws: 1, goalsFor: 15, goalsAgainst: 28, goalDifference: -13, performance: 16.67, points: 4.5, goals: 3, assists: 0, yellowCards: 0, redCards: 0 } }
+      'p30': { name: 'Pedro Roberto', team: 'SAN', pos: 'ATA', value: 4.5, points: 4.5, last_val: 0.5, games: 9, img: 'https://placehold.co/60x60', stats: { wins: 1, losses: 7, draws: 1, goalsFor: 15, goalsAgainst: 28, goalDifference: -13, performance: 16.67, points: 4.5, goals: 3, assists: 0, yellowCards: 0, redCards: 0 } },
+      'p31': { name: 'Vinícius Conceição', team: 'VAS', pos: 'GOL', value: 5.0, points: 22, last_val: 0, games: 14, img: 'https://placehold.co/60x60', stats: { wins: 7, losses: 5, draws: 2, goalsFor: 0, goalsAgainst: 29, goalDifference: 0, performance: 50, points: 22, goals: 0, assists: 0, yellowCards: 0, redCards: 0 } },
+      'p32': { name: 'Walex Leek', team: 'CFC', pos: 'GOL', value: 5.0, points: 25, last_val: 0, games: 19, img: 'https://placehold.co/60x60', stats: { wins: 8, losses: 8, draws: 3, goalsFor: 0, goalsAgainst: 44, goalDifference: 0, performance: 42, points: 25, goals: 0, assists: 0, yellowCards: 1, redCards: 0 } },
+      'p33': { name: 'Tom', team: 'SAO', pos: 'GOL', value: 5.0, points: 20, last_val: 0, games: 13, img: 'https://placehold.co/60x60', stats: { wins: 6, losses: 5, draws: 2, goalsFor: 0, goalsAgainst: 34, goalDifference: 0, performance: 46, points: 20, goals: 0, assists: 0, yellowCards: 0, redCards: 0 } },
     },
     friends: [],
     scalersRanking: {
@@ -189,3 +192,5 @@ export const data: AppData = {
         'goalie3': { id: 'goalie3', name: 'Tom', games: 13, goalsConceded: 34, avgGoalsConceded: 2.62 },
     }
 };
+
+
