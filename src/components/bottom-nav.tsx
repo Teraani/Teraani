@@ -33,7 +33,7 @@ export default function BottomNav({ currentView, onNavigate, canViewPayments }: 
             key={item.view}
             onClick={() => onNavigate(item.view)}
             className={cn(
-              'flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 w-full transition-colors duration-200 relative gap-1',
+              'flex-1 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 transition-colors duration-200 relative gap-1',
               { 'text-primary dark:text-primary': currentView === item.view },
               'hover:text-primary'
             )}
