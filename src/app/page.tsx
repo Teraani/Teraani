@@ -63,7 +63,7 @@ export default function Home() {
   // Maps userId -> best eleven lineup
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
   const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
-  const [isBestElevenVotingReleased, setIsBestElevenVotingReleased] = useState(false);
+  const [isVotingReleased, setIsVotingReleased] = useState(false);
 
 
   // Simulate a logged-in user. By default, it's the admin.
@@ -357,7 +357,7 @@ export default function Home() {
   };
 
   const handleReleaseBestElevenVoting = () => {
-    setIsBestElevenVotingReleased(true);
+    setIsVotingReleased(true);
     toast({
       title: "Votação Liberada!",
       description: "Os jogadores agora podem votar na Seleção da Rodada.",
