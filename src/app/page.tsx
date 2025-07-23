@@ -417,6 +417,10 @@ export default function Home() {
     });
     return Array.from(scaledIds);
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
+  
+  const allPlayersForScout = useMemo(() => {
+    return Object.entries(appData.players).map(([id, player]) => ({...player, id}));
+  }, [appData.players]);
 
   const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection';
 
@@ -496,7 +500,7 @@ export default function Home() {
                   liveEvents={liveEvents}
                   onAddLiveEvent={handleAddLiveEvent}
                   onFinishMatch={handleFinishMatch}
-                  allPlayers={Object.values(appData.players).map(p => ({...p, id: Object.keys(appData.players).find(key => appData.players[key] === p)!}))}
+                  allPlayers={allPlayersForScout}
                 />;
       case 'payments':
         return <PaymentsView
