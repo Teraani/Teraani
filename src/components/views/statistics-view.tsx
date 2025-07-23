@@ -163,23 +163,29 @@ const EditableRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts
             {sortedItems.map((item, index) => (
                 <AccordionItem value={item.id} key={`${type}-${item.id}`} className="border-b-0">
                     <Card className="bg-card shadow-sm p-3 rounded-lg overflow-hidden">
-                         <AccordionTrigger className="p-0 hover:no-underline w-full" disabled={!canEditScouts}>
+                         <AccordionTrigger className="p-0 hover:no-underline w-full"
+                           onClick={(e) => {
+                            if (!canEditScouts) {
+                                e.preventDefault();
+                                'pos' in item && onPlayerSelect(item.id);
+                            }
+                           }}
+                         >
                              <RankingListItem 
                                  player={item}
                                  rank={index + 1}
                                  statValue={getStatValue(item)}
                                  label={label}
-                                 onClick={() => {
-                                   if (!canEditScouts && 'pos' in item) {
-                                     onPlayerSelect(item.id);
-                                   }
-                                 }}
                              />
                          </AccordionTrigger>
                          <AccordionContent>
-                            {type === 'player' && <PlayerStatsEditor player={item} canEditScouts={canEditScouts} onPlayerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
-                            {type === 'scaler' && <ScalerStatsEditor scaler={item} canEditScouts={canEditScouts} onScalerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
-                            {type === 'goalie' && <GoalieStatsEditor goalie={item} canEditScouts={canEditScouts} onGoalieChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                           {canEditScouts && (
+                              <>
+                                {type === 'player' && <PlayerStatsEditor player={item} canEditScouts={canEditScouts} onPlayerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                                {type === 'scaler' && <ScalerStatsEditor scaler={item} canEditScouts={canEditScouts} onScalerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                                {type === 'goalie' && <GoalieStatsEditor goalie={item} canEditScouts={canEditScouts} onGoalieChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                              </>
+                           )}
                          </AccordionContent>
                     </Card>
                 </AccordionItem>
@@ -231,13 +237,12 @@ const SimpleRankingList = ({ items, onPlayerSelect, stat, label, type }: {
     return (
         <div className="w-full space-y-2">
             {sortedItems.map((item, index) => (
-                <Card key={`${type}-${item.id}-${stat}`} className="bg-card shadow-sm p-3 rounded-lg overflow-hidden">
+                <Card key={`${type}-${item.id}-${stat}`} className="bg-card shadow-sm p-3 rounded-lg overflow-hidden cursor-pointer"  onClick={() => 'pos' in item && onPlayerSelect(item.id)}>
                     <RankingListItem 
                         player={item}
                         rank={index + 1}
                         statValue={getStatValue(item)}
                         label={label}
-                        onClick={() => 'pos' in item && onPlayerSelect(item.id)}
                     />
                 </Card>
             ))}
@@ -385,3 +390,4 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
         </div>
     );
 }
+
