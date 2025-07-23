@@ -40,7 +40,7 @@ export default function BottomNav({ currentView, onNavigate, canViewPayments }: 
             aria-current={currentView === item.view ? 'page' : undefined}
           >
             <item.icon className="h-6 w-6" />
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center h-8 justify-center">
                  <span className="text-xs font-medium text-center">{item.label}</span>
                  {item.isPro && <Badge className="bg-amber-400 text-black text-[8px] px-1 h-3 font-bold -mt-0.5">PRO</Badge>}
             </div>
