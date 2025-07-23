@@ -396,7 +396,7 @@ export default function Home() {
     });
   };
 
-  const handleReleaseBestElevenVoting = () => {
+  const handleReleaseVoting = () => {
     setIsVotingReleased(true);
     toast({
       title: "Votação Liberada!",
