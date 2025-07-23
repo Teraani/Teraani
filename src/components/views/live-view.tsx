@@ -128,13 +128,6 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
 
     const matchDate = useMemo(() => format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR }), []);
 
-    const userTeamScore = useMemo(() => {
-        return user.lineup.reduce((sum, id) => {
-            if (!id) return sum;
-            return sum + (players[id]?.points ?? 0);
-        }, 0);
-    }, [user, players]);
-
     // Update score based on events
     useEffect(() => {
         const t1Score = liveEvents.filter(e => e.team === 'Time 1' && e.event === 'Gol').length;
@@ -250,7 +243,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
       
       {canEditScouts && (
         <div className="bg-card p-4 border-t border-border">
-          <Button className="w-full h-12" onClick={() => setIsFinishConfirmOpen(true)}>
+          <Button className="w-full h-12" onClick={() => setIsFinishConfirmOpen(true)} disabled={liveEvents.length === 0}>
             <CheckCircle className="mr-2 h-5 w-5" />
             Finalizar Partida
           </Button>
