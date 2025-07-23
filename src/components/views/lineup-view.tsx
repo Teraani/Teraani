@@ -48,7 +48,7 @@ interface LineupViewProps {
   modality: Modality | null;
 }
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-2' | '2-2';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-2' | '2-2' | '3-1' | '1-3';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
 interface PlayerActionState {
@@ -63,7 +63,7 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
     case 'society':
       return ['3-2-2'];
     case 'futsal':
-      return ['2-2'];
+      return ['2-2', '3-1', '1-3'];
     case 'campo':
     default:
       return ['4-3-3', '4-4-2', '3-5-2'];
@@ -133,8 +133,8 @@ const TeamDisplay = ({
         [parsedDef, parsedMid, parsedAtk] = formationParts;
     } else if (modality === 'society' && formationParts.length === 3) { // 3-2-2
         [parsedDef, parsedMid, parsedAtk] = [formationParts[0], formationParts[1], formationParts[2]];
-    } else if (modality === 'futsal' && formationParts.length === 2) { // 2-2
-        [parsedDef, parsedMid, parsedAtk] = [formationParts[0], 0, formationParts[1]]; // No official midfielders in 2-2
+    } else if (modality === 'futsal' && formationParts.length === 2) { // e.g. 2-2, 3-1, 1-3
+        [parsedDef, parsedMid, parsedAtk] = [formationParts[0], 0, formationParts[1]]; // No official midfielders
     } else {
         // Fallback for default or incorrect formation mapping
         if(lineupPlayers.length === 11) [parsedDef, parsedMid, parsedAtk] = [4,3,3];
