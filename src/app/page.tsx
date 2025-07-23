@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Player, User, Ranking, GoalieRanking } from '@/lib/data';
 import { data } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
@@ -39,6 +39,18 @@ export interface AddPlayerSlot {
 
 export type BestElevenVote = { playerId: string; rating: number };
 
+const getTeamSizes = (modality: Modality | null) => {
+  switch (modality) {
+    case 'society':
+      return { lineup: 8, reserves: 4 };
+    case 'futsal':
+      return { lineup: 6, reserves: 4 };
+    case 'campo':
+    default:
+      return { lineup: 11, reserves: 5 };
+  }
+};
+
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -58,15 +70,25 @@ export default function Home() {
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
   const currentUser = loggedInUserId ? appData.users[loggedInUserId] : null;
 
+  const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
+
   // State for the two teams the editor can manage
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(11).fill(null));
-  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(11).fill(null));
-  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
+  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
+  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
+
+  useEffect(() => {
+    const { lineup, reserves } = getTeamSizes(selectedModality);
+    setTeam1Lineup(Array(lineup).fill(null));
+    setTeam1Reserves(Array(reserves).fill(null));
+    setTeam2Lineup(Array(lineup).fill(null));
+    setTeam2Reserves(Array(reserves).fill(null));
+  }, [selectedModality]);
   
   const handleAvatarChange = (userId: string, image: string) => {
     setAppData(prevData => ({
@@ -397,6 +419,7 @@ export default function Home() {
                  setTeam2Reserves={setTeam2Reserves}
                  onSaveLineups={handleSaveLineups}
                  lineupsSaved={lineupsSaved}
+                 modality={selectedModality}
                />;
       case 'player-details':
         return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
@@ -458,7 +481,7 @@ export default function Home() {
                   userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
                   canEdit={canEditLineup}
-                  isVotingReleased={isBestElevenVotingReleased}
+                  isVotingReleased={isVotingReleased}
                   onReleaseVoting={handleReleaseBestElevenVoting}
                 />;
       default:

@@ -8,7 +8,7 @@ import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import type { View, AddPlayerSlot } from '@/app/page';
+import type { View, AddPlayerSlot, Modality } from '@/app/page';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '@/components/lineup/add-player-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -45,9 +45,10 @@ interface LineupViewProps {
   setTeam2Reserves: (reserves: (string | null)[]) => void;
   onSaveLineups: () => void;
   lineupsSaved: boolean;
+  modality: Modality | null;
 }
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-2' | '2-3-1' | '1-2-2';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
 interface PlayerActionState {
@@ -56,6 +57,19 @@ interface PlayerActionState {
   index: number;
   team: 'team1' | 'team2';
 }
+
+const getFormationsForModality = (modality: Modality | null): Formation[] => {
+  switch (modality) {
+    case 'society':
+      return ['3-2-2'];
+    case 'futsal':
+      return ['1-2-2'];
+    case 'campo':
+    default:
+      return ['4-3-3', '4-4-2', '3-5-2'];
+  }
+};
+
 
 const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtColor, onColorChange: (color: ShirtColor) => void, disabled: boolean }) => {
     const colors: { value: ShirtColor, label: string }[] = [
@@ -93,7 +107,8 @@ const TeamDisplay = ({
   onPlayerCardClick,
   onAddPlayer,
   canEdit,
-  teamIdentifier
+  teamIdentifier,
+  modality
 }: {
   lineup: (string | null)[];
   reserves: (string | null)[];
@@ -104,13 +119,29 @@ const TeamDisplay = ({
   onAddPlayer: (position: Player['pos'] | 'RES', index: number) => void;
   canEdit: boolean;
   teamIdentifier: 'team1' | 'team2';
+  modality: Modality | null;
 }) => {
     
   const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
   const reservePlayers = reserves.map(id => id ? { ...players[id], id } : null);
   
   const { attackers, midfielders, defenders, goalkeeper, atkCount, midCount, defCount } = useMemo(() => {
-    const [parsedDef, parsedMid, parsedAtk] = formation.split('-').map(Number);
+    const formationParts = formation.split('-').map(Number);
+    let parsedDef = 0, parsedMid = 0, parsedAtk = 0;
+
+    if (modality === 'campo' && formationParts.length === 3) {
+        [parsedDef, parsedMid, parsedAtk] = formationParts;
+    } else if (modality === 'society' && formationParts.length === 3) { // 3-2-2
+        [parsedDef, parsedMid, parsedAtk] = [formationParts[0], formationParts[1], formationParts[2]];
+    } else if (modality === 'futsal' && formationParts.length === 3) { // 1-2-2
+        [parsedDef, parsedMid, parsedAtk] = [formationParts[0], formationParts[1], formationParts[2]];
+    } else {
+        // Fallback for default or incorrect formation mapping
+        if(lineupPlayers.length === 11) [parsedDef, parsedMid, parsedAtk] = [4,3,3];
+        if(lineupPlayers.length === 8) [parsedDef, parsedMid, parsedAtk] = [3,2,2];
+        if(lineupPlayers.length === 6) [parsedDef, parsedMid, parsedAtk] = [1,2,2];
+    }
+    
     let playerIndex = 0;
     
     const assignedAttackers = lineupPlayers.slice(playerIndex, playerIndex + parsedAtk);
@@ -130,10 +161,11 @@ const TeamDisplay = ({
         midCount: parsedMid,
         defCount: parsedDef,
     };
-  }, [lineupPlayers, formation]);
+  }, [lineupPlayers, formation, modality]);
 
 
   const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
+    if (count === 0) return null;
     return (
         <div className="flex justify-around z-10 w-full">
             {Array.from({ length: count }).map((_, i) => {
@@ -153,7 +185,7 @@ const TeamDisplay = ({
 
   const renderReserves = () => (
     <div className="flex flex-wrap justify-center gap-4">
-        {Array.from({ length: 5 }).map((_, i) => {
+        {Array.from({ length: reservePlayers.length }).map((_, i) => {
             const player = reservePlayers[i];
             if (player) {
                 return <PlayerCard key={`${teamIdentifier}-res-${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
@@ -189,10 +221,17 @@ export default function LineupView(props: LineupViewProps) {
     currentUser, canEdit,
     team1Lineup, setTeam1Lineup, team1Reserves, setTeam1Reserves,
     team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves,
-    onSaveLineups, lineupsSaved
+    onSaveLineups, lineupsSaved, modality
   } = props;
     
-  const [formation, setFormation] = useState<Formation>('4-3-3');
+  const availableFormations = useMemo(() => getFormationsForModality(modality), [modality]);
+  const [formation, setFormation] = useState<Formation>(availableFormations[0]);
+  
+  useEffect(() => {
+    setFormation(getFormationsForModality(modality)[0]);
+  }, [modality]);
+
+
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('verde');
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('amarelo');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
@@ -254,20 +293,21 @@ export default function LineupView(props: LineupViewProps) {
   };
   
   const handleClearLineup = (team: 'team1' | 'team2') => {
+    const { lineup, reserves } = getFormationsForModality(modality);
     if (team === 'team1') {
-        setTeam1Lineup(Array(11).fill(null));
-        setTeam1Reserves(Array(5).fill(null));
+        setTeam1Lineup(Array(team1Lineup.length).fill(null));
+        setTeam1Reserves(Array(team1Reserves.length).fill(null));
     } else {
-        setTeam2Lineup(Array(11).fill(null));
-        setTeam2Reserves(Array(5).fill(null));
+        setTeam2Lineup(Array(team2Lineup.length).fill(null));
+        setTeam2Reserves(Array(team2Reserves.length).fill(null));
     }
   };
   
   const handleClearReserves = (team: 'team1' | 'team2') => {
     if (team === 'team1') {
-      setTeam1Reserves(Array(5).fill(null));
+      setTeam1Reserves(Array(team1Reserves.length).fill(null));
     } else {
-      setTeam2Reserves(Array(5).fill(null));
+      setTeam2Reserves(Array(team2Reserves.length).fill(null));
     }
   };
 
@@ -287,16 +327,16 @@ export default function LineupView(props: LineupViewProps) {
             teamBudget: 150,
         });
 
-        const newTeam1Lineup = Array(11).fill(null);
-        team1Result.lineup.slice(0, 11).forEach((id, i) => newTeam1Lineup[i] = id);
+        const newTeam1Lineup = Array(team1Lineup.length).fill(null);
+        team1Result.lineup.slice(0, team1Lineup.length).forEach((id, i) => newTeam1Lineup[i] = id);
         
-        const newTeam2Lineup = Array(11).fill(null);
-        team2Result.lineup.slice(0, 11).forEach((id, i) => newTeam2Lineup[i] = id);
+        const newTeam2Lineup = Array(team2Lineup.length).fill(null);
+        team2Result.lineup.slice(0, team2Lineup.length).forEach((id, i) => newTeam2Lineup[i] = id);
 
         setTeam1Lineup(newTeam1Lineup);
-        setTeam1Reserves(Array(5).fill(null));
+        setTeam1Reserves(Array(team1Reserves.length).fill(null));
         setTeam2Lineup(newTeam2Lineup);
-        setTeam2Reserves(Array(5).fill(null));
+        setTeam2Reserves(Array(team2Reserves.length).fill(null));
         
         toast({
             title: "Times Balanceados!",
@@ -382,6 +422,7 @@ export default function LineupView(props: LineupViewProps) {
                             onPlayerCardClick={handlePlayerCardClick}
                             onAddPlayer={handleAddPlayerForTeam('team1')}
                             canEdit={canEdit}
+                            modality={modality}
                         />
                     </TabsContent>
                     <TabsContent value="team2" className="mt-4">
@@ -404,6 +445,7 @@ export default function LineupView(props: LineupViewProps) {
                             onPlayerCardClick={handlePlayerCardClick}
                             onAddPlayer={handleAddPlayerForTeam('team2')}
                             canEdit={canEdit}
+                            modality={modality}
                         />
                     </TabsContent>
                 </Tabs>
@@ -516,14 +558,12 @@ export default function LineupView(props: LineupViewProps) {
             <div className="flex justify-around items-center px-2 pb-2">
                 <div className="flex flex-col items-center gap-1">
                     <span className="text-xs">Esquema Tático</span>
-                    <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
+                     <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
                         <SelectTrigger className="w-auto bg-muted border-none h-8">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="4-3-3">4-3-3</SelectItem>
-                            <SelectItem value="4-4-2">4-4-2</SelectItem>
-                            <SelectItem value="3-5-2">3-5-2</SelectItem>
+                            {availableFormations.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                         </SelectContent>
                     </Select>
                 </div>
