@@ -43,7 +43,10 @@ export default function Home() {
   const [appData, setAppData] = useState(data);
   const { toast } = useToast();
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
-  const [votes, setVotes] = useState<Record<string, Vote>>({}); // userId -> Vote
+  
+  // Maps userId -> best eleven lineup
+  const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (string | null)[]>>({});
+
 
   // Simulate a logged-in user. By default, it's the admin.
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
@@ -304,15 +307,15 @@ export default function Home() {
     });
   };
   
-  const handleVote = (vote: Vote) => {
+  const handleBestElevenVote = (lineup: (string | null)[]) => {
     if (!currentUser) return;
-    setVotes(prev => ({
+    setBestElevenVotes(prev => ({
         ...prev,
-        [currentUser.id]: vote,
+        [currentUser.id]: lineup,
     }));
      toast({
-      title: "Voto Registrado!",
-      description: `Você votou em ${appData.players[vote.playerId].name} com nota ${vote.rating}.`,
+      title: "Seleção Salva!",
+      description: `Sua seleção da rodada foi salva com sucesso.`,
     });
   };
 
@@ -427,9 +430,9 @@ export default function Home() {
         return <BestElevenView
                   onBack={goBack}
                   players={appData.players}
-                  votes={votes}
-                  onVote={handleVote}
-                  currentUserVote={currentUser ? votes[currentUser.id] : undefined}
+                  currentUser={currentUser!}
+                  onVote={handleBestElevenVote}
+                  userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
                 />;
       default:
         return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
