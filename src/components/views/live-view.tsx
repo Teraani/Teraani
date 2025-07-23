@@ -149,7 +149,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     }
 
   return (
-    <div className={cn("flex flex-col h-screen", canEditScouts ? "pb-24" : "")}>
+    <div className="flex flex-col h-screen">
        <AlertDialog open={isFinishConfirmOpen} onOpenChange={setIsFinishConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -174,7 +174,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
       </header>
 
       <ScrollArea className="flex-1">
-        <main className="p-4 space-y-4">
+        <main className={cn("p-4 space-y-4", canEditScouts && "pb-24")}>
             <Card className="bg-card">
               <CardContent className="p-4">
                   <div className="flex justify-between items-center text-center">
@@ -241,7 +241,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
       </ScrollArea>
       
       {canEditScouts && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card p-4 border-t border-border z-30">
+        <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border z-30">
           <Button className="w-full h-12" onClick={() => setIsFinishConfirmOpen(true)} disabled={liveEvents.length === 0}>
             <CheckCircle className="mr-2 h-5 w-5" />
             Finalizar Partida
