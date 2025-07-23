@@ -29,6 +29,7 @@ import type { Vote } from '@/components/views/best-eleven-view';
 
 export type View = 'welcome' | 'register' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
+export type Modality = 'campo' | 'society' | 'futsal';
 
 export interface AddPlayerSlot {
   position: Player['pos'] | 'RES'; // 'RES' for reserve
@@ -45,6 +46,7 @@ export default function Home() {
   const [appData, setAppData] = useState(data);
   const { toast } = useToast();
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  const [selectedModality, setSelectedModality] = useState<Modality | null>(null);
   
   // Maps userId -> best eleven lineup
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
@@ -119,6 +121,11 @@ export default function Home() {
     setLoggedInUserId('user27');
     navigateTo('modality-selection');
   }
+
+  const handleModalitySelect = (modality: Modality) => {
+    setSelectedModality(modality);
+    navigateTo('dashboard');
+  };
 
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
@@ -369,7 +376,7 @@ export default function Home() {
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
       case 'modality-selection':
-        return <ModalitySelectionView onModalitySelect={() => navigateTo('dashboard')} />;
+        return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} />;
       case 'dashboard':
         return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
       case 'lineup':
