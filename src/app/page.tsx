@@ -48,6 +48,7 @@ export default function Home() {
   
   // Maps userId -> best eleven lineup
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
+  const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
 
 
   // Simulate a logged-in user. By default, it's the admin.
@@ -315,6 +316,10 @@ export default function Home() {
         ...prev,
         [currentUser.id]: lineup,
     }));
+    setBestElevenSaved(prev => ({
+        ...prev,
+        [currentUser.id]: true,
+    }))
      toast({
       title: "Seleção Salva!",
       description: `Sua seleção da rodada foi salva com sucesso.`,
@@ -435,6 +440,7 @@ export default function Home() {
                   currentUser={currentUser!}
                   onVote={handleBestElevenVote}
                   userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
+                  isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
                 />;
       default:
         return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;

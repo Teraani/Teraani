@@ -33,8 +33,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Slider } from '../ui/slider';
 import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { BestElevenVote } from '@/app/page';
 
+type Formation = '4-3-3' | '4-4-2' | '3-5-2';
 
 export interface Vote {
   playerId: string;
@@ -47,6 +49,7 @@ interface BestElevenViewProps {
   currentUser: User;
   onVote: (lineup: (BestElevenVote | null)[]) => void;
   userLineup: (BestElevenVote | null)[] | undefined;
+  isSaved: boolean;
 }
 
 interface PlayerActionState {
@@ -66,16 +69,21 @@ const getVotingStatus = () => {
   return { isOpen: true, message: "A votação encerra Quinta-feira às 00:00h." };
 };
 
-const PlayerSelectionModal = ({ players, onSelectPlayer, currentUserPlayerId }: { players: Record<string, Player>, onSelectPlayer: (playerId: string) => void, currentUserPlayerId: string | null }) => {
+const PlayerSelectionModal = ({ players, onSelectPlayer, currentUserPlayerId, lineup }: { players: Record<string, Player>, onSelectPlayer: (playerId: string) => void, currentUserPlayerId: string | null, lineup: (BestElevenVote | null)[] }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const lineupPlayerIds = new Set(lineup.filter(Boolean).map(vote => vote!.playerId));
 
   const filteredPlayers = useMemo(() => {
     return Object.entries(players)
       .map(([id, p]) => ({ ...p, id }))
-      .filter(p => p.id !== currentUserPlayerId && p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      .filter(p => 
+        p.id !== currentUserPlayerId &&
+        !lineupPlayerIds.has(p.id) &&
+        p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
       .sort((a,b) => b.value - a.value)
       .slice(0, 50); 
-  }, [searchTerm, players, currentUserPlayerId]);
+  }, [searchTerm, players, currentUserPlayerId, lineupPlayerIds]);
 
   return (
     <DialogContent className="h-[90vh] flex flex-col">
@@ -145,7 +153,7 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, onVote, userLineup }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, onVote, userLineup, isSaved }: BestElevenViewProps) {
     const { toast } = useToast();
     const [votingStatus, setVotingStatus] = useState(getVotingStatus());
     const [lineup, setLineup] = useState<(BestElevenVote | null)[]>(userLineup || Array(11).fill(null));
@@ -153,6 +161,7 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
     const [slotToFill, setSlotToFill] = useState<number | null>(null);
     const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
     const [playerToRate, setPlayerToRate] = useState<string | null>(null);
+    const [formation, setFormation] = useState<Formation>('4-3-3');
 
 
     useEffect(() => {
@@ -171,7 +180,7 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
 
 
     const handleAddPlayerClick = (index: number) => {
-      if (!votingStatus.isOpen) {
+      if (!votingStatus.isOpen || isSaved) {
         toast({ title: "Votação Encerrada", description: "Não é mais possível alterar a seleção.", variant: 'destructive' });
         return;
       }
@@ -180,15 +189,25 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
     }
     
     const handlePlayerCardClick = (state: PlayerActionState) => {
-        if (!votingStatus.isOpen) return;
+        if (!votingStatus.isOpen || isSaved) return;
         setPlayerActionState(state);
     };
 
     const handleSelectPlayerForSlot = (playerId: string) => {
-      if (slotToFill !== null) {
-        setPlayerToRate(playerId);
-        setSelectionModalOpen(false);
-      }
+        const isAlreadyInLineup = lineup.some(vote => vote?.playerId === playerId);
+        if (isAlreadyInLineup) {
+            toast({
+                title: "Jogador já escalado",
+                description: "Este jogador já foi adicionado à sua seleção.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (slotToFill !== null) {
+            setPlayerToRate(playerId);
+            setSelectionModalOpen(false);
+        }
     }
     
     const handleConfirmRating = (rating: number) => {
@@ -210,24 +229,36 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
         setPlayerActionState(null);
     };
 
+    const { attackers, midfielders, defenders, goalkeeper, atkCount, midCount, defCount } = useMemo(() => {
+        const [parsedDef, parsedMid, parsedAtk] = formation.split('-').map(Number);
+        
+        return { 
+            attackers: lineup.slice(0, parsedAtk), 
+            midfielders: lineup.slice(parsedAtk, parsedAtk + parsedMid), 
+            defenders: lineup.slice(parsedAtk + parsedMid, parsedAtk + parsedMid + parsedDef), 
+            goalkeeper: lineup.slice(parsedAtk + parsedMid + parsedDef, parsedAtk + parsedMid + parsedDef + 1),
+            atkCount: parsedAtk,
+            midCount: parsedMid,
+            defCount: parsedDef,
+        };
+    }, [lineup, formation]);
 
-  const renderPlayerRow = (count: number, startIndex: number, lineupPlayers: ({ player: Player & { id: string }, rating: number } | null)[]) => {
-    return (
-        <div className="flex justify-around z-10 w-full">
-            {Array.from({ length: count }).map((_, i) => {
-                const lineupEntry = lineupPlayers[startIndex + i];
-                const currentIndex = startIndex + i;
-                if (lineupEntry) {
-                    return <PlayerCard key={lineupEntry.player.id} player={lineupEntry.player} rating={lineupEntry.rating} onPlayerSelect={() => handlePlayerCardClick({ playerId: lineupEntry.player.id, index: currentIndex })} />;
-                } else {
-                    return <AddPlayerButton key={`add-${i}`} onClick={() => handleAddPlayerClick(currentIndex)} />;
-                }
-            })}
-        </div>
-    );
-  };
-    
-  const lineupWithFullPlayerData = lineup.map(vote => vote ? { player: { ...players[vote.playerId], id: vote.playerId }, rating: vote.rating } : null);
+    const renderPlayerRow = (count: number, lineupSlice: (BestElevenVote | null)[], startIndex: number) => {
+      return (
+          <div className="flex justify-around z-10 w-full">
+              {Array.from({ length: count }).map((_, i) => {
+                  const lineupEntry = lineupSlice[i];
+                  const currentIndex = startIndex + i;
+                  if (lineupEntry) {
+                      const player = players[lineupEntry.playerId];
+                      return <PlayerCard key={lineupEntry.playerId} player={{...player, id: lineupEntry.playerId}} rating={lineupEntry.rating} onPlayerSelect={() => handlePlayerCardClick({ playerId: lineupEntry.playerId, index: currentIndex })} />;
+                  } else {
+                      return <AddPlayerButton key={`add-${i}`} onClick={() => handleAddPlayerClick(currentIndex)} />;
+                  }
+              })}
+          </div>
+      );
+    };
 
   const isComplete = !lineup.some(p => p === null);
 
@@ -256,6 +287,7 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
             players={players}
             onSelectPlayer={handleSelectPlayerForSlot}
             currentUserPlayerId={currentUserPlayerId}
+            lineup={lineup}
         />
       </Dialog>
       
@@ -280,10 +312,10 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
 
       <main className="p-4 space-y-4 pb-24">
         <Pitch>
-          {renderPlayerRow(1, 10, lineupWithFullPlayerData)}
-          {renderPlayerRow(3, 7, lineupWithFullPlayerData)}
-          {renderPlayerRow(3, 4, lineupWithFullPlayerData)}
-          {renderPlayerRow(4, 0, lineupWithFullPlayerData)}
+          {renderPlayerRow(atkCount, attackers, 0)}
+          {renderPlayerRow(midCount, midfielders, atkCount)}
+          {renderPlayerRow(defCount, defenders, atkCount + midCount)}
+          {renderPlayerRow(1, goalkeeper, atkCount + midCount + defCount)}
         </Pitch>
         
         <div className="mt-4 flex flex-col gap-2">
@@ -294,12 +326,26 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
         </div>
       </main>
 
-       {votingStatus.isOpen && (
-        <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-30">
-            <Button className="w-full bg-green-600 text-white hover:bg-green-700 h-12 text-lg" disabled={!isComplete} onClick={() => onVote(lineup)}>
-                <Save className="mr-2 h-5 w-5"/>
-                Salvar Seleção
-            </Button>
+       {votingStatus.isOpen && !isSaved && (
+        <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border shadow-lg z-30 flex items-center gap-4">
+            <div className="flex-1">
+                 <Button className="w-full bg-green-600 text-white hover:bg-green-700 h-12 text-lg" disabled={!isComplete} onClick={() => onVote(lineup)}>
+                    <Save className="mr-2 h-5 w-5"/>
+                    Salvar Seleção
+                </Button>
+            </div>
+            <div className="flex-none">
+                 <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
+                    <SelectTrigger className="w-auto bg-muted border-none h-12">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="4-3-3">4-3-3</SelectItem>
+                        <SelectItem value="4-4-2">4-4-2</SelectItem>
+                        <SelectItem value="3-5-2">3-5-2</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
       )}
 
