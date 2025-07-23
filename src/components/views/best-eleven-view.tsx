@@ -216,6 +216,69 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         return () => clearInterval(timer);
     }, [isVotingClosed]);
 
+    const finalEleven = useMemo(() => {
+        if (!isVotingClosed) return null;
+
+        const playerScores: Record<string, { totalRating: number; voteCount: number }> = {};
+
+        Object.values(allVotes).forEach(userVote => {
+            userVote.forEach(vote => {
+                if (vote) {
+                    if (!playerScores[vote.playerId]) {
+                        playerScores[vote.playerId] = { totalRating: 0, voteCount: 0 };
+                    }
+                    playerScores[vote.playerId].totalRating += vote.rating;
+                    playerScores[vote.playerId].voteCount += 1;
+                }
+            });
+        });
+
+        const getTopPlayersForPosition = (
+          positions: Player['pos'][],
+          count: number
+        ): (BestElevenVote | null)[] => {
+            const eligiblePlayers = Object.entries(playerScores)
+                .filter(([playerId]) => positions.includes(players[playerId]?.pos))
+                .sort(([, a], [, b]) => b.totalRating - a.totalRating)
+                .slice(0, count);
+
+            const results: (BestElevenVote | null)[] = eligiblePlayers.map(([playerId, score]) => ({
+                playerId,
+                rating: score.totalRating / score.voteCount,
+            }));
+            
+            // Fill with null if not enough players were voted for
+            while(results.length < count) {
+                results.push(null);
+            }
+
+            return results;
+        };
+        
+        const formationParts = formation.split('-').map(Number);
+        let defCount = 0, midCount = 0, atkCount = 0;
+        const gkCount = 1;
+
+        if ((modality === 'campo' || modality === 'society') && formationParts.length === 3) {
+            [defCount, midCount, atkCount] = formationParts;
+        } else if (modality === 'futsal' && formationParts.length === 2) {
+            [defCount, atkCount] = formationParts;
+        } else {
+             if (lineupSize === 11) [defCount, midCount, atkCount] = [4, 3, 3];
+             if (lineupSize === 7) [defCount, midCount, atkCount] = [3, 2, 1];
+             if (lineupSize === 6) [defCount, atkCount] = [2, 3];
+        }
+
+        const topAttackers = getTopPlayersForPosition(['ATA'], atkCount);
+        const topMidfielders = getTopPlayersForPosition(['MEI', 'VOL'], midCount);
+        const topDefenders = getTopPlayersForPosition(['ZAG', 'LAT'], defCount);
+        const topGoalkeeper = getTopPlayersForPosition(['GOL'], gkCount);
+        
+        return [...topAttackers, ...topMidfielders, ...topDefenders, ...topGoalkeeper];
+
+    }, [isVotingClosed, allVotes, players, formation, modality, lineupSize]);
+
+
     const currentUserPlayerId = useMemo(() => {
       if (!currentUser) return null;
       const userFirstName = currentUser.name.split(' ')[0].toLowerCase();
@@ -280,7 +343,13 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         setPlayerActionState(null);
     };
 
+    const lineupToDisplay = isVotingClosed ? finalEleven : lineup;
+
     const { attackers, midfielders, defenders, goalkeeper, atkCount, midCount, defCount } = useMemo(() => {
+        if (!lineupToDisplay) {
+            return { attackers: [], midfielders: [], defenders: [], goalkeeper: [], atkCount: 0, midCount: 0, defCount: 0 };
+        }
+        
         const formationParts = formation.split('-').map(Number);
         let parsedDef = 0, parsedMid = 0, parsedAtk = 0;
 
@@ -297,13 +366,13 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         }
 
         let playerIndex = 0;
-        const assignedAttackers = lineup.slice(playerIndex, playerIndex + parsedAtk);
+        const assignedAttackers = lineupToDisplay.slice(playerIndex, playerIndex + parsedAtk);
         playerIndex += parsedAtk;
-        const assignedMidfielders = lineup.slice(playerIndex, playerIndex + parsedMid);
+        const assignedMidfielders = lineupToDisplay.slice(playerIndex, playerIndex + parsedMid);
         playerIndex += parsedMid;
-        const assignedDefenders = lineup.slice(playerIndex, playerIndex + parsedDef);
+        const assignedDefenders = lineupToDisplay.slice(playerIndex, playerIndex + parsedDef);
         playerIndex += parsedDef;
-        const assignedGoalkeeper = lineup.slice(playerIndex, playerIndex + 1);
+        const assignedGoalkeeper = lineupToDisplay.slice(playerIndex, playerIndex + 1);
 
         return {
             attackers: assignedAttackers,
@@ -314,7 +383,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
             midCount: parsedMid,
             defCount: parsedDef,
         };
-    }, [lineup, formation, modality, lineupSize]);
+    }, [lineupToDisplay, formation, modality, lineupSize]);
 
     const renderPlayerRow = (count: number, lineupSlice: (BestElevenVote | null)[], startIndex: number) => {
       if (count === 0) return null;
@@ -325,9 +394,11 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                   const currentIndex = startIndex + i;
                   if (lineupEntry) {
                       const player = players[lineupEntry.playerId];
-                      return <PlayerCard key={lineupEntry.playerId} player={{...player, id: lineupEntry.playerId}} rating={lineupEntry.rating} onPlayerSelect={() => handlePlayerCardClick({ playerId: lineupEntry.playerId, index: currentIndex })} />;
-                  } else {
+                      return <PlayerCard key={lineupEntry.playerId} player={{...player, id: lineupEntry.playerId}} rating={lineupEntry.rating} onPlayerSelect={() => !isVotingClosed && handlePlayerCardClick({ playerId: lineupEntry.playerId, index: currentIndex })} />;
+                  } else if (!isVotingClosed) {
                       return <AddPlayerButton key={`add-${i}`} onClick={() => handleAddPlayerClick(currentIndex)} />;
+                  } else {
+                     return <div key={`empty-slot-${i}`} className="w-20 h-28"/>
                   }
               })}
           </div>
@@ -393,7 +464,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
       <main className="p-4 space-y-4 pb-24">
         <Tabs defaultValue="my-selection">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="my-selection">Minha Seleção</TabsTrigger>
+            <TabsTrigger value="my-selection">{isVotingClosed ? "Resultado Final" : "Minha Seleção"}</TabsTrigger>
             <TabsTrigger value="votes">Apuração</TabsTrigger>
           </TabsList>
           <TabsContent value="my-selection">
@@ -508,7 +579,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 Liberar Votação
               </Button>
             )}
-             {canEdit && !isVotingClosed && (
+             {canEdit && isVotingReleased && !isVotingClosed && (
               <Button onClick={onCloseVoting} variant="destructive" className="bg-red-600 hover:bg-red-700">
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Encerrar Votação (Admin)
