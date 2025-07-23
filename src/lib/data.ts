@@ -69,6 +69,14 @@ export interface GoalieRanking {
     avgGoalsConceded: number;
 }
 
+export interface Game {
+    date: string;
+    homeTeam: string;
+    awayTeam: string;
+    homeScore: number;
+    awayScore: number;
+    status: 'Finalizado' | 'Em andamento' | 'Agendado';
+}
 
 interface AppData {
   users: Record<string, User>;

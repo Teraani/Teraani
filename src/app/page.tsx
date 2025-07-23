@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Player, User, Ranking, GoalieRanking } from '@/lib/data';
+import type { Player, User, Ranking, GoalieRanking, Game } from '@/lib/data';
 import { data } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
@@ -25,7 +25,8 @@ import { cn } from '@/lib/utils';
 import ModalitySelectionView from '@/components/views/modality-selection-view';
 import BestElevenView from '@/components/views/best-eleven-view';
 import type { Vote } from '@/components/views/best-eleven-view';
-
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export type View = 'welcome' | 'register' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
@@ -59,6 +60,8 @@ export default function Home() {
   const { toast } = useToast();
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const [selectedModality, setSelectedModality] = useState<Modality | null>(null);
+  const [allGamesData, setAllGamesData] = useState<Record<string, Game[]>>({});
+
   
   // Maps userId -> best eleven lineup
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
@@ -279,6 +282,36 @@ export default function Home() {
     setLiveEvents(prevEvents => [newEvent, ...prevEvents]);
   };
 
+  const handleFinishMatch = (team1Score: number, team2Score: number) => {
+    setAllGamesData(prevGames => {
+        const nextRoundNumber = Object.keys(prevGames).length + 1;
+        const newRoundKey = `${nextRoundNumber}`;
+        const newGame: Game = {
+            date: format(new Date(), "dd 'de' MMMM - HH:mm'hs'", { locale: ptBR }),
+            homeTeam: 'Time 1',
+            awayTeam: 'Time 2',
+            homeScore: team1Score,
+            awayScore: team2Score,
+            status: 'Finalizado'
+        };
+        
+        const updatedGames = { ...prevGames };
+        if (updatedGames[newRoundKey]) {
+            updatedGames[newRoundKey].push(newGame);
+        } else {
+            updatedGames[newRoundKey] = [newGame];
+        }
+        return updatedGames;
+    });
+
+    setLiveEvents([]); // Clear events for next match
+    toast({
+        title: "Partida Finalizada!",
+        description: `O placar de ${team1Score} a ${team2Score} foi salvo nos resultados.`,
+    });
+    navigateTo('games');
+};
+
   const handleAddPlayerToMarket = (newPlayer: Omit<Player, 'last_val' | 'games'>) => {
     setAppData(prevData => {
       const newPlayerId = `p${Object.keys(prevData.players).length + 1}`;
@@ -438,7 +471,7 @@ export default function Home() {
       case 'partial-score':
         return <PartialScoreView players={appData.players} users={appData.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'games':
-        return <GamesView onBack={goBack} />;
+        return <GamesView onBack={goBack} gamesData={allGamesData} />;
       case 'friends-score':
         return <FriendsScoreView onBack={goBack} user={userForViews!} players={appData.players} allUsers={appData.users} />;
       case 'statistics':
@@ -462,6 +495,7 @@ export default function Home() {
                   canEditScouts={canEditScouts}
                   liveEvents={liveEvents}
                   onAddLiveEvent={handleAddLiveEvent}
+                  onFinishMatch={handleFinishMatch}
                   allPlayers={Object.values(appData.players).map(p => ({...p, id: Object.keys(appData.players).find(key => appData.players[key] === p)!}))}
                 />;
       case 'payments':

@@ -4,12 +4,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Footprints, Goal, Send } from 'lucide-react';
+import { ArrowLeft, Shield, Footprints, Goal, Send, Calendar, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '../ui/input';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export interface LiveEvent {
   time: string;
@@ -27,6 +39,7 @@ interface LiveViewProps {
   canEditScouts: boolean;
   liveEvents: LiveEvent[];
   onAddLiveEvent: (event: Omit<LiveEvent, 'time'>) => void;
+  onFinishMatch: (team1Score: number, team2Score: number) => void;
   allPlayers: ({id: string} & Player)[];
 }
 
@@ -108,9 +121,12 @@ const ScoutControlPanel = ({ allPlayers, onAddLiveEvent }: { allPlayers: ({id: s
 };
 
 
-export default function LiveView({ onBack, user, players, canEditScouts, liveEvents, onAddLiveEvent, allPlayers }: LiveViewProps) {
+export default function LiveView({ onBack, user, players, canEditScouts, liveEvents, onAddLiveEvent, onFinishMatch, allPlayers }: LiveViewProps) {
     const [team1Score, setTeam1Score] = useState(0);
     const [team2Score, setTeam2Score] = useState(0);
+    const [isFinishConfirmOpen, setIsFinishConfirmOpen] = useState(false);
+
+    const matchDate = useMemo(() => format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR }), []);
 
     const userTeamScore = useMemo(() => {
         return user.lineup.reduce((sum, id) => {
@@ -133,9 +149,29 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
         if (event === 'Defesa Difícil') return <Shield className="w-4 h-4 text-foreground" />;
         return <div className="w-4 h-4" />;
     };
+    
+    const handleFinishClick = () => {
+      onFinishMatch(team1Score, team2Score);
+      setIsFinishConfirmOpen(false);
+    }
 
   return (
     <div className="flex flex-col h-screen">
+       <AlertDialog open={isFinishConfirmOpen} onOpenChange={setIsFinishConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Finalizar Partida?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja finalizar a partida com o placar de {team1Score} a {team2Score}? Esta ação não pode ser desfeita e irá registrar o resultado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleFinishClick}>Finalizar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
@@ -145,13 +181,6 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
       </header>
 
       <main className="flex-1 p-4 space-y-4 overflow-y-auto">
-        <Card className="bg-card border-primary/50 border-2">
-            <CardHeader className="text-center p-4">
-                <CardTitle>Sua Pontuação</CardTitle>
-                <p className="text-4xl font-bold text-primary">{userTeamScore.toFixed(2)}</p>
-            </CardHeader>
-        </Card>
-        
         <Card className="bg-card">
           <CardContent className="p-4">
               <div className="flex justify-between items-center text-center">
@@ -180,6 +209,11 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
               </div>
           </CardContent>
         </Card>
+        
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground capitalize">
+            <Calendar className="w-4 h-4"/>
+            <span>{matchDate}</span>
+        </div>
 
         {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} onAddLiveEvent={onAddLiveEvent} />}
 
@@ -213,6 +247,16 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
         </Card>
 
       </main>
+      
+      {canEditScouts && (
+        <div className="bg-card p-4 border-t border-border">
+          <Button className="w-full h-12" onClick={() => setIsFinishConfirmOpen(true)}>
+            <CheckCircle className="mr-2 h-5 w-5" />
+            Finalizar Partida
+          </Button>
+        </div>
+      )}
+
     </div>
   );
 }
