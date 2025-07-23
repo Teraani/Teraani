@@ -23,9 +23,11 @@ import type { LiveEvent } from '@/components/views/live-view';
 import PaymentsView from '@/components/views/payments-view';
 import { cn } from '@/lib/utils';
 import ModalitySelectionView from '@/components/views/modality-selection-view';
+import BestElevenView from '@/components/views/best-eleven-view';
+import type { Vote } from '@/components/views/best-eleven-view';
 
 
-export type View = 'welcome' | 'register' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments';
+export type View = 'welcome' | 'register' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
 
 export interface AddPlayerSlot {
@@ -41,6 +43,7 @@ export default function Home() {
   const [appData, setAppData] = useState(data);
   const { toast } = useToast();
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  const [votes, setVotes] = useState<Record<string, Vote>>({}); // userId -> Vote
 
   // Simulate a logged-in user. By default, it's the admin.
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
@@ -300,6 +303,18 @@ export default function Home() {
       description: `Os dados de ${updatedData.name} foram salvos.`,
     });
   };
+  
+  const handleVote = (vote: Vote) => {
+    if (!currentUser) return;
+    setVotes(prev => ({
+        ...prev,
+        [currentUser.id]: vote,
+    }));
+     toast({
+      title: "Voto Registrado!",
+      description: `Você votou em ${appData.players[vote.playerId].name} com nota ${vote.rating}.`,
+    });
+  };
 
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
@@ -407,6 +422,14 @@ export default function Home() {
                   users={appData.users}
                   canEdit={canEditPayments && !isPersonalPaymentsView}
                   onSave={handleUpdateUserPayments}
+                />;
+      case 'best-eleven':
+        return <BestElevenView
+                  onBack={goBack}
+                  players={appData.players}
+                  votes={votes}
+                  onVote={handleVote}
+                  currentUserVote={currentUser ? votes[currentUser.id] : undefined}
                 />;
       default:
         return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
