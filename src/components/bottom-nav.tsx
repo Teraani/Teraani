@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Home, Shirt, Trophy, BarChart2, DollarSign, Award, Users, Radio } from 'lucide-react';
+import { Home, Shirt, Trophy, BarChart2, DollarSign, Award } from 'lucide-react';
 import type { View } from '@/app/page';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -16,15 +16,14 @@ const navItems: { view: View, icon: React.ElementType, label: string, isPro?: bo
   { view: 'dashboard', icon: Home, label: 'Início' },
   { view: 'lineup', icon: Shirt, label: 'Escalação' },
   { view: 'best-eleven', icon: Award, label: 'Seleção', isPro: true },
-  { view: 'friends-score', icon: Users, label: 'Amigos', isPro: true },
-  { view: 'live', icon: Radio, label: 'Ao Vivo', isPro: true },
-  { view: 'statistics', icon: BarChart2, label: 'Números' },
+  { view: 'partial-score', icon: BarChart2, label: 'Parciais' },
+  { view: 'statistics', icon: Trophy, label: 'Ligas' },
 ];
 
 export default function BottomNav({ currentView, onNavigate, canViewPayments }: BottomNavProps) {
   const allNavItems = [...navItems];
   if (canViewPayments) {
-      allNavItems.push({ view: 'payments', icon: DollarSign, label: 'Pagamentos', isPro: true });
+      allNavItems.push({ view: 'payments', icon: DollarSign, label: 'Pagamentos' });
   }
 
   return (

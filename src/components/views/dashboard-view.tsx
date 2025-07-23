@@ -185,6 +185,8 @@ function PlayerSummary({ user, players, onNavigate, onAvatarChange }: { user: Us
 function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
     const items = [
         { label: "Parciais gerais", view: 'partial-score' as View, icon: BarChart3 },
+        { label: "Parcial dos amigos", view: 'friends-score' as View, icon: Users },
+        { label: "Partida ao vivo", view: 'live' as View, icon: Radio },
         { label: "Resultado dos jogos", view: 'games' as View, icon: Trophy },
     ];
     return (
