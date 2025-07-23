@@ -36,6 +36,8 @@ export interface AddPlayerSlot {
   team: 'team1' | 'team2';
 }
 
+export type BestElevenVote = { playerId: string; rating: number };
+
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export default function Home() {
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   
   // Maps userId -> best eleven lineup
-  const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (string | null)[]>>({});
+  const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
 
 
   // Simulate a logged-in user. By default, it's the admin.
@@ -307,7 +309,7 @@ export default function Home() {
     });
   };
   
-  const handleBestElevenVote = (lineup: (string | null)[]) => {
+  const handleBestElevenVote = (lineup: (BestElevenVote | null)[]) => {
     if (!currentUser) return;
     setBestElevenVotes(prev => ({
         ...prev,

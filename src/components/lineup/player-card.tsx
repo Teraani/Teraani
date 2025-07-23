@@ -1,6 +1,6 @@
 import type { Player } from '@/lib/data';
 import { cn } from '@/lib/utils';
-import { ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, Star } from 'lucide-react';
 import type { ShirtColor } from '@/components/views/lineup-view';
 
 interface PlayerCardProps {
@@ -8,6 +8,7 @@ interface PlayerCardProps {
   onPlayerSelect: () => void;
   isReserve?: boolean;
   shirtColor?: ShirtColor;
+  rating?: number;
 }
 
 const teamShirtColors: Record<ShirtColor, string> = {
@@ -18,7 +19,7 @@ const teamShirtColors: Record<ShirtColor, string> = {
   branco: '#FFFFFF', // White
 };
 
-export default function PlayerCard({ player, onPlayerSelect, isReserve = false, shirtColor = 'verde' }: PlayerCardProps) {
+export default function PlayerCard({ player, onPlayerSelect, isReserve = false, shirtColor = 'verde', rating }: PlayerCardProps) {
   const valColor = player.last_val >= 0 ? 'text-green-500' : 'text-red-500';
   const ValIcon = player.last_val >= 0 ? ArrowUp : ArrowDown;
   const primaryColor = isReserve ? '#4B5563' : teamShirtColors[shirtColor];
@@ -49,6 +50,12 @@ export default function PlayerCard({ player, onPlayerSelect, isReserve = false, 
           <ValIcon className={cn("w-2.5 h-2.5 ml-1", valColor)} />
         </div>
       </div>
+       {rating !== undefined && (
+        <div className="flex items-center justify-center mt-1 bg-amber-400 rounded-full px-2 py-0.5 text-black text-xs font-bold w-auto">
+            <Star className="w-3 h-3 mr-1" fill="black" />
+            <span>{rating.toFixed(1)}</span>
+        </div>
+      )}
     </button>
   );
 }

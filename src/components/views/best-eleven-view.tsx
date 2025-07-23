@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye } from 'lucide-react';
+import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '../ui/input';
@@ -31,6 +31,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Slider } from '../ui/slider';
+import { Label } from '../ui/label';
+import type { BestElevenVote } from '@/app/page';
 
 
 export interface Vote {
@@ -42,15 +45,14 @@ interface BestElevenViewProps {
   onBack: () => void;
   players: Record<string, Player>;
   currentUser: User;
-  onVote: (lineup: (string | null)[]) => void;
-  userLineup: (string | null)[] | undefined;
+  onVote: (lineup: (BestElevenVote | null)[]) => void;
+  userLineup: (BestElevenVote | null)[] | undefined;
 }
 
 interface PlayerActionState {
   playerId: string;
   index: number;
 }
-
 
 const getVotingStatus = () => {
   const now = new Date();
@@ -64,7 +66,7 @@ const getVotingStatus = () => {
   return { isOpen: true, message: "A votação encerra Quinta-feira às 00:00h." };
 };
 
-const PlayerSelectionModal = ({ players, onSelectPlayer, onBack, currentUserPlayerId }: { players: Record<string, Player>, onSelectPlayer: (playerId: string) => void, onBack: () => void, currentUserPlayerId: string | null }) => {
+const PlayerSelectionModal = ({ players, onSelectPlayer, currentUserPlayerId }: { players: Record<string, Player>, onSelectPlayer: (playerId: string) => void, currentUserPlayerId: string | null }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredPlayers = useMemo(() => {
@@ -112,14 +114,45 @@ const PlayerSelectionModal = ({ players, onSelectPlayer, onBack, currentUserPlay
   )
 }
 
+const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (rating: number) => void, onCancel: () => void }) => {
+    const [rating, setRating] = useState(5);
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Avalie o Jogador</DialogTitle>
+                <DialogDescription>
+                    Dê uma nota de 0 a 10 para a atuação de {player.name}.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+                <Label htmlFor="rating" className="text-center block text-4xl font-bold mb-4">{rating.toFixed(1)}</Label>
+                <Slider
+                    id="rating"
+                    min={0}
+                    max={10}
+                    step={0.5}
+                    value={[rating]}
+                    onValueChange={(value) => setRating(value[0])}
+                />
+            </div>
+             <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={onCancel}>Cancelar</Button>
+                <Button onClick={() => onRate(rating)}>Confirmar Nota</Button>
+            </div>
+        </DialogContent>
+    )
+}
+
 
 export default function BestElevenView({ onBack, players, currentUser, onVote, userLineup }: BestElevenViewProps) {
     const { toast } = useToast();
     const [votingStatus, setVotingStatus] = useState(getVotingStatus());
-    const [lineup, setLineup] = useState<(string | null)[]>(userLineup || Array(11).fill(null));
+    const [lineup, setLineup] = useState<(BestElevenVote | null)[]>(userLineup || Array(11).fill(null));
     const [isSelectionModalOpen, setSelectionModalOpen] = useState(false);
     const [slotToFill, setSlotToFill] = useState<number | null>(null);
     const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
+    const [playerToRate, setPlayerToRate] = useState<string | null>(null);
 
 
     useEffect(() => {
@@ -153,13 +186,20 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
 
     const handleSelectPlayerForSlot = (playerId: string) => {
       if (slotToFill !== null) {
-        const newLineup = [...lineup];
-        newLineup[slotToFill] = playerId;
-        setLineup(newLineup);
+        setPlayerToRate(playerId);
         setSelectionModalOpen(false);
-        setSlotToFill(null);
       }
     }
+    
+    const handleConfirmRating = (rating: number) => {
+        if (slotToFill !== null && playerToRate !== null) {
+            const newLineup = [...lineup];
+            newLineup[slotToFill] = { playerId: playerToRate, rating };
+            setLineup(newLineup);
+        }
+        setPlayerToRate(null);
+        setSlotToFill(null);
+    };
     
     const handleRemovePlayer = () => {
         if (!playerActionState) return;
@@ -171,14 +211,14 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
     };
 
 
-  const renderPlayerRow = (count: number, startIndex: number, lineupPlayers: (({ id: string } & Player) | null)[]) => {
+  const renderPlayerRow = (count: number, startIndex: number, lineupPlayers: ({ player: Player & { id: string }, rating: number } | null)[]) => {
     return (
         <div className="flex justify-around z-10 w-full">
             {Array.from({ length: count }).map((_, i) => {
-                const player = lineupPlayers[startIndex + i];
+                const lineupEntry = lineupPlayers[startIndex + i];
                 const currentIndex = startIndex + i;
-                if (player) {
-                    return <PlayerCard key={player.id} player={player} onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, index: currentIndex })} />;
+                if (lineupEntry) {
+                    return <PlayerCard key={lineupEntry.player.id} player={lineupEntry.player} rating={lineupEntry.rating} onPlayerSelect={() => handlePlayerCardClick({ playerId: lineupEntry.player.id, index: currentIndex })} />;
                 } else {
                     return <AddPlayerButton key={`add-${i}`} onClick={() => handleAddPlayerClick(currentIndex)} />;
                 }
@@ -187,7 +227,7 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
     );
   };
     
-  const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
+  const lineupWithFullPlayerData = lineup.map(vote => vote ? { player: { ...players[vote.playerId], id: vote.playerId }, rating: vote.rating } : null);
 
   const isComplete = !lineup.some(p => p === null);
 
@@ -215,9 +255,18 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
         <PlayerSelectionModal 
             players={players}
             onSelectPlayer={handleSelectPlayerForSlot}
-            onBack={() => setSelectionModalOpen(false)}
             currentUserPlayerId={currentUserPlayerId}
         />
+      </Dialog>
+      
+      <Dialog open={!!playerToRate} onOpenChange={(open) => !open && setPlayerToRate(null)}>
+        {playerToRate && (
+            <RatingModal 
+                player={players[playerToRate]}
+                onRate={handleConfirmRating}
+                onCancel={() => setPlayerToRate(null)}
+            />
+        )}
       </Dialog>
 
 
@@ -231,10 +280,10 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
 
       <main className="p-4 space-y-4 pb-24">
         <Pitch>
-          {renderPlayerRow(1, 10, lineupPlayers)}
-          {renderPlayerRow(3, 7, lineupPlayers)}
-          {renderPlayerRow(3, 4, lineupPlayers)}
-          {renderPlayerRow(4, 0, lineupPlayers)}
+          {renderPlayerRow(1, 10, lineupWithFullPlayerData)}
+          {renderPlayerRow(3, 7, lineupWithFullPlayerData)}
+          {renderPlayerRow(3, 4, lineupWithFullPlayerData)}
+          {renderPlayerRow(4, 0, lineupWithFullPlayerData)}
         </Pitch>
         
         <div className="mt-4 flex flex-col gap-2">
