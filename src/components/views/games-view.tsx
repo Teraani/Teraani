@@ -4,13 +4,18 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Goal } from 'lucide-react';
+import { ArrowLeft, Shield, Goal, ChevronDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '../ui/scroll-area';
 import type { Game } from '@/lib/data';
 import { Separator } from '../ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface GamesViewProps {
   onBack: () => void;
@@ -20,7 +25,6 @@ interface GamesViewProps {
 const teamColors: { [key: string]: string } = {
   'Time 1': 'bg-green-500',
   'Time 2': 'bg-yellow-400',
-  // Keep original colors as fallbacks
   'Verde': 'bg-green-500',
   'Amarelo': 'bg-yellow-400',
   'Azul': 'bg-blue-500',
@@ -31,7 +35,7 @@ type Round = keyof GamesViewProps['gamesData'];
 
 export default function GamesView({ onBack, gamesData }: GamesViewProps) {
   const rounds = Object.keys(gamesData);
-  const [activeTab, setActiveTab] = useState<Round>(rounds.length > 0 ? rounds[0] : '1');
+  const [activeTab, setActiveTab] = useState<Round>(rounds.length > 0 ? rounds[rounds.length - 1] : '1');
 
   return (
     <div>
@@ -46,15 +50,23 @@ export default function GamesView({ onBack, gamesData }: GamesViewProps) {
       <main>
         {rounds.length > 0 ? (
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Round)} className="w-full">
-            <ScrollArea className="w-full whitespace-nowrap">
-              <TabsList className="bg-card px-4 gap-2">
+            <div className="px-4 pt-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full justify-between">
+                    Rodada {activeTab}
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
                   {rounds.map(round => (
-                      <TabsTrigger key={round} value={round} className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground px-4">
-                          Rodada {round}
-                      </TabsTrigger>
+                    <DropdownMenuItem key={round} onSelect={() => setActiveTab(round)}>
+                      Rodada {round}
+                    </DropdownMenuItem>
                   ))}
-              </TabsList>
-            </ScrollArea>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             
             <div className="p-4">
               {Object.entries(gamesData).map(([round, games]) => (
@@ -65,7 +77,7 @@ export default function GamesView({ onBack, gamesData }: GamesViewProps) {
                         <CardContent className="p-4">
                             <div className="flex justify-between items-center text-center">
                                 <div className="flex flex-col items-center gap-2 w-1/3">
-                                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", teamColors[game.homeTeam])}>
+                                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", teamColors[game.homeTeam] || 'bg-gray-400')}>
                                         <Shield className="w-6 h-6 text-white"/>
                                     </div>
                                     <span className="font-semibold text-sm text-foreground">{game.homeTeam}</span>
@@ -82,7 +94,7 @@ export default function GamesView({ onBack, gamesData }: GamesViewProps) {
                                 </div>
 
                                 <div className="flex flex-col items-center gap-2 w-1/3">
-                                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", teamColors[game.awayTeam])}>
+                                    <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", teamColors[game.awayTeam] || 'bg-gray-400')}>
                                         <Shield className="w-6 h-6 text-white"/>
                                     </div>
                                     <span className="font-semibold text-sm text-foreground">{game.awayTeam}</span>
@@ -92,7 +104,7 @@ export default function GamesView({ onBack, gamesData }: GamesViewProps) {
                                 <>
                                     <Separator className="my-3" />
                                     <div className="flex justify-around text-xs">
-                                        <div className="w-1/2 text-left pr-2">
+                                        <div className="w-1/2 text-left pr-2 space-y-1">
                                             {game.scorers.filter(s => s.team === game.homeTeam).map((scorer, i) => (
                                                 <div key={i} className="flex items-center gap-1.5">
                                                     <Goal className="w-3 h-3" />
@@ -100,7 +112,7 @@ export default function GamesView({ onBack, gamesData }: GamesViewProps) {
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="w-1/2 text-right pl-2">
+                                        <div className="w-1/2 text-right pl-2 space-y-1">
                                            {game.scorers.filter(s => s.team === game.awayTeam).map((scorer, i) => (
                                                 <div key={i} className="flex items-center justify-end gap-1.5">
                                                     <Goal className="w-3 h-3" />
