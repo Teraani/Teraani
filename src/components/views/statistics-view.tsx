@@ -43,14 +43,13 @@ const statCategories: { key: StatCategory; label: string; icon: React.ElementTyp
 ];
 
 
-const RankingListItem = ({ player, rank, statValue, statLabel, onClick }: {
+const RankingListItem = ({ player, rank, statValue, statLabel }: {
     player: {id: string; avatar?: string} & (Player | Ranking | GoalieRanking | User),
     rank: number,
     statValue: string | number,
     statLabel: string,
-    onClick?: () => void,
 }) => (
-     <div className="flex items-center gap-4 w-full" onClick={onClick}>
+     <div className="flex items-center gap-4 w-full">
         <span className={cn(
             "font-bold text-lg w-6 text-center",
             rank === 1 && "text-amber-400",
@@ -89,7 +88,7 @@ const EditableStat = ({ label, value, onChange, disabled }: { label: string, val
     </div>
 );
 
-const PlayerStatsEditor = ({ player, canEditScouts, onPlayerChange, onPlayerSelect }: { player: Player, canEditScouts: boolean, onPlayerChange: (updatedPlayer: Player) => void, onPlayerSelect: (playerId: string) => void}) => {
+const PlayerStatsEditor = ({ player, canEditScouts, onPlayerChange }: { player: Player, canEditScouts: boolean, onPlayerChange: (updatedPlayer: Player) => void }) => {
     
     const handleStatChange = (statName: keyof Player, value: number) => {
         onPlayerChange({ ...player, [statName]: value });
@@ -113,7 +112,6 @@ const PlayerStatsEditor = ({ player, canEditScouts, onPlayerChange, onPlayerSele
                   <EditableStat label="Gols Sofridos" value={player.stats?.goalsAgainst ?? 0} onChange={(v) => handleSubStatChange('goalsAgainst', v)} disabled={canEditScouts} />
                 )}
             </div>
-            <Button variant="link" className="mt-2" onClick={() => onPlayerSelect((player as any).id)}>Ver detalhes completos...</Button>
         </div>
     );
 };
@@ -174,9 +172,10 @@ const EditableRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts
                          </AccordionTrigger>
                          <AccordionContent>
                             <>
-                                {type === 'player' && <PlayerStatsEditor player={item} canEditScouts={canEditScouts} onPlayerChange={(updatedData) => onItemsChange(item.id, updatedData)} onPlayerSelect={onPlayerSelect} />}
-                                {type === 'scaler' && canEditScouts && <ScalerStatsEditor scaler={item} canEditScouts={canEditScouts} onScalerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
-                                {type === 'goalie' && canEditScouts && <GoalieStatsEditor goalie={item} canEditScouts={canEditScouts} onGoalieChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                                {canEditScouts && type === 'player' && <PlayerStatsEditor player={item} canEditScouts={canEditScouts} onPlayerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                                {canEditScouts && type === 'scaler' && <ScalerStatsEditor scaler={item} canEditScouts={canEditScouts} onScalerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                                {canEditScouts && type === 'goalie' && <GoalieStatsEditor goalie={item} canEditScouts={canEditScouts} onGoalieChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
+                                {!canEditScouts && type === 'player' && <PlayerStatsEditor player={item} canEditScouts={canEditScouts} onPlayerChange={(updatedData) => onItemsChange(item.id, updatedData)} />}
                             </>
                          </AccordionContent>
                     </Card>
@@ -382,4 +381,3 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
         </div>
     );
 }
-

@@ -378,7 +378,7 @@ export default function Home() {
       case 'friends-score':
         return <FriendsScoreView onBack={goBack} user={userForViews!} players={appData.players} allUsers={appData.users} />;
       case 'statistics':
-        return <StatisticsView players={appData.players} users={appData.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} />;
+        return <StatisticsView players={appData.players} users={appData.users} onBack={() => navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} />;
       case 'admin':
         return <AdminView 
                   onBack={goBack} 
