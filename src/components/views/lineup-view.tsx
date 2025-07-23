@@ -48,7 +48,7 @@ interface LineupViewProps {
   modality: Modality | null;
 }
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-2' | '3-3-1' | '2-4-1' | '2-2' | '3-1' | '1-3';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-1' | '1-3';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
 interface PlayerActionState {
@@ -61,7 +61,7 @@ interface PlayerActionState {
 const getFormationsForModality = (modality: Modality | null): Formation[] => {
   switch (modality) {
     case 'society':
-      return ['3-2-2', '3-3-1', '2-4-1'];
+      return ['3-2-1', '2-3-1'];
     case 'futsal':
       return ['2-2', '3-1', '1-3'];
     case 'campo':
@@ -136,7 +136,7 @@ const TeamDisplay = ({
     } else {
         // Fallback for default or incorrect formation mapping
         if(lineupPlayers.length === 11) [parsedDef, parsedMid, parsedAtk] = [4,3,3];
-        if(lineupPlayers.length === 8) [parsedDef, parsedMid, parsedAtk] = [3,2,2];
+        if(lineupPlayers.length === 7) [parsedDef, parsedMid, parsedAtk] = [3,2,1];
         if(lineupPlayers.length === 5) [parsedDef, parsedMid, parsedAtk] = [2,0,2];
     }
     
@@ -592,4 +592,3 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
-

@@ -42,7 +42,7 @@ export type BestElevenVote = { playerId: string; rating: number };
 const getTeamSizes = (modality: Modality | null) => {
   switch (modality) {
     case 'society':
-      return { lineup: 8, reserves: 4 };
+      return { lineup: 7, reserves: 4 };
     case 'futsal':
       return { lineup: 5, reserves: 4 };
     case 'campo':
