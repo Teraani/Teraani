@@ -7,7 +7,7 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight } from 'lucide-react';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -192,16 +192,23 @@ function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
     return (
         <div>
             <h3 className="text-xl font-bold mb-4">Acesso Rápido</h3>
-            <div className="grid grid-cols-2 gap-4">
-                {items.map(item => (
-                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg bg-card hover:bg-muted transition-colors aspect-square">
-                        <div className="text-primary">
-                            <item.icon className="w-8 h-8" />
-                        </div>
-                        <p className="text-sm font-semibold text-center text-foreground">{item.label}</p>
-                    </button>
-                ))}
-            </div>
+            <Card className="bg-card">
+                 <CardContent className="p-2">
+                    <div className="space-y-1">
+                        {items.map(item => (
+                            <button key={item.label} onClick={() => onNavigate(item.view)} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left">
+                                <div className="flex items-center gap-4">
+                                    <div className="text-primary">
+                                        <item.icon className="w-5 h-5" />
+                                    </div>
+                                    <span className="font-semibold text-foreground">{item.label}</span>
+                                </div>
+                                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                            </button>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
