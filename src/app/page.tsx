@@ -44,7 +44,7 @@ const getTeamSizes = (modality: Modality | null) => {
     case 'society':
       return { lineup: 7, reserves: 4 };
     case 'futsal':
-      return { lineup: 5, reserves: 4 };
+      return { lineup: 6, reserves: 4 };
     case 'campo':
     default:
       return { lineup: 11, reserves: 5 };

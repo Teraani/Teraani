@@ -28,7 +28,7 @@ const modalities: { name: string; players: string; type: Modality; description: 
   },
   {
     name: 'Futsal',
-    players: '5 jogadores',
+    players: '6 jogadores',
     type: 'futsal',
     description: 'Técnica e habilidade na quadra.'
   },
