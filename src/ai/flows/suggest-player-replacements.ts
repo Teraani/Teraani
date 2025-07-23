@@ -28,8 +28,8 @@ const GenerateBalancedTeamInputSchema = z.object({
 export type GenerateBalancedTeamInput = z.infer<typeof GenerateBalancedTeamInputSchema>;
 
 const GenerateBalancedTeamOutputSchema = z.object({
-    lineup: z.array(z.string()).describe('An array of 11 player IDs for the main lineup.'),
-    reserves: z.array(z.string()).describe('An array of 5 player IDs for the reserves.'),
+    team1: z.array(z.string()).describe('An array of player IDs for team 1.'),
+    team2: z.array(z.string()).describe('An array of player IDs for team 2.'),
     reasoning: z.string().describe('A brief explanation of the team selection strategy.')
 });
 export type GenerateBalancedTeamOutput = z.infer<typeof GenerateBalancedTeamOutputSchema>;
@@ -69,11 +69,9 @@ export async function generateBalancedTeam(input: GenerateBalancedTeamInput): Pr
         }
     });
     
-    // The first team generated (Team A) will be returned as the main lineup.
-    // The second team (Team B) will be used for reserves to simulate a full squad suggestion.
     return {
-        lineup: teamA.slice(0, 11),
-        reserves: teamB.slice(0, 5),
-        reasoning: 'Este time foi gerado de forma balanceada, distribuindo os melhores jogadores disponíveis para criar confrontos equilibrados. Os reservas foram selecionados a partir do segundo time sugerido.'
+        team1: teamA,
+        team2: teamB,
+        reasoning: 'Estes times foram gerados de forma balanceada, distribuindo os melhores goleiros e jogadores de linha disponíveis para criar confrontos equilibrados.'
     };
 }

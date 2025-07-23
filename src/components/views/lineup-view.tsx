@@ -312,39 +312,40 @@ export default function LineupView(props: LineupViewProps) {
   const handleBalanceTeams = async () => {
     setIsBalancing(true);
     try {
-        const team1Result = await generateBalancedTeam({
+        const result = await generateBalancedTeam({
             availablePlayers: players,
-            teamBudget: 150,
+            teamBudget: 150, // This budget is not really used in the new logic but let's keep it
         });
 
-        const remainingPlayers = { ...players };
-        team1Result.lineup.forEach(id => delete remainingPlayers[id]);
-        team1Result.reserves.forEach(id => delete remainingPlayers[id]);
+        const { team1, team2 } = result;
 
+        const placePlayers = (teamData: string[], currentLineup: (string | null)[]) => {
+            const newLineup = Array(currentLineup.length).fill(null);
+            const goalkeeper = teamData.find(id => players[id]?.pos === 'GOL');
+            const fieldPlayers = teamData.filter(id => players[id]?.pos !== 'GOL');
 
-        const team2Result = await generateBalancedTeam({
-            availablePlayers: remainingPlayers,
-            teamBudget: 150,
-        });
+            // Place goalkeeper at the last position
+            if (goalkeeper) {
+                newLineup[newLineup.length - 1] = goalkeeper;
+            }
 
-        const newTeam1Lineup = Array(team1Lineup.length).fill(null);
-        team1Result.lineup.slice(0, team1Lineup.length).forEach((id, i) => newTeam1Lineup[i] = id);
-        const newTeam1Reserves = Array(team1Reserves.length).fill(null);
-        team1Result.reserves.slice(0, team1Reserves.length).forEach((id, i) => newTeam1Reserves[i] = id);
+            // Fill the rest with field players
+            for (let i = 0; i < newLineup.length - 1 && i < fieldPlayers.length; i++) {
+                newLineup[i] = fieldPlayers[i];
+            }
+            return newLineup;
+        };
         
-        const newTeam2Lineup = Array(team2Lineup.length).fill(null);
-        team2Result.lineup.slice(0, team2Lineup.length).forEach((id, i) => newTeam2Lineup[i] = id);
-        const newTeam2Reserves = Array(team2Reserves.length).fill(null);
-        team2Result.reserves.slice(0, team2Reserves.length).forEach((id, i) => newTeam2Reserves[i] = id);
-
-        setTeam1Lineup(newTeam1Lineup);
-        setTeam1Reserves(newTeam1Reserves);
-        setTeam2Lineup(newTeam2Lineup);
-        setTeam2Reserves(newTeam2Reserves);
+        setTeam1Lineup(placePlayers(team1, team1Lineup));
+        setTeam2Lineup(placePlayers(team2, team2Lineup));
         
+        // Clear reserves
+        setTeam1Reserves(Array(team1Reserves.length).fill(null));
+        setTeam2Reserves(Array(team2Reserves.length).fill(null));
+
         toast({
             title: "Times Balanceados!",
-            description: "A IA gerou duas equipes equilibradas para o confronto.",
+            description: "A IA gerou duas equipes titulares equilibradas para o confronto.",
         });
 
     } catch (error) {
