@@ -84,9 +84,7 @@ const ScoutControlPanel = ({ allPlayers, team1Lineup, team2Lineup, onAddLiveEven
       details: details || selectedEvent,
     });
 
-    // Reset form
-    setSelectedPlayerId(undefined);
-    setSelectedEvent(undefined);
+    // Reset only details
     setDetails('');
   };
 
