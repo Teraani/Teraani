@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -41,6 +42,8 @@ interface LiveViewProps {
   onAddLiveEvent: (event: Omit<LiveEvent, 'time'>) => void;
   onFinishMatch: (team1Score: number, team2Score: number) => void;
   allPlayers: ({id: string} & Player)[];
+  team1Lineup: (string | null)[];
+  team2Lineup: (string | null)[];
 }
 
 const teamColors: { [key: string]: string } = {
@@ -48,7 +51,12 @@ const teamColors: { [key: string]: string } = {
   'Time 2': 'bg-yellow-400',
 };
 
-const ScoutControlPanel = ({ allPlayers, onAddLiveEvent }: { allPlayers: ({id: string} & Player)[], onAddLiveEvent: (event: Omit<LiveEvent, 'time'>) => void }) => {
+const ScoutControlPanel = ({ allPlayers, team1Lineup, team2Lineup, onAddLiveEvent }: { 
+  allPlayers: ({id: string} & Player)[], 
+  team1Lineup: (string | null)[], 
+  team2Lineup: (string | null)[], 
+  onAddLiveEvent: (event: Omit<LiveEvent, 'time'>) => void 
+}) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | undefined>();
   const [selectedEvent, setSelectedEvent] = useState<string | undefined>();
   const [details, setDetails] = useState('');
@@ -61,10 +69,17 @@ const ScoutControlPanel = ({ allPlayers, onAddLiveEvent }: { allPlayers: ({id: s
     const player = allPlayers.find(p => p.id === selectedPlayerId);
     if (!player) return;
 
+    let teamIdentifier = 'Time 1'; // Default
+    if (team1Lineup.includes(player.id)) {
+        teamIdentifier = 'Time 1';
+    } else if (team2Lineup.includes(player.id)) {
+        teamIdentifier = 'Time 2';
+    }
+
     onAddLiveEvent({
       playerId: player.id,
       player: player.name,
-      team: 'Time 1', // This is simplified, a real app would know the player's current team
+      team: teamIdentifier,
       event: selectedEvent,
       details: details || selectedEvent,
     });
@@ -121,7 +136,7 @@ const ScoutControlPanel = ({ allPlayers, onAddLiveEvent }: { allPlayers: ({id: s
 };
 
 
-export default function LiveView({ onBack, user, players, canEditScouts, liveEvents, onAddLiveEvent, onFinishMatch, allPlayers }: LiveViewProps) {
+export default function LiveView({ onBack, user, players, canEditScouts, liveEvents, onAddLiveEvent, onFinishMatch, allPlayers, team1Lineup, team2Lineup }: LiveViewProps) {
     const [team1Score, setTeam1Score] = useState(0);
     const [team2Score, setTeam2Score] = useState(0);
     const [isFinishConfirmOpen, setIsFinishConfirmOpen] = useState(false);
@@ -209,7 +224,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
                 <span>{matchDate}</span>
             </div>
 
-            {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} onAddLiveEvent={onAddLiveEvent} />}
+            {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} team1Lineup={team1Lineup} team2Lineup={team2Lineup} onAddLiveEvent={onAddLiveEvent} />}
 
             <Card className="flex-1 flex flex-col">
                 <CardHeader>

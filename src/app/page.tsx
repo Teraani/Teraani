@@ -425,8 +425,10 @@ export default function Home() {
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
   
   const allPlayersForScout = useMemo(() => {
-    return Object.entries(appData.players).map(([id, player]) => ({...player, id}));
-  }, [appData.players]);
+    return Object.entries(appData.players)
+      .filter(([id, _]) => allScaledPlayerIds.includes(id))
+      .map(([id, player]) => ({...player, id}));
+  }, [appData.players, allScaledPlayerIds]);
 
   const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection';
 
@@ -507,6 +509,8 @@ export default function Home() {
                   onAddLiveEvent={handleAddLiveEvent}
                   onFinishMatch={handleFinishMatch}
                   allPlayers={allPlayersForScout}
+                  team1Lineup={team1Lineup}
+                  team2Lineup={team2Lineup}
                 />;
       case 'payments':
         return <PaymentsView
