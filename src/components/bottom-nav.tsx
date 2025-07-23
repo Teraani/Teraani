@@ -16,8 +16,7 @@ const navItems: { view: View, icon: React.ElementType, label: string, isPro?: bo
   { view: 'dashboard', icon: Home, label: 'Início' },
   { view: 'lineup', icon: Shirt, label: 'Escalação' },
   { view: 'best-eleven', icon: Award, label: 'Seleção', isPro: true },
-  { view: 'partial-score', icon: BarChart2, label: 'Parciais' },
-  { view: 'statistics', icon: Trophy, label: 'Ligas' },
+  { view: 'statistics', icon: BarChart2, label: 'Estatísticas' },
 ];
 
 export default function BottomNav({ currentView, onNavigate, canViewPayments }: BottomNavProps) {

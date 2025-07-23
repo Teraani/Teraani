@@ -186,29 +186,22 @@ function QuickAccess({ onNavigate }: { onNavigate: (view: View) => void }) {
     const items = [
         { label: "Parciais gerais", view: 'partial-score' as View, icon: BarChart3 },
         { label: "Parcial dos amigos", view: 'friends-score' as View, icon: Users },
-        { label: "Partida ao vivo", view: 'live' as View, icon: Radio },
         { label: "Resultado dos jogos", view: 'games' as View, icon: Trophy },
+        { label: "Partida ao vivo", view: 'live' as View, icon: Radio },
     ];
     return (
         <div>
             <h3 className="text-xl font-bold mb-4">Acesso Rápido</h3>
-            <Card className="bg-card">
-                 <CardContent className="p-2">
-                    <div className="space-y-1">
-                        {items.map(item => (
-                            <button key={item.label} onClick={() => onNavigate(item.view)} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors text-left">
-                                <div className="flex items-center gap-4">
-                                    <div className="text-primary">
-                                        <item.icon className="w-5 h-5" />
-                                    </div>
-                                    <span className="font-semibold text-foreground">{item.label}</span>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                            </button>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
+             <div className="grid grid-cols-4 gap-2 text-center">
+                {items.map(item => (
+                    <button key={item.label} onClick={() => onNavigate(item.view)} className="flex flex-col items-center gap-2 p-3 bg-card rounded-lg hover:bg-muted transition-colors">
+                        <div className="text-primary">
+                            <item.icon className="w-6 h-6" />
+                        </div>
+                        <span className="font-semibold text-xs text-foreground">{item.label}</span>
+                    </button>
+                ))}
+            </div>
         </div>
     );
 }
