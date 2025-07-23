@@ -5,7 +5,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star, Send, VoteIcon, Lock } from 'lucide-react';
+import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star, Send, VoteIcon, Lock, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '../ui/input';
@@ -59,6 +59,7 @@ interface BestElevenViewProps {
   isVotingReleased: boolean;
   isVotingClosed: boolean;
   onReleaseVoting: () => void;
+  onCloseVoting: () => void;
   modality: Modality | null;
   isVoteRevelationEnabled: boolean;
 }
@@ -189,7 +190,7 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, allUsers, onVote, userLineup, allVotes, isSaved, canEdit, isVotingReleased, isVotingClosed, onReleaseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, allUsers, onVote, userLineup, allVotes, isSaved, canEdit, isVotingReleased, isVotingClosed, onReleaseVoting, onCloseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
     const { toast } = useToast();
     const [votingStatus, setVotingStatus] = useState(getVotingStatus(isVotingClosed));
     const lineupSize = getLineupSize(modality);
@@ -505,6 +506,12 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
               <Button onClick={onReleaseVoting} className="bg-blue-600 hover:bg-blue-700">
                 <Send className="mr-2 h-4 w-4" />
                 Liberar Votação
+              </Button>
+            )}
+             {canEdit && !isVotingClosed && (
+              <Button onClick={onCloseVoting} variant="destructive" className="bg-red-600 hover:bg-red-700">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Encerrar Votação (Admin)
               </Button>
             )}
         </div>

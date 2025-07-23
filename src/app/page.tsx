@@ -404,6 +404,14 @@ export default function Home() {
       description: "Os jogadores agora podem votar na Seleção da Rodada.",
     });
   };
+
+  const handleCloseVoting = () => {
+    setIsBestElevenVotingClosed(true);
+    toast({
+      title: "Votação Encerrada Manualmente",
+      description: "O administrador encerrou a votação.",
+    });
+  };
   
   const handleToggleVoteRevelation = (enabled: boolean) => {
     setIsVoteRevelationEnabled(enabled);
@@ -578,6 +586,7 @@ export default function Home() {
                   isVotingReleased={isVotingReleased}
                   isVotingClosed={isBestElevenVotingClosed}
                   onReleaseVoting={handleReleaseVoting}
+                  onCloseVoting={handleCloseVoting}
                   modality={selectedModality}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                 />;
