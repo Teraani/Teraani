@@ -224,12 +224,12 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
 
             {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} team1Lineup={team1Lineup} team2Lineup={team2Lineup} onAddLiveEvent={onAddLiveEvent} />}
 
-            <Card className="flex-1 flex flex-col">
+            <Card>
                 <CardHeader>
                     <CardTitle>Feed da Partida</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-1 p-0">
-                    <div className="space-y-4 p-4 pt-0">
+                <CardContent>
+                    <div className="space-y-4">
                         {liveEvents.length > 0 ? liveEvents.map((event, index) => (
                             <div key={index} className="flex items-start gap-3">
                                 <span className="font-mono text-sm text-muted-foreground">{event.time}</span>
