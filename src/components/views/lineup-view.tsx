@@ -200,7 +200,7 @@ const TeamDisplay = ({
 
   return (
     <div className="space-y-4">
-        <Pitch>
+        <Pitch modality={modality}>
             {renderPlayerRow(atkCount, attackers, 'ATA', 0)}
             {renderPlayerRow(midCount, midfielders, 'MEI', atkCount)}
             {renderPlayerRow(defCount, defenders, 'ZAG', atkCount + midCount)}

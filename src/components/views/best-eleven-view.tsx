@@ -319,7 +319,7 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
       </header>
 
       <main className="p-4 space-y-4 pb-24">
-        <Pitch>
+        <Pitch modality={'campo'}>
           {renderPlayerRow(atkCount, attackers, 0)}
           {renderPlayerRow(midCount, midfielders, atkCount)}
           {renderPlayerRow(defCount, defenders, atkCount + midCount)}
