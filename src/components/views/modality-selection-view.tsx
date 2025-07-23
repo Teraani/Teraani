@@ -22,13 +22,13 @@ const modalities: { name: string; players: string; type: Modality; description: 
   },
   {
     name: 'Society',
-    players: '8 jogadores',
+    players: '7 jogadores',
     type: 'society',
     description: 'Jogo rápido e dinâmico em campo reduzido.'
   },
   {
     name: 'Futsal',
-    players: '6 jogadores',
+    players: '5 jogadores',
     type: 'futsal',
     description: 'Técnica e habilidade na quadra.'
   },
