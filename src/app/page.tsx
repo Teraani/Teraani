@@ -366,7 +366,7 @@ export default function Home() {
                  onBack={goBack} 
                  position={slotToAddPlayer?.position ?? null}
                  scaledPlayerIds={allScaledPlayerIds}
-                 canEdit={canEditScouts}
+                 canEdit={canEditLineup}
                  onAddPlayerToMarket={handleAddPlayerToMarket}
                  onRemovePlayerFromMarket={handleRemovePlayerFromMarket}
                  onUpdatePlayerInMarket={handleUpdatePlayerInMarket}
