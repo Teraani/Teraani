@@ -4,7 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star, Send } from 'lucide-react';
+import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star, Send, VoteIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '../ui/input';
@@ -35,6 +35,8 @@ import { Slider } from '../ui/slider';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { BestElevenVote, Modality } from '@/app/page';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { cn } from '@/lib/utils';
 
 type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '3-2' | '2-3';
 
@@ -47,11 +49,14 @@ interface BestElevenViewProps {
   onBack: () => void;
   players: Record<string, Player>;
   currentUser: User;
+  allUsers: User[];
   onVote: (lineup: (BestElevenVote | null)[]) => void;
   userLineup: (BestElevenVote | null)[] | undefined;
+  allVotes: Record<string, (BestElevenVote | null)[]>;
   isSaved: boolean;
   canEdit: boolean;
   isVotingReleased: boolean;
+  isVotingClosed: boolean;
   onReleaseVoting: () => void;
   modality: Modality | null;
 }
@@ -61,7 +66,10 @@ interface PlayerActionState {
   index: number;
 }
 
-const getVotingStatus = () => {
+const getVotingStatus = (isClosed: boolean) => {
+  if (isClosed) {
+    return { isOpen: false, message: "Votação da rodada encerrada." };
+  }
   const now = new Date();
   const day = now.getDay(); // 0 (Sun) - 6 (Sat)
   const hour = now.getHours();
@@ -179,9 +187,9 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, onVote, userLineup, isSaved, canEdit, isVotingReleased, onReleaseVoting, modality }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, allUsers, onVote, userLineup, allVotes, isSaved, canEdit, isVotingReleased, isVotingClosed, onReleaseVoting, modality }: BestElevenViewProps) {
     const { toast } = useToast();
-    const [votingStatus, setVotingStatus] = useState(getVotingStatus());
+    const [votingStatus, setVotingStatus] = useState(getVotingStatus(isVotingClosed));
     const lineupSize = getLineupSize(modality);
     
     const [lineup, setLineup] = useState<(BestElevenVote | null)[]>(userLineup || Array(lineupSize).fill(null));
@@ -200,10 +208,10 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
 
     useEffect(() => {
         const timer = setInterval(() => {
-            setVotingStatus(getVotingStatus());
+            setVotingStatus(getVotingStatus(isVotingClosed));
         }, 60000); // Check every minute
         return () => clearInterval(timer);
-    }, []);
+    }, [isVotingClosed]);
 
     const currentUserPlayerId = useMemo(() => {
       if (!currentUser) return null;
@@ -212,12 +220,13 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
       return playerEntry ? playerEntry[0] : null;
     }, [currentUser, players]);
 
-    const isVotingActive = votingStatus.isOpen && isVotingReleased;
+    const isVotingActive = votingStatus.isOpen && isVotingReleased && !isVotingClosed;
 
     const handleAddPlayerClick = (index: number) => {
       if (!isVotingActive || isSaved) {
         let description = "Não é mais possível alterar a seleção.";
         if (!isVotingReleased) description = "Aguarde o editor da rodada liberar a votação.";
+        else if (isVotingClosed) description = "A votação já foi encerrada.";
         else if (!votingStatus.isOpen) description = "O prazo para votação encerrou.";
         
         toast({ title: "Votação Indisponível", description, variant: 'destructive' });
@@ -322,7 +331,11 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
       );
     };
 
-  const isComplete = !lineup.some(p => p === null);
+    const isComplete = !lineup.some(p => p === null);
+    
+    const usersWhoVoted = useMemo(() => {
+        return allUsers.filter(user => allVotes[user.id]);
+    }, [allVotes, allUsers]);
 
   return (
     <div>
@@ -373,15 +386,102 @@ export default function BestElevenView({ onBack, players, currentUser, onVote, u
       </header>
 
       <main className="p-4 space-y-4 pb-24">
-        <Pitch modality={modality}>
-          {renderPlayerRow(atkCount, attackers, 0)}
-          {renderPlayerRow(midCount, midfielders, atkCount)}
-          {renderPlayerRow(defCount, defenders, atkCount + midCount)}
-          {renderPlayerRow(1, goalkeeper, atkCount + midCount + defCount)}
-        </Pitch>
+        <Tabs defaultValue="my-selection">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="my-selection">Minha Seleção</TabsTrigger>
+            <TabsTrigger value="votes">Apuração</TabsTrigger>
+          </TabsList>
+          <TabsContent value="my-selection">
+            <Pitch modality={modality}>
+                {renderPlayerRow(atkCount, attackers, 0)}
+                {renderPlayerRow(midCount, midfielders, atkCount)}
+                {renderPlayerRow(defCount, defenders, atkCount + midCount)}
+                {renderPlayerRow(1, goalkeeper, atkCount + midCount + defCount)}
+            </Pitch>
+          </TabsContent>
+          <TabsContent value="votes">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Apuração dos Votos</CardTitle>
+                    <CardDescription>
+                        {isVotingClosed ? 'Confira os votos de todos os participantes.' : 'Acompanhe em tempo real quem já votou.'}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ScrollArea className="h-96">
+                        <div className="space-y-3 pr-2">
+                            {isVotingClosed && Object.entries(allVotes).map(([userId, vote]) => {
+                                const user = allUsers.find(u => u.id === userId);
+                                if (!user || !vote) return null;
+                                return (
+                                    <Dialog key={userId}>
+                                        <DialogTrigger asChild>
+                                            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 cursor-pointer">
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar>
+                                                        <AvatarImage src={user.avatar} alt={user.name}/>
+                                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <p className="font-semibold">{user.name}</p>
+                                                </div>
+                                                <Button variant="ghost" size="sm">
+                                                    <Eye className="mr-2 h-4 w-4" /> Ver Voto
+                                                </Button>
+                                            </div>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Voto de {user.name}</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                                                {vote.map((playerVote, index) => {
+                                                    if (!playerVote) return null;
+                                                    const player = players[playerVote.playerId];
+                                                    return (
+                                                        <div key={index} className="flex items-center justify-between p-2 bg-background rounded">
+                                                            <p>{player.name}</p>
+                                                            <div className="flex items-center gap-1 font-bold text-amber-500">
+                                                                <Star className="w-4 h-4" fill="currentColor" />
+                                                                {playerVote.rating.toFixed(1)}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                )
+                            })}
+
+                            {!isVotingClosed && allUsers.map(user => {
+                                const hasVoted = !!allVotes[user.id];
+                                return (
+                                     <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage src={user.avatar} alt={user.name}/>
+                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <p className="font-semibold">{user.name}</p>
+                                        </div>
+                                        <div className={cn("px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap", hasVoted ? "bg-green-500/20 text-green-500" : "bg-gray-500/20 text-gray-500")}>
+                                            {hasVoted ? 'Votou' : 'Pendente'}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </ScrollArea>
+                </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
         
         <div className="mt-4 flex flex-col gap-2">
-            <div className="p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center font-bold text-primary-foreground bg-primary/80">
+            <div className={cn(
+                "p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center font-bold text-primary-foreground",
+                isVotingActive ? "bg-primary/80" : "bg-destructive/80"
+            )}>
                 <Clock className="w-5 h-5" />
                 <span>{votingStatus.message}</span>
             </div>

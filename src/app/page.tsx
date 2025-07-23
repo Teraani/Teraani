@@ -67,6 +67,7 @@ export default function Home() {
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
   const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
   const [isVotingReleased, setIsVotingReleased] = useState(false);
+  const [isBestElevenVotingClosed, setIsBestElevenVotingClosed] = useState(false);
 
 
   // Simulate a logged-in user. By default, it's the admin.
@@ -430,6 +431,38 @@ export default function Home() {
       .map(([id, player]) => ({...player, id}));
   }, [appData.players, allScaledPlayerIds]);
 
+  // Logic to check if voting should be closed
+    useEffect(() => {
+        if (!isVotingReleased || isBestElevenVotingClosed) return;
+
+        // Check 1: Time-based closure
+        const now = new Date();
+        const day = now.getDay(); // 0 (Sun) - 6 (Sat)
+        const hour = now.getHours();
+        if (day > 4 || (day === 4 && hour >= 0)) {
+            setIsBestElevenVotingClosed(true);
+            toast({ title: "Votação Encerrada", description: "O prazo para a votação da Seleção da Rodada terminou." });
+            return;
+        }
+
+        // Check 2: All players voted
+        const scaledPlayerUsers = allScaledPlayerIds.map(pId => {
+            const player = appData.players[pId];
+            if (!player) return null;
+            const user = Object.values(appData.users).find(u => u.name.toLowerCase().includes(player.name.split(' ')[0].toLowerCase()));
+            return user;
+        }).filter(Boolean) as User[];
+        
+        const haveAllVoted = scaledPlayerUsers.length > 0 && scaledPlayerUsers.every(user => bestElevenSaved[user.id]);
+
+        if (haveAllVoted) {
+            setIsBestElevenVotingClosed(true);
+            toast({ title: "Votação Encerrada", description: "Todos os jogadores escalados já votaram!" });
+        }
+
+    }, [bestElevenSaved, allScaledPlayerIds, appData.players, appData.users, isVotingReleased, isBestElevenVotingClosed, toast]);
+
+
   const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection';
 
   const renderView = () => {
@@ -525,12 +558,15 @@ export default function Home() {
                   onBack={goBack}
                   players={appData.players}
                   currentUser={currentUser!}
+                  allUsers={Object.values(appData.users)}
                   onVote={handleBestElevenVote}
                   userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
+                  allVotes={bestElevenVotes}
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
                   canEdit={canEditLineup}
                   isVotingReleased={isVotingReleased}
-                  onReleaseVoting={handleReleaseBestElevenVoting}
+                  isVotingClosed={isBestElevenVotingClosed}
+                  onReleaseVoting={handleReleaseVoting}
                   modality={selectedModality}
                 />;
       default:
