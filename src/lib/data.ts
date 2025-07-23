@@ -76,6 +76,7 @@ export interface Game {
     homeScore: number;
     awayScore: number;
     status: 'Finalizado' | 'Em andamento' | 'Agendado';
+    scorers: { player: string; team: string }[];
 }
 
 interface AppData {

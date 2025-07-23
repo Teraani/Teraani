@@ -1,14 +1,16 @@
 
+
 "use client";
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield } from 'lucide-react';
+import { ArrowLeft, Shield, Goal } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
 import type { Game } from '@/lib/data';
+import { Separator } from '../ui/separator';
 
 interface GamesViewProps {
   onBack: () => void;
@@ -86,6 +88,29 @@ export default function GamesView({ onBack, gamesData }: GamesViewProps) {
                                     <span className="font-semibold text-sm text-foreground">{game.awayTeam}</span>
                                 </div>
                             </div>
+                             {game.scorers && game.scorers.length > 0 && (
+                                <>
+                                    <Separator className="my-3" />
+                                    <div className="flex justify-around text-xs">
+                                        <div className="w-1/2 text-left pr-2">
+                                            {game.scorers.filter(s => s.team === game.homeTeam).map((scorer, i) => (
+                                                <div key={i} className="flex items-center gap-1.5">
+                                                    <Goal className="w-3 h-3" />
+                                                    <span>{scorer.player}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="w-1/2 text-right pl-2">
+                                           {game.scorers.filter(s => s.team === game.awayTeam).map((scorer, i) => (
+                                                <div key={i} className="flex items-center justify-end gap-1.5">
+                                                    <Goal className="w-3 h-3" />
+                                                    <span>{scorer.player}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                       </Card>
                     ))}

@@ -286,13 +286,19 @@ export default function Home() {
     setAllGamesData(prevGames => {
         const nextRoundNumber = Object.keys(prevGames).length + 1;
         const newRoundKey = `${nextRoundNumber}`;
+        
+        const scorers = liveEvents
+            .filter(event => event.event === 'Gol')
+            .map(event => ({ player: event.player, team: event.team }));
+
         const newGame: Game = {
             date: format(new Date(), "dd 'de' MMMM - HH:mm'hs'", { locale: ptBR }),
             homeTeam: 'Time 1',
             awayTeam: 'Time 2',
             homeScore: team1Score,
             awayScore: team2Score,
-            status: 'Finalizado'
+            status: 'Finalizado',
+            scorers: scorers,
         };
         
         const updatedGames = { ...prevGames };
