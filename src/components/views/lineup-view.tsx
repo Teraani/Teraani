@@ -48,7 +48,7 @@ interface LineupViewProps {
   modality: Modality | null;
 }
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-2' | '2-2' | '3-1' | '1-3';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-2' | '3-3-1' | '2-4-1' | '2-2' | '3-1' | '1-3';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
 interface PlayerActionState {
@@ -61,7 +61,7 @@ interface PlayerActionState {
 const getFormationsForModality = (modality: Modality | null): Formation[] => {
   switch (modality) {
     case 'society':
-      return ['3-2-2'];
+      return ['3-2-2', '3-3-1', '2-4-1'];
     case 'futsal':
       return ['2-2', '3-1', '1-3'];
     case 'campo':
@@ -129,10 +129,8 @@ const TeamDisplay = ({
     const formationParts = formation.split('-').map(Number);
     let parsedDef = 0, parsedMid = 0, parsedAtk = 0;
 
-    if (modality === 'campo' && formationParts.length === 3) {
+    if ((modality === 'campo' || modality === 'society') && formationParts.length === 3) {
         [parsedDef, parsedMid, parsedAtk] = formationParts;
-    } else if (modality === 'society' && formationParts.length === 3) { // 3-2-2
-        [parsedDef, parsedMid, parsedAtk] = [formationParts[0], formationParts[1], formationParts[2]];
     } else if (modality === 'futsal' && formationParts.length === 2) { // e.g. 2-2, 3-1, 1-3
         [parsedDef, parsedMid, parsedAtk] = [formationParts[0], 0, formationParts[1]]; // No official midfielders
     } else {
@@ -293,7 +291,6 @@ export default function LineupView(props: LineupViewProps) {
   };
   
   const handleClearLineup = (team: 'team1' | 'team2') => {
-    const { lineup, reserves } = getFormationsForModality(modality);
     if (team === 'team1') {
         setTeam1Lineup(Array(team1Lineup.length).fill(null));
         setTeam1Reserves(Array(team1Reserves.length).fill(null));
@@ -321,6 +318,8 @@ export default function LineupView(props: LineupViewProps) {
 
         const remainingPlayers = { ...players };
         team1Result.lineup.forEach(id => delete remainingPlayers[id]);
+        team1Result.reserves.forEach(id => delete remainingPlayers[id]);
+
 
         const team2Result = await generateBalancedTeam({
             availablePlayers: remainingPlayers,
@@ -329,14 +328,18 @@ export default function LineupView(props: LineupViewProps) {
 
         const newTeam1Lineup = Array(team1Lineup.length).fill(null);
         team1Result.lineup.slice(0, team1Lineup.length).forEach((id, i) => newTeam1Lineup[i] = id);
+        const newTeam1Reserves = Array(team1Reserves.length).fill(null);
+        team1Result.reserves.slice(0, team1Reserves.length).forEach((id, i) => newTeam1Reserves[i] = id);
         
         const newTeam2Lineup = Array(team2Lineup.length).fill(null);
         team2Result.lineup.slice(0, team2Lineup.length).forEach((id, i) => newTeam2Lineup[i] = id);
+        const newTeam2Reserves = Array(team2Reserves.length).fill(null);
+        team2Result.reserves.slice(0, team2Reserves.length).forEach((id, i) => newTeam2Reserves[i] = id);
 
         setTeam1Lineup(newTeam1Lineup);
-        setTeam1Reserves(Array(team1Reserves.length).fill(null));
+        setTeam1Reserves(newTeam1Reserves);
         setTeam2Lineup(newTeam2Lineup);
-        setTeam2Reserves(Array(team2Reserves.length).fill(null));
+        setTeam2Reserves(newTeam2Reserves);
         
         toast({
             title: "Times Balanceados!",
@@ -589,3 +592,4 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
+
