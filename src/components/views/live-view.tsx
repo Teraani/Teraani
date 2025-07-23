@@ -162,7 +162,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div>
        <AlertDialog open={isFinishConfirmOpen} onOpenChange={setIsFinishConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -186,50 +186,50 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
         <div className="w-9 h-9" />
       </header>
 
-      <ScrollArea className="flex-1">
-        <main className={cn("p-4 space-y-4", canEditScouts && "pb-24")}>
-            <Card className="bg-card">
-              <CardContent className="p-4">
-                  <div className="flex justify-between items-center text-center">
-                      <div className="flex flex-col items-center gap-2 w-1/3">
-                          <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", teamColors['Time 1'])}>
-                              <p className="font-bold text-white text-lg">T1</p>
-                          </div>
-                          <span className="font-semibold text-sm text-foreground">Time 1</span>
-                      </div>
+      <main className={cn("p-4 space-y-4", canEditScouts && "pb-24")}>
+          <Card className="bg-card">
+            <CardContent className="p-4">
+                <div className="flex justify-between items-center text-center">
+                    <div className="flex flex-col items-center gap-2 w-1/3">
+                        <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", teamColors['Time 1'])}>
+                            <p className="font-bold text-white text-lg">T1</p>
+                        </div>
+                        <span className="font-semibold text-sm text-foreground">Time 1</span>
+                    </div>
 
-                      <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-3 my-1">
-                              <span className="text-3xl font-bold text-foreground">{team1Score}</span>
-                              <span className="text-muted-foreground">x</span>
-                              <span className="text-3xl font-bold text-foreground">{team2Score}</span>
-                          </div>
-                          <span className="text-xs font-semibold text-red-500 animate-pulse">Em andamento</span>
-                      </div>
+                    <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-3 my-1">
+                            <span className="text-3xl font-bold text-foreground">{team1Score}</span>
+                            <span className="text-muted-foreground">x</span>
+                            <span className="text-3xl font-bold text-foreground">{team2Score}</span>
+                        </div>
+                        <span className="text-xs font-semibold text-red-500 animate-pulse">Em andamento</span>
+                    </div>
 
-                      <div className="flex flex-col items-center gap-2 w-1/3">
-                           <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", teamColors['Time 2'])}>
-                               <p className="font-bold text-white text-lg">T2</p>
-                           </div>
-                          <span className="font-semibold text-sm text-foreground">Time 2</span>
-                      </div>
-                  </div>
-              </CardContent>
-            </Card>
-            
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground capitalize">
-                <Calendar className="w-4 h-4"/>
-                <span>{matchDate}</span>
-            </div>
+                    <div className="flex flex-col items-center gap-2 w-1/3">
+                         <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", teamColors['Time 2'])}>
+                             <p className="font-bold text-white text-lg">T2</p>
+                         </div>
+                        <span className="font-semibold text-sm text-foreground">Time 2</span>
+                    </div>
+                </div>
+            </CardContent>
+          </Card>
+          
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground capitalize">
+              <Calendar className="w-4 h-4"/>
+              <span>{matchDate}</span>
+          </div>
 
-            {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} team1Lineup={team1Lineup} team2Lineup={team2Lineup} onAddLiveEvent={onAddLiveEvent} />}
+          {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} team1Lineup={team1Lineup} team2Lineup={team2Lineup} onAddLiveEvent={onAddLiveEvent} />}
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Feed da Partida</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
+          <Card>
+              <CardHeader>
+                  <CardTitle>Feed da Partida</CardTitle>
+              </CardHeader>
+              <CardContent>
+                  <ScrollArea className="h-64">
+                    <div className="space-y-4 pr-4">
                         {liveEvents.length > 0 ? liveEvents.map((event, index) => (
                             <div key={index} className="flex items-start gap-3">
                                 <span className="font-mono text-sm text-muted-foreground">{event.time}</span>
@@ -248,10 +248,10 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
                             </div>
                         )}
                     </div>
-                </CardContent>
-            </Card>
-        </main>
-      </ScrollArea>
+                  </ScrollArea>
+              </CardContent>
+          </Card>
+      </main>
       
       {canEditScouts && (
         <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border z-30">
