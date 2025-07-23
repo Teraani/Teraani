@@ -68,6 +68,7 @@ export default function Home() {
   const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
   const [isVotingReleased, setIsVotingReleased] = useState(false);
   const [isBestElevenVotingClosed, setIsBestElevenVotingClosed] = useState(false);
+  const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
 
 
   // Simulate a logged-in user. By default, it's the admin.
@@ -403,6 +404,14 @@ export default function Home() {
       description: "Os jogadores agora podem votar na Seleção da Rodada.",
     });
   };
+  
+  const handleToggleVoteRevelation = (enabled: boolean) => {
+    setIsVoteRevelationEnabled(enabled);
+    toast({
+      title: `Revelação de Votos ${enabled ? 'Ativada' : 'Desativada'}`,
+      description: `A visualização dos votos foi ${enabled ? 'liberada' : 'ocultada'} pelo admin.`,
+    });
+  };
 
 
   const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
@@ -531,6 +540,8 @@ export default function Home() {
                   onSetScoutEditor={handleSetScoutEditor}
                   paymentEditor={appData.paymentEditor}
                   onSetPaymentEditor={handleSetPaymentEditor}
+                  isVoteRevelationEnabled={isVoteRevelationEnabled}
+                  onToggleVoteRevelation={handleToggleVoteRevelation}
                 />;
        case 'live':
         return <LiveView 
@@ -568,6 +579,7 @@ export default function Home() {
                   isVotingClosed={isBestElevenVotingClosed}
                   onReleaseVoting={handleReleaseVoting}
                   modality={selectedModality}
+                  isVoteRevelationEnabled={isVoteRevelationEnabled}
                 />;
       default:
         return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;

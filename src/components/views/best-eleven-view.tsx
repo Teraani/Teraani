@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star, Send, VoteIcon } from 'lucide-react';
+import { ArrowLeft, Clock, Search, Save, Trash2, UserX, Eye, Star, Send, VoteIcon, Lock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '../ui/input';
@@ -59,6 +60,7 @@ interface BestElevenViewProps {
   isVotingClosed: boolean;
   onReleaseVoting: () => void;
   modality: Modality | null;
+  isVoteRevelationEnabled: boolean;
 }
 
 interface PlayerActionState {
@@ -187,7 +189,7 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, allUsers, onVote, userLineup, allVotes, isSaved, canEdit, isVotingReleased, isVotingClosed, onReleaseVoting, modality }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, allUsers, onVote, userLineup, allVotes, isSaved, canEdit, isVotingReleased, isVotingClosed, onReleaseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
     const { toast } = useToast();
     const [votingStatus, setVotingStatus] = useState(getVotingStatus(isVotingClosed));
     const lineupSize = getLineupSize(modality);
@@ -336,6 +338,8 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const usersWhoVoted = useMemo(() => {
         return allUsers.filter(user => allVotes[user.id]);
     }, [allVotes, allUsers]);
+    
+    const canViewVotes = isVotingClosed && isVoteRevelationEnabled;
 
   return (
     <div>
@@ -404,19 +408,69 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 <CardHeader>
                     <CardTitle>Apuração dos Votos</CardTitle>
                     <CardDescription>
-                        {isVotingClosed ? 'Confira os votos de todos os participantes.' : 'Acompanhe em tempo real quem já votou.'}
+                       {isVoteRevelationEnabled 
+                            ? (isVotingClosed ? 'Confira os votos de todos os participantes.' : 'Acompanhe em tempo real quem já votou.')
+                            : 'A apuração dos votos está oculta pelo administrador.'
+                        }
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ScrollArea className="h-96">
-                        <div className="space-y-3 pr-2">
-                            {isVotingClosed && Object.entries(allVotes).map(([userId, vote]) => {
-                                const user = allUsers.find(u => u.id === userId);
-                                if (!user || !vote) return null;
-                                return (
-                                    <Dialog key={userId}>
-                                        <DialogTrigger asChild>
-                                            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 cursor-pointer">
+                        {!isVoteRevelationEnabled ? (
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
+                                <Lock className="w-12 h-12 mb-4" />
+                                <p className="font-bold">Votos Ocultos</p>
+                                <p className="text-sm">O administrador desativou a revelação dos votos no momento.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3 pr-2">
+                                {allUsers.map(user => {
+                                    const hasVoted = !!allVotes[user.id];
+                                    if (canViewVotes) {
+                                        const userVote = allVotes[user.id];
+                                        if (!userVote) return null;
+                                        return (
+                                            <Dialog key={user.id}>
+                                                <DialogTrigger asChild>
+                                                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 cursor-pointer">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar>
+                                                                <AvatarImage src={user.avatar} alt={user.name}/>
+                                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                                            </Avatar>
+                                                            <p className="font-semibold">{user.name}</p>
+                                                        </div>
+                                                        <Button variant="ghost" size="sm">
+                                                            <Eye className="mr-2 h-4 w-4" /> Ver Voto
+                                                        </Button>
+                                                    </div>
+                                                </DialogTrigger>
+                                                <DialogContent>
+                                                    <DialogHeader>
+                                                        <DialogTitle>Voto de {user.name}</DialogTitle>
+                                                    </DialogHeader>
+                                                    <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                                                        {userVote.map((playerVote, index) => {
+                                                            if (!playerVote) return null;
+                                                            const player = players[playerVote.playerId];
+                                                            return (
+                                                                <div key={index} className="flex items-center justify-between p-2 bg-background rounded">
+                                                                    <p>{player.name}</p>
+                                                                    <div className="flex items-center gap-1 font-bold text-amber-500">
+                                                                        <Star className="w-4 h-4" fill="currentColor" />
+                                                                        {playerVote.rating.toFixed(1)}
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
+                                        )
+                                    } else {
+                                        // Show pending status if revelation is on but voting is not closed
+                                        return (
+                                            <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                                                 <div className="flex items-center gap-3">
                                                     <Avatar>
                                                         <AvatarImage src={user.avatar} alt={user.name}/>
@@ -424,53 +478,15 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                                                     </Avatar>
                                                     <p className="font-semibold">{user.name}</p>
                                                 </div>
-                                                <Button variant="ghost" size="sm">
-                                                    <Eye className="mr-2 h-4 w-4" /> Ver Voto
-                                                </Button>
+                                                <div className={cn("px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap", hasVoted ? "bg-green-500/20 text-green-500" : "bg-gray-500/20 text-gray-500")}>
+                                                    {hasVoted ? 'Votou' : 'Pendente'}
+                                                </div>
                                             </div>
-                                        </DialogTrigger>
-                                        <DialogContent>
-                                            <DialogHeader>
-                                                <DialogTitle>Voto de {user.name}</DialogTitle>
-                                            </DialogHeader>
-                                            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                                                {vote.map((playerVote, index) => {
-                                                    if (!playerVote) return null;
-                                                    const player = players[playerVote.playerId];
-                                                    return (
-                                                        <div key={index} className="flex items-center justify-between p-2 bg-background rounded">
-                                                            <p>{player.name}</p>
-                                                            <div className="flex items-center gap-1 font-bold text-amber-500">
-                                                                <Star className="w-4 h-4" fill="currentColor" />
-                                                                {playerVote.rating.toFixed(1)}
-                                                            </div>
-                                                        </div>
-                                                    )
-                                                })}
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                )
-                            })}
-
-                            {!isVotingClosed && allUsers.map(user => {
-                                const hasVoted = !!allVotes[user.id];
-                                return (
-                                     <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar>
-                                                <AvatarImage src={user.avatar} alt={user.name}/>
-                                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <p className="font-semibold">{user.name}</p>
-                                        </div>
-                                        <div className={cn("px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap", hasVoted ? "bg-green-500/20 text-green-500" : "bg-gray-500/20 text-gray-500")}>
-                                            {hasVoted ? 'Votou' : 'Pendente'}
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                                        );
+                                    }
+                                })}
+                            </div>
+                        )}
                     </ScrollArea>
                 </CardContent>
             </Card>

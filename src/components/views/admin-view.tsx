@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import { useState, useMemo } from 'react';
 import type { User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check, DollarSign } from 'lucide-react';
+import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check, DollarSign, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -16,8 +17,9 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuTrigger,
-  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
 
 interface AdminViewProps {
   onBack: () => void;
@@ -28,9 +30,22 @@ interface AdminViewProps {
   onSetScoutEditor: (userId: string | null) => void;
   paymentEditor: string | null;
   onSetPaymentEditor: (userId: string | null) => void;
+  isVoteRevelationEnabled: boolean;
+  onToggleVoteRevelation: (enabled: boolean) => void;
 }
 
-export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor, scoutEditor, onSetScoutEditor, paymentEditor, onSetPaymentEditor }: AdminViewProps) {
+export default function AdminView({ 
+    onBack, 
+    users, 
+    editorOfTheRound, 
+    onSetEditor, 
+    scoutEditor, 
+    onSetScoutEditor, 
+    paymentEditor, 
+    onSetPaymentEditor,
+    isVoteRevelationEnabled,
+    onToggleVoteRevelation
+}: AdminViewProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -103,6 +118,27 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
       </header>
 
       <main className="p-4 space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Configurações Gerais</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label className="text-base">Revelar Votos</Label>
+                        <p className="text-sm text-muted-foreground">
+                            Permite que todos vejam os votos da Seleção da Rodada.
+                        </p>
+                    </div>
+                    <Switch
+                        checked={isVoteRevelationEnabled}
+                        onCheckedChange={onToggleVoteRevelation}
+                    />
+                </div>
+            </CardContent>
+        </Card>
+
+
         <Card className="bg-card border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold text-foreground">Gerenciar Permissões</CardTitle>
@@ -120,7 +156,7 @@ export default function AdminView({ onBack, users, editorOfTheRound, onSetEditor
                     className="pl-10 bg-muted/30 border-border"
                 />
             </div>
-            <ScrollArea className="h-[calc(100vh-300px)]">
+            <ScrollArea className="h-[calc(100vh-450px)]">
                 <div className="space-y-3 pr-4">
                     {filteredUsers.map((user) => {
                         const isLineupEditor = editorOfTheRound === user.id;
