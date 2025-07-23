@@ -149,7 +149,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className={cn("flex flex-col h-screen", canEditScouts ? "pb-24" : "")}>
        <AlertDialog open={isFinishConfirmOpen} onOpenChange={setIsFinishConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -173,76 +173,75 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
         <div className="w-9 h-9" />
       </header>
 
-      <main className="flex-1 p-4 space-y-4 overflow-y-auto">
-        <Card className="bg-card">
-          <CardContent className="p-4">
-              <div className="flex justify-between items-center text-center">
-                  <div className="flex flex-col items-center gap-2 w-1/3">
-                      <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", teamColors['Time 1'])}>
-                          <p className="font-bold text-white text-lg">T1</p>
+      <ScrollArea className="flex-1">
+        <main className="p-4 space-y-4">
+            <Card className="bg-card">
+              <CardContent className="p-4">
+                  <div className="flex justify-between items-center text-center">
+                      <div className="flex flex-col items-center gap-2 w-1/3">
+                          <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", teamColors['Time 1'])}>
+                              <p className="font-bold text-white text-lg">T1</p>
+                          </div>
+                          <span className="font-semibold text-sm text-foreground">Time 1</span>
                       </div>
-                      <span className="font-semibold text-sm text-foreground">Time 1</span>
-                  </div>
 
-                  <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-3 my-1">
-                          <span className="text-3xl font-bold text-foreground">{team1Score}</span>
-                          <span className="text-muted-foreground">x</span>
-                          <span className="text-3xl font-bold text-foreground">{team2Score}</span>
+                      <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-3 my-1">
+                              <span className="text-3xl font-bold text-foreground">{team1Score}</span>
+                              <span className="text-muted-foreground">x</span>
+                              <span className="text-3xl font-bold text-foreground">{team2Score}</span>
+                          </div>
+                          <span className="text-xs font-semibold text-red-500 animate-pulse">Em andamento</span>
                       </div>
-                      <span className="text-xs font-semibold text-red-500 animate-pulse">Em andamento</span>
+
+                      <div className="flex flex-col items-center gap-2 w-1/3">
+                           <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", teamColors['Time 2'])}>
+                               <p className="font-bold text-white text-lg">T2</p>
+                           </div>
+                          <span className="font-semibold text-sm text-foreground">Time 2</span>
+                      </div>
                   </div>
+              </CardContent>
+            </Card>
+            
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground capitalize">
+                <Calendar className="w-4 h-4"/>
+                <span>{matchDate}</span>
+            </div>
 
-                  <div className="flex flex-col items-center gap-2 w-1/3">
-                       <div className={cn("w-12 h-12 rounded-full flex items-center justify-center", teamColors['Time 2'])}>
-                           <p className="font-bold text-white text-lg">T2</p>
-                       </div>
-                      <span className="font-semibold text-sm text-foreground">Time 2</span>
-                  </div>
-              </div>
-          </CardContent>
-        </Card>
-        
-        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground capitalize">
-            <Calendar className="w-4 h-4"/>
-            <span>{matchDate}</span>
-        </div>
+            {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} onAddLiveEvent={onAddLiveEvent} />}
 
-        {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} onAddLiveEvent={onAddLiveEvent} />}
-
-        <Card className="flex-1 flex flex-col">
-            <CardHeader>
-                <CardTitle>Feed da Partida</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 p-0">
-                 <ScrollArea className="h-[calc(100vh-450px)]">
+            <Card className="flex-1 flex flex-col">
+                <CardHeader>
+                    <CardTitle>Feed da Partida</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 p-0">
                     <div className="space-y-4 p-4 pt-0">
-                    {liveEvents.length > 0 ? liveEvents.map((event, index) => (
-                        <div key={index} className="flex items-start gap-3">
-                            <span className="font-mono text-sm text-muted-foreground">{event.time}</span>
-                            <div className="flex-shrink-0 bg-muted rounded-full w-8 h-8 flex items-center justify-center">
-                               <EventIcon event={event.event} />
+                        {liveEvents.length > 0 ? liveEvents.map((event, index) => (
+                            <div key={index} className="flex items-start gap-3">
+                                <span className="font-mono text-sm text-muted-foreground">{event.time}</span>
+                                <div className="flex-shrink-0 bg-muted rounded-full w-8 h-8 flex items-center justify-center">
+                                   <EventIcon event={event.event} />
+                                </div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-foreground">{event.player} ({event.team})</p>
+                                    <p className="text-sm text-muted-foreground">{event.details}</p>
+                                </div>
                             </div>
-                            <div className="flex-1">
-                                <p className="font-semibold text-foreground">{event.player} ({event.team})</p>
-                                <p className="text-sm text-muted-foreground">{event.details}</p>
+                        )) : (
+                            <div className="text-center py-10 text-muted-foreground">
+                                <p>Nenhum evento na partida ainda.</p>
+                                <p className="text-xs">Aguardando o início do jogo.</p>
                             </div>
-                        </div>
-                    )) : (
-                        <div className="text-center py-10 text-muted-foreground">
-                            <p>Nenhum evento na partida ainda.</p>
-                            <p className="text-xs">Aguardando o início do jogo.</p>
-                        </div>
-                    )}
-                     </div>
-                </ScrollArea>
-            </CardContent>
-        </Card>
-
-      </main>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+        </main>
+      </ScrollArea>
       
       {canEditScouts && (
-        <div className="bg-card p-4 border-t border-border">
+        <div className="fixed bottom-0 left-0 right-0 bg-card p-4 border-t border-border z-30">
           <Button className="w-full h-12" onClick={() => setIsFinishConfirmOpen(true)} disabled={liveEvents.length === 0}>
             <CheckCircle className="mr-2 h-5 w-5" />
             Finalizar Partida
