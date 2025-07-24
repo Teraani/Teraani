@@ -16,7 +16,7 @@ const SignalIcon = (props: React.SVGProps<SVGSVGElement>) => (
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-        <path d="M7 16V8M12 16V4M17 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M7 16V12M12 16V8M17 16V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
 
