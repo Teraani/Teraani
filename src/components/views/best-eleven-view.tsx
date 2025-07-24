@@ -39,7 +39,7 @@ import type { BestElevenVote, Modality } from '@/app/page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '@/lib/utils';
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-3' | '3-2';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-2';
 
 export interface Vote {
   playerId: string;
@@ -56,7 +56,7 @@ interface BestElevenViewProps {
   userLineup: (BestElevenVote | null)[] | undefined;
   allVotes: Record<string, (BestElevenVote | null)[]>;
   isSaved: boolean;
-  canEdit: boolean;
+  canManageVoting: boolean;
   isVotingReleased: boolean;
   isVotingClosed: boolean;
   onReleaseVoting: () => void;
@@ -90,7 +90,7 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
     case 'society':
       return ['3-2-1', '2-3-1'];
     case 'futsal':
-      return ['2-3', '3-2'];
+      return ['2-2', '3-2'];
     case 'campo':
     default:
       return ['4-3-3', '4-4-2', '3-5-2'];
@@ -191,7 +191,7 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, allUsers, allScaledPlayerIds, onVote, userLineup, allVotes, isSaved, canEdit, isVotingReleased, isVotingClosed, onReleaseVoting, onCloseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, allUsers, allScaledPlayerIds, onVote, userLineup, allVotes, isSaved, canManageVoting, isVotingReleased, isVotingClosed, onReleaseVoting, onCloseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
     const { toast } = useToast();
     const [votingStatus, setVotingStatus] = useState(getVotingStatus(isVotingClosed));
     const lineupSize = getLineupSize(modality);
@@ -574,13 +574,13 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 <Clock className="w-5 h-5" />
                 <span>{votingStatus.message}</span>
             </div>
-            {canEdit && !isVotingReleased && (
+            {canManageVoting && !isVotingReleased && (
               <Button onClick={onReleaseVoting} className="bg-blue-600 hover:bg-blue-700">
                 <Send className="mr-2 h-4 w-4" />
                 Liberar Votação
               </Button>
             )}
-             {canEdit && isVotingReleased && !isVotingClosed && (
+             {canManageVoting && isVotingReleased && !isVotingClosed && (
               <Button onClick={onCloseVoting} variant="destructive" className="bg-red-600 hover:bg-red-700">
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Encerrar Votação (Admin)

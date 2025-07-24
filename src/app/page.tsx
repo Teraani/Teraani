@@ -159,6 +159,11 @@ export default function Home() {
     if (!currentUser || !currentLeague) return false;
     return currentUser.role === 'admin' || currentUser.id === currentLeague.editorOfTheRound;
   }, [currentUser, currentLeague]);
+
+  const canManageVoting = useMemo(() => {
+    if (!currentUser) return false;
+    return currentUser.role === 'admin';
+  }, [currentUser]);
   
   const canEditScouts = useMemo(() => {
     if (!currentUser || !currentLeague) return false;
@@ -583,11 +588,12 @@ export default function Home() {
             return user;
         }).filter(Boolean) as User[];
         
-        const haveAllVoted = scaledPlayerUsers.length > 0 && scaledPlayerUsers.every(user => bestElevenSaved[user.id]);
-
-        if (haveAllVoted) {
-            setIsBestElevenVotingClosed(true);
-            toast({ title: "Votação Encerrada", description: "Todos os jogadores escalados já votaram!" });
+        if (scaledPlayerUsers.length > 0) {
+            const haveAllVoted = scaledPlayerUsers.every(user => bestElevenSaved[user.id]);
+            if (haveAllVoted) {
+                setIsBestElevenVotingClosed(true);
+                toast({ title: "Votação Encerrada", description: "Todos os jogadores escalados já votaram!" });
+            }
         }
 
     }, [bestElevenSaved, allScaledPlayerIds, currentLeague.players, currentLeague.users, isVotingReleased, isBestElevenVotingClosed, toast]);
@@ -701,7 +707,7 @@ export default function Home() {
                   userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
                   allVotes={bestElevenVotes}
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
-                  canEdit={canEditLineup}
+                  canManageVoting={canManageVoting}
                   isVotingReleased={isVotingReleased}
                   isVotingClosed={isBestElevenVotingClosed}
                   onReleaseVoting={handleReleaseVoting}
