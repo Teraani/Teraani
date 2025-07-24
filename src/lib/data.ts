@@ -87,7 +87,7 @@ interface AppData {
 }
 
 // This is now the initial state for one default league.
-const defaultLeagueData: League = {
+export const defaultLeagueData: League = {
     id: 'defaultLeague',
     name: 'Liga Principal Amistosos FC',
     adminId: 'user27',

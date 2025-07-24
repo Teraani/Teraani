@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User, Ranking, GoalieRanking, Game, League } from '@/lib/data';
-import { initialData } from '@/lib/data';
+import { initialData, defaultLeagueData } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
@@ -249,7 +249,7 @@ export default function Home() {
           role: 'admin' // Ensure the creator is the admin of this league
         }
       },
-      players: {},
+      players: defaultLeagueData.players, // Start with default players
       editorOfTheRound: null,
       scoutEditor: null,
       paymentEditor: null,
