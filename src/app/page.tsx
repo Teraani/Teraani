@@ -579,16 +579,12 @@ export default function Home() {
             toast({ title: "Votação Encerrada", description: "O prazo para a votação da Seleção da Rodada terminou." });
             return;
         }
-
-        const scaledPlayerUsers = allScaledPlayerIds
-          .map(pId => {
-              const player = currentLeague.players[pId];
-              if (!player) return null;
-              // Match user by finding if player's first name is in the user's name
-              const user = Object.values(currentLeague.users).find(u => u.name.toLowerCase().includes(player.name.split(' ')[0].toLowerCase()));
-              return user;
-          }).filter(Boolean) as User[];
         
+        // Find users who were scaled in the match
+        const scaledPlayerUsers = Object.values(currentLeague.users).filter(user => 
+            user.playerId && allScaledPlayerIds.includes(user.playerId)
+        );
+
         if (scaledPlayerUsers.length > 0) {
             const haveAllVoted = scaledPlayerUsers.every(user => bestElevenSaved[user.id]);
             if (haveAllVoted) {
@@ -597,7 +593,7 @@ export default function Home() {
             }
         }
 
-    }, [bestElevenSaved, allScaledPlayerIds, currentLeague.players, currentLeague.users, isVotingReleased, isBestElevenVotingClosed, toast]);
+    }, [bestElevenSaved, allScaledPlayerIds, currentLeague.users, isVotingReleased, isBestElevenVotingClosed, toast]);
 
 
   const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection' && currentView !== 'league-selection';
