@@ -107,28 +107,28 @@ const getLineupSize = (modality: Modality | null) => {
 }
 
 
-const PlayerSelectionModal = ({ players, onSelectPlayer, currentUserPlayerId, lineup }: { players: Record<string, Player>, onSelectPlayer: (playerId: string) => void, currentUserPlayerId: string | null, lineup: (BestElevenVote | null)[] }) => {
+const PlayerSelectionModal = ({ players, onSelectPlayer, lineup, allScaledPlayerIds }: { players: Record<string, Player>, onSelectPlayer: (playerId: string) => void, lineup: (BestElevenVote | null)[], allScaledPlayerIds: string[] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const lineupPlayerIds = new Set(lineup.filter(Boolean).map(vote => vote!.playerId));
+  const scaledPlayerIdsSet = new Set(allScaledPlayerIds);
 
   const filteredPlayers = useMemo(() => {
     return Object.entries(players)
       .map(([id, p]) => ({ ...p, id }))
       .filter(p => 
-        p.id !== currentUserPlayerId &&
+        scaledPlayerIdsSet.has(p.id) &&
         !lineupPlayerIds.has(p.id) &&
         p.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
-      .sort((a,b) => b.value - a.value)
-      .slice(0, 50); 
-  }, [searchTerm, players, currentUserPlayerId, lineupPlayerIds]);
+      .sort((a,b) => b.value - a.value);
+  }, [searchTerm, players, lineupPlayerIds, scaledPlayerIdsSet]);
 
   return (
     <DialogContent className="h-[90vh] flex flex-col">
        <DialogHeader>
         <DialogTitle>Selecionar Jogador</DialogTitle>
         <DialogDescription>
-          Escolha um jogador para adicionar à sua seleção da rodada.
+          Escolha um jogador que participou da partida para adicionar à sua seleção.
         </DialogDescription>
       </DialogHeader>
        <div className="relative">
@@ -153,7 +153,7 @@ const PlayerSelectionModal = ({ players, onSelectPlayer, currentUserPlayerId, li
                   <p className="text-sm text-muted-foreground">{player.pos}</p>
               </div>
             </div>
-          )) : <p className="text-center text-muted-foreground py-4">Nenhum jogador encontrado.</p>}
+          )) : <p className="text-center text-muted-foreground py-4">Nenhum jogador encontrado ou todos já foram adicionados.</p>}
         </div>
       </ScrollArea>
     </DialogContent>
@@ -280,19 +280,12 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     }, [isVotingClosed, allVotes, players, formation, modality, lineupSize]);
 
 
-    const currentUserPlayerId = useMemo(() => {
-      if (!currentUser) return null;
-      const userFirstName = currentUser.name.split(' ')[0].toLowerCase();
-      const playerEntry = Object.entries(players).find(([id, p]) => p.name.toLowerCase().includes(userFirstName));
-      return playerEntry ? playerEntry[0] : null;
-    }, [currentUser, players]);
-
     const isVotingActive = votingStatus.isOpen && isVotingReleased && !isVotingClosed;
 
     const handleAddPlayerClick = (index: number) => {
       if (!isVotingActive || isSaved) {
         let description = "Não é mais possível alterar a seleção.";
-        if (!isVotingReleased) description = "Aguarde o editor da rodada liberar a votação.";
+        if (!isVotingReleased) description = "Aguarde o administrador da liga liberar a votação.";
         else if (isVotingClosed) description = "A votação já foi encerrada.";
         else if (!votingStatus.isOpen) description = "O prazo para votação encerrou.";
         
@@ -438,8 +431,8 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         <PlayerSelectionModal 
             players={players}
             onSelectPlayer={handleSelectPlayerForSlot}
-            currentUserPlayerId={currentUserPlayerId}
             lineup={lineup}
+            allScaledPlayerIds={allScaledPlayerIds}
         />
       </Dialog>
       
@@ -613,3 +606,5 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     </div>
   );
 }
+
+    
