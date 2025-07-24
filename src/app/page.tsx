@@ -23,12 +23,13 @@ import type { LiveEvent } from '@/components/views/live-view';
 import PaymentsView from '@/components/views/payments-view';
 import { cn } from '@/lib/utils';
 import ModalitySelectionView from '@/components/views/modality-selection-view';
+import LeagueSelectionView from '@/components/views/league-selection-view';
 import BestElevenView from '@/components/views/best-eleven-view';
 import type { Vote } from '@/components/views/best-eleven-view';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export type View = 'welcome' | 'register' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
+export type View = 'welcome' | 'register' | 'league-selection' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
 export type Modality = 'campo' | 'society' | 'futsal';
 
@@ -177,10 +178,12 @@ export default function Home() {
     }
     setLoggedInUserId(userId);
     
-    if (currentLeague && !currentLeague.modality) {
-      navigateTo('modality-selection');
-    } else {
+    // This logic is simplified. In a real app, you'd check if the user belongs to ANY league.
+    // For this prototype, we'll assume if they log in via the main league, they might be new.
+    if (userId === 'user27' || currentLeagueId !== 'defaultLeague') {
       navigateTo('dashboard');
+    } else {
+       navigateTo('league-selection');
     }
 
     toast({
@@ -190,16 +193,83 @@ export default function Home() {
   };
 
   const handleRegistrationSuccess = () => {
-    // For now, just log in the default user (Admin) after "Google Sign-In"
-    const firstAdmin = Object.values(currentLeague?.users || {}).find(u => u.role === 'admin');
-    setLoggedInUserId(firstAdmin?.id || 'user27');
+    // For this prototype, we create a temporary user and navigate to league selection
+    const tempUserId = `newUser_${Date.now()}`;
+    const tempUser: User = {
+      id: tempUserId,
+      name: "Novo Jogador",
+      email: "novo@jogador.com",
+      teamName: "Time",
+      partialScore: 0,
+      totalScore: 0,
+      valuation: 100,
+      lineup: [],
+      reserves: [],
+      role: 'admin', // The creator of a league becomes its admin
+      paymentDueDate: new Date().toISOString().split('T')[0],
+    };
 
-    if (currentLeague && !currentLeague.modality) {
-      navigateTo('modality-selection');
-    } else {
-      navigateTo('dashboard');
-    }
+    // We don't add them to a league yet, just set them as the logged-in user
+    setLoggedInUserId(tempUserId);
+
+    // This is a temporary solution to make the user available without adding to a league
+    // In a real app, this would be handled differently (e.g., a separate user table)
+    setAppData(prev => ({
+        ...prev,
+        leagues: {
+            ...prev.leagues,
+            defaultLeague: {
+                ...prev.leagues.defaultLeague,
+                users: {
+                    ...prev.leagues.defaultLeague.users,
+                    [tempUserId]: tempUser
+                }
+            }
+        }
+    }));
+    
+    navigateTo('league-selection');
   }
+
+  const handleCreateLeague = (leagueName: string) => {
+    if (!currentUser) {
+      toast({ title: "Erro", description: "Nenhum usuário logado para criar a liga.", variant: "destructive" });
+      return;
+    }
+
+    const newLeagueId = `league_${Date.now()}`;
+    const newLeague: League = {
+      id: newLeagueId,
+      name: leagueName,
+      adminId: currentUser.id,
+      modality: null,
+      users: {
+        [currentUser.id]: {
+          ...currentUser,
+          role: 'admin' // Ensure the creator is the admin of this league
+        }
+      },
+      players: {},
+      editorOfTheRound: null,
+      scoutEditor: null,
+      paymentEditor: null,
+      scalersRanking: {},
+      goalieRanking: {},
+    };
+
+    setAppData(prev => ({
+      ...prev,
+      leagues: {
+        ...prev.leagues,
+        [newLeagueId]: newLeague,
+      }
+    }));
+    
+    setCurrentLeagueId(newLeagueId);
+    navigateTo('modality-selection');
+    toast({ title: "Liga Criada!", description: `Bem-vindo à ${leagueName}!` });
+  };
+
 
   const handleModalitySelect = (modality: Modality) => {
     updateCurrentLeague(league => ({ ...league, modality }));
@@ -523,7 +593,7 @@ export default function Home() {
     }, [bestElevenSaved, allScaledPlayerIds, currentLeague.players, currentLeague.users, isVotingReleased, isBestElevenVotingClosed, toast]);
 
 
-  const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection';
+  const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection' && currentView !== 'league-selection';
 
   const renderView = () => {
     if (!userForViews && showBottomNav) {
@@ -535,6 +605,8 @@ export default function Home() {
         return <WelcomeView onEnter={() => navigateTo('register')} />;
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
+      case 'league-selection':
+        return <LeagueSelectionView onCreateLeague={handleCreateLeague} />;
       case 'modality-selection':
         return <ModalitySelectionView 
                   onModalitySelect={handleModalitySelect} 
