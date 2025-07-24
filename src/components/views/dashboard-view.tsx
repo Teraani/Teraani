@@ -3,11 +3,11 @@
 "use client";
 
 import type { View } from '@/app/page';
-import type { Player, User } from '@/lib/data';
+import type { Player, User, League } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail, Landmark } from 'lucide-react';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -34,6 +34,9 @@ interface DashboardViewProps {
   onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void;
   onPlayerSelect: (playerId: string) => void;
   onAvatarChange: (userId: string, image: string) => void;
+  leagues: Record<string, League>;
+  currentLeagueId: string;
+  onLeagueChange: (leagueId: string) => void;
 }
 
 function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void }) {
@@ -221,7 +224,7 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, onAvatarChange }: DashboardViewProps) {
+export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, onAvatarChange, leagues, currentLeagueId, onLeagueChange }: DashboardViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const sortedUsers = useMemo(() => {
     return Object.values(allUsers)
@@ -253,7 +256,23 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-              {user.role === 'admin' && (
+            <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                    <Landmark className="mr-2 h-4 w-4" />
+                    <span>Trocar de Liga</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                    {Object.values(leagues).map(league => (
+                        <DropdownMenuItem key={league.id} onClick={() => onLeagueChange(league.id)}>
+                            {league.name}
+                            {currentLeagueId === league.id && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuItem>
+                    ))}
+                    </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+            </DropdownMenuSub>
+            {user.role === 'admin' && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
                     <Users className="mr-2 h-4 w-4" />
@@ -301,7 +320,7 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <h1 className="text-xl font-bold text-foreground">Amistosos FC</h1>
+        <h1 className="text-xl font-bold text-foreground">{leagues[currentLeagueId].name}</h1>
 
         <div className="w-10 h-10" />
       </header>

@@ -87,6 +87,9 @@ interface AppData {
 
 // This is now the initial state for one default league.
 const defaultLeagueData = {
+    id: 'defaultLeague',
+    name: 'Liga Principal Amistosos FC',
+    adminId: 'user27',
     users: {
         'user1': {
             id: 'user1',
@@ -188,13 +191,55 @@ const defaultLeagueData = {
     }
 };
 
+const testLeagueData: League = {
+    id: 'testLeague',
+    name: 'Liga de Teste',
+    adminId: 'test_user_1',
+    users: {
+        'test_user_1': {
+            id: 'test_user_1',
+            name: 'Admin da Liga',
+            email: 'admin_test@exemplo.com',
+            teamName: "Teste FC",
+            partialScore: 10,
+            totalScore: 100,
+            valuation: 50,
+            lineup: [],
+            reserves: [],
+            role: 'admin',
+            avatar: 'https://placehold.co/128x128.png',
+            paymentDueDate: '2025-09-15',
+        },
+        'test_user_2': {
+            id: 'test_user_2',
+            name: 'Jogador de Teste',
+            email: 'player_test@exemplo.com',
+            teamName: "Amigos do Teste",
+            partialScore: 5,
+            totalScore: 50,
+            valuation: 40,
+            lineup: [],
+            reserves: [],
+            role: 'player',
+            avatar: 'https://placehold.co/128x128.png',
+            paymentDueDate: '2025-09-20',
+        },
+    },
+    players: {
+      'test_p1': { name: 'Atacante Teste', team: 'AVA', pos: 'ATA', value: 10, points: 15, last_val: 1, games: 2, img: 'https://placehold.co/60x60' },
+      'test_p2': { name: 'Goleiro Teste', team: 'BOT', pos: 'GOL', value: 8, points: 12, last_val: -0.5, games: 2, img: 'https://placehold.co/60x60' },
+    },
+    editorOfTheRound: null,
+    scoutEditor: null,
+    paymentEditor: null,
+    scalersRanking: {},
+    goalieRanking: {},
+};
+
+
 export const initialData: AppData = {
     leagues: {
-        'defaultLeague': {
-            id: 'defaultLeague',
-            name: 'Liga Principal Amistosos FC',
-            adminId: 'user27',
-            ...defaultLeagueData
-        }
+        'defaultLeague': defaultLeagueData,
+        'testLeague': testLeagueData,
     }
 }

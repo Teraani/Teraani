@@ -113,6 +113,27 @@ export default function Home() {
       }
     }));
   };
+  
+  const handleLeagueChange = (newLeagueId: string) => {
+    const newLeague = appData.leagues[newLeagueId];
+    if (!newLeague) return;
+
+    setCurrentLeagueId(newLeagueId);
+    
+    // Reset user and dependent states
+    const firstUserId = Object.keys(newLeague.users)[0] || null;
+    setLoggedInUserId(firstUserId);
+    setLiveEvents([]);
+    setAllGamesData({});
+    setBestElevenVotes({});
+    setBestElevenSaved({});
+    setLineupsSaved(false);
+    
+    toast({
+        title: `Liga Alterada: ${newLeague.name}`,
+    });
+  };
+
 
   const handleAvatarChange = (userId: string, image: string) => {
     updateCurrentLeague(league => ({
@@ -163,7 +184,8 @@ export default function Home() {
 
   const handleRegistrationSuccess = () => {
     // For now, just log in the default user (Admin) after "Google Sign-In"
-    setLoggedInUserId('user27');
+    const firstAdmin = Object.values(currentLeague?.users || {}).find(u => u.role === 'admin');
+    setLoggedInUserId(firstAdmin?.id || 'user27');
     navigateTo('modality-selection');
   }
 
@@ -504,7 +526,7 @@ export default function Home() {
       case 'modality-selection':
         return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
       case 'lineup':
         return <LineupView 
                  players={currentLeague.players} 
@@ -526,7 +548,7 @@ export default function Home() {
                  modality={selectedModality}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
       case 'market':
         return <MarketView 
                  players={currentLeague.players} 
@@ -600,7 +622,7 @@ export default function Home() {
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
     }
   };
 
