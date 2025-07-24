@@ -131,9 +131,14 @@ export default function Home() {
     setBestElevenSaved({});
     setLineupsSaved(false);
     
-    toast({
-        title: `Liga Alterada: ${newLeague.name}`,
-    });
+    // Check if the new league has a modality, if not, navigate to selection
+    if (!newLeague.modality) {
+      navigateTo('modality-selection');
+    } else {
+        toast({
+            title: `Liga Alterada: ${newLeague.name}`,
+        });
+    }
   };
 
 
@@ -180,7 +185,7 @@ export default function Home() {
     
     // This logic is simplified. In a real app, you'd check if the user belongs to ANY league.
     // For this prototype, we'll assume if they log in via the main league, they might be new.
-    if (userId === 'user27' || currentLeagueId !== 'defaultLeague') {
+    if (user.role === 'admin' || currentLeagueId !== 'defaultLeague') {
       navigateTo('dashboard');
     } else {
        navigateTo('league-selection');
@@ -697,7 +702,7 @@ export default function Home() {
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
                   canEdit={canEditLineup}
                   isVotingReleased={isVotingReleased}
-                  isVotingClosed={isVotingClosed}
+                  isVotingClosed={isBestElevenVotingClosed}
                   onReleaseVoting={handleReleaseVoting}
                   onCloseVoting={handleCloseVoting}
                   modality={selectedModality}
