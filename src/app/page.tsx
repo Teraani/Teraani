@@ -157,7 +157,7 @@ export default function Home() {
 
   const canEditLineup = useMemo(() => {
     if (!currentUser || !currentLeague) return false;
-    return currentUser.role === 'admin' || currentUser.id === currentLeague.editorOfTheRound;
+    return currentUser.role === 'admin';
   }, [currentUser, currentLeague]);
 
   const canManageVoting = useMemo(() => {
@@ -580,13 +580,14 @@ export default function Home() {
             return;
         }
 
-        // Check 2: All players voted
-        const scaledPlayerUsers = allScaledPlayerIds.map(pId => {
-            const player = currentLeague.players[pId];
-            if (!player) return null;
-            const user = Object.values(currentLeague.users).find(u => u.name.toLowerCase().includes(player.name.split(' ')[0].toLowerCase()));
-            return user;
-        }).filter(Boolean) as User[];
+        const scaledPlayerUsers = allScaledPlayerIds
+          .map(pId => {
+              const player = currentLeague.players[pId];
+              if (!player) return null;
+              // Match user by finding if player's first name is in the user's name
+              const user = Object.values(currentLeague.users).find(u => u.name.toLowerCase().includes(player.name.split(' ')[0].toLowerCase()));
+              return user;
+          }).filter(Boolean) as User[];
         
         if (scaledPlayerUsers.length > 0) {
             const haveAllVoted = scaledPlayerUsers.every(user => bestElevenSaved[user.id]);
