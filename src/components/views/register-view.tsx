@@ -9,19 +9,22 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-const SignalIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const ShieldIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg 
-        viewBox="0 0 100 100" 
-        xmlns="http://www.w3.org/2000/svg" 
-        {...props}
+      viewBox="0 0 100 100" 
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
     >
-        <defs>
-            <rect id="signal-icon-bg" width="100" height="100" rx="20" fill="rgba(255, 255, 255, 0.2)" />
-        </defs>
-        <use href="#signal-icon-bg" />
-        <rect x="30" y="55" width="8" height="15" rx="3" fill="white" />
-        <rect x="46" y="45" width="8" height="25" rx="3" fill="white" />
-        <rect x="62" y="30" width="8" height="40" rx="3" fill="white" />
+        <path 
+            d="M50 10 C 50 10, 90 25, 90 50 C 90 75, 50 90, 50 90 C 50 90, 10 75, 10 50 C 10 25, 50 10, 50 10 Z" 
+            fill="rgba(255, 255, 255, 0.2)"
+            stroke="white"
+            strokeWidth="3"
+        />
+        <path
+            d="M35 40 L 65 40 L 65 60 L 50 70 L 35 60 Z"
+            fill="white"
+        />
     </svg>
 );
 
@@ -64,7 +67,7 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground text-center">
        <main className="flex-1 flex flex-col items-center justify-center">
          <div className="w-20 h-20 mb-4">
-            <SignalIcon className="w-full h-full" />
+            <ShieldIcon className="w-full h-full" />
         </div>
         <h1 className="text-3xl font-bold mb-1">Amistosos FC</h1>
         <p className="max-w-md mb-6">
