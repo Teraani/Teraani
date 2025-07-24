@@ -9,22 +9,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-const ShieldIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const SignalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg 
-      viewBox="0 0 100 100" 
+      viewBox="0 0 24 24" 
+      fill="none" 
       xmlns="http://www.w3.org/2000/svg"
       {...props}
     >
-        <path 
-            d="M50 10 C 50 10, 90 25, 90 50 C 90 75, 50 90, 50 90 C 50 90, 10 75, 10 50 C 10 25, 50 10, 50 10 Z" 
-            fill="rgba(255, 255, 255, 0.2)"
-            stroke="white"
-            strokeWidth="3"
-        />
-        <path
-            d="M35 40 L 65 40 L 65 60 L 50 70 L 35 60 Z"
-            fill="white"
-        />
+        <path d="M7 16V8M12 16V4M17 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
 );
 
@@ -66,8 +58,8 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
   return (
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground text-center">
        <main className="flex-1 flex flex-col items-center justify-center">
-         <div className="w-20 h-20 mb-4">
-            <ShieldIcon className="w-full h-full" />
+         <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+            <SignalIcon className="w-12 h-12 text-white" />
         </div>
         <h1 className="text-3xl font-bold mb-1">Amistosos FC</h1>
         <p className="max-w-md mb-6">
