@@ -51,6 +51,7 @@ interface BestElevenViewProps {
   players: Record<string, Player>;
   currentUser: User;
   allUsers: User[];
+  allScaledPlayerIds: string[];
   onVote: (lineup: (BestElevenVote | null)[]) => void;
   userLineup: (BestElevenVote | null)[] | undefined;
   allVotes: Record<string, (BestElevenVote | null)[]>;
@@ -190,7 +191,7 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, allUsers, onVote, userLineup, allVotes, isSaved, canEdit, isVotingReleased, isVotingClosed, onReleaseVoting, onCloseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, allUsers, allScaledPlayerIds, onVote, userLineup, allVotes, isSaved, canEdit, isVotingReleased, isVotingClosed, onReleaseVoting, onCloseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
     const { toast } = useToast();
     const [votingStatus, setVotingStatus] = useState(getVotingStatus(isVotingClosed));
     const lineupSize = getLineupSize(modality);
