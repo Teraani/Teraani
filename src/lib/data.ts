@@ -1,4 +1,5 @@
 
+
 export interface Player {
   name: string;
   team: string;
@@ -41,18 +42,6 @@ export interface User {
   paymentDueDate: string; // YYYY-MM-DD
 }
 
-export interface Friend {
-  id: string;
-  name: string;
-  teamName: string;
-  score: number | null;
-  playersPlayed: number;
-  totalPlayers: number;
-  isPro: boolean;
-  crest: string;
-  avatar: string;
-}
-
 export interface Ranking {
     id: string;
     name: string;
@@ -79,18 +68,25 @@ export interface Game {
     scorers: { player: string; team: string }[];
 }
 
-interface AppData {
-  users: Record<string, User>;
-  editorOfTheRound: string | null;
-  scoutEditor: string | null;
-  paymentEditor: string | null;
-  players: Record<string, Player>;
-  friends: Friend[];
-  scalersRanking: Record<string, Ranking>;
-  goalieRanking: Record<string, GoalieRanking>;
+export interface League {
+    id: string;
+    name: string;
+    adminId: string;
+    users: Record<string, User>;
+    players: Record<string, Player>;
+    editorOfTheRound: string | null;
+    scoutEditor: string | null;
+    paymentEditor: string | null;
+    scalersRanking: Record<string, Ranking>;
+    goalieRanking: Record<string, GoalieRanking>;
 }
 
-export const data: AppData = {
+interface AppData {
+  leagues: Record<string, League>;
+}
+
+// This is now the initial state for one default league.
+const defaultLeagueData = {
     users: {
         'user1': {
             id: 'user1',
@@ -175,7 +171,6 @@ export const data: AppData = {
       'p32': { name: 'Walex Leek', team: 'CFC', pos: 'GOL', value: 5.0, points: 25, last_val: 0, games: 19, img: 'https://placehold.co/60x60', stats: { wins: 8, losses: 8, draws: 3, goalsFor: 0, goalsAgainst: 44, goalDifference: 0, performance: 42, points: 25, goals: 0, assists: 0, yellowCards: 1, redCards: 0 } },
       'p33': { name: 'Tom', team: 'SAO', pos: 'GOL', value: 5.0, points: 20, last_val: 0, games: 13, img: 'https://placehold.co/60x60', stats: { wins: 6, losses: 5, draws: 2, goalsFor: 0, goalsAgainst: 34, goalDifference: 0, performance: 46, points: 20, goals: 0, assists: 0, yellowCards: 0, redCards: 0 } },
     },
-    friends: [],
     scalersRanking: {
         'scaler1': { id: 'scaler1', name: 'Gustavo', games: 5, resultsDifference: 5, avgDifference: 1.00 },
         'scaler2': { id: 'scaler2', name: 'Rafael', games: 2, resultsDifference: 2, avgDifference: 1.00 },
@@ -193,4 +188,13 @@ export const data: AppData = {
     }
 };
 
-
+export const initialData: AppData = {
+    leagues: {
+        'defaultLeague': {
+            id: 'defaultLeague',
+            name: 'Liga Principal Amistosos FC',
+            adminId: 'user27',
+            ...defaultLeagueData
+        }
+    }
+}

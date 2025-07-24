@@ -4,7 +4,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, PlayerStats, Ranking, GoalieRanking, User } from '@/lib/data';
-import { data } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, Shield, Star, Award, Footprints, Target, Percent, Trophy, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -29,6 +28,8 @@ interface StatisticsViewProps {
   onPlayerSelect: (playerId: string) => void;
   canEditScouts: boolean;
   onSave: (updatedPlayers: Record<string, Player>, updatedScalers?: Record<string, Ranking>, updatedGoalies?: Record<string, GoalieRanking>) => void;
+  scalersRanking: Record<string, Ranking>;
+  goalieRanking: Record<string, GoalieRanking>;
 }
 
 type StatCategory = 'general' | 'scorers' | 'assists' | 'avgGoals' | 'scalers' | 'defense';
@@ -242,7 +243,7 @@ const SimpleRankingList = ({ items, onPlayerSelect, stat, label, type }: {
 };
 
 
-export default function StatisticsView({ players, users, onBack, onPlayerSelect, canEditScouts, onSave: onSaveProp }: StatisticsViewProps) {
+export default function StatisticsView({ players, users, onBack, onPlayerSelect, canEditScouts, onSave: onSaveProp, scalersRanking, goalieRanking }: StatisticsViewProps) {
     const [editablePlayers, setEditablePlayers] = useState<Record<string, Player>>({});
     const [editableScalers, setEditableScalers] = useState<Record<string, Ranking>>({});
     const [editableGoalies, setEditableGoalies] = useState<Record<string, GoalieRanking>>({});
@@ -252,10 +253,10 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
     
     useEffect(() => {
         setEditablePlayers(JSON.parse(JSON.stringify(players)));
-        setEditableScalers(JSON.parse(JSON.stringify(data.scalersRanking)));
-        setEditableGoalies(JSON.parse(JSON.stringify(data.goalieRanking)));
+        setEditableScalers(JSON.parse(JSON.stringify(scalersRanking)));
+        setEditableGoalies(JSON.parse(JSON.stringify(goalieRanking)));
         setHasChanges(false);
-    }, [players]);
+    }, [players, scalersRanking, goalieRanking]);
 
     const handlePlayerChange = (playerId: string, updatedData: Player) => {
         setHasChanges(true);

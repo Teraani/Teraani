@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import type { Friend, Player, User } from '@/lib/data';
+import type { Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, UserPlus, Search, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -31,9 +31,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+interface Friend {
+  id: string;
+  name: string;
+  teamName: string;
+  score: number | null;
+  playersPlayed: number;
+  totalPlayers: number;
+  isPro: boolean;
+  crest: string;
+  avatar: string;
+}
+
 interface FriendsScoreViewProps {
   onBack: () => void;
-  friends: Friend[]; // This will be used as the initial list of all possible players to add
   user: User;
   players: Record<string, Player>;
   allUsers: Record<string, User>;

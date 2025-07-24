@@ -3,8 +3,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Player, User, Ranking, GoalieRanking, Game } from '@/lib/data';
-import { data } from '@/lib/data';
+import type { Player, User, Ranking, GoalieRanking, Game, League } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
@@ -56,8 +56,14 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('welcome');
-  const [appData, setAppData] = useState(data);
+  const [appData, setAppData] = useState(initialData);
   const { toast } = useToast();
+  
+  // New state for multi-league
+  const [currentLeagueId, setCurrentLeagueId] = useState<string>('defaultLeague');
+  const currentLeague: League | undefined = appData.leagues[currentLeagueId];
+
+  // These states are now league-dependent
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const [selectedModality, setSelectedModality] = useState<Modality | null>(null);
   const [allGamesData, setAllGamesData] = useState<Record<string, Game[]>>({});
@@ -73,7 +79,7 @@ export default function Home() {
 
   // Simulate a logged-in user. By default, it's the admin.
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
-  const currentUser = loggedInUserId ? appData.users[loggedInUserId] : null;
+  const currentUser = loggedInUserId && currentLeague ? currentLeague.users[loggedInUserId] : null;
 
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
 
@@ -95,13 +101,26 @@ export default function Home() {
     setTeam2Reserves(Array(reserves).fill(null));
   }, [selectedModality]);
   
-  const handleAvatarChange = (userId: string, image: string) => {
+  // Helper to update league data
+  const updateCurrentLeague = (updater: (league: League) => League) => {
+    if (!currentLeague) return;
+    const newLeague = updater(currentLeague);
     setAppData(prevData => ({
       ...prevData,
+      leagues: {
+        ...prevData.leagues,
+        [currentLeagueId]: newLeague,
+      }
+    }));
+  };
+
+  const handleAvatarChange = (userId: string, image: string) => {
+    updateCurrentLeague(league => ({
+      ...league,
       users: {
-        ...prevData.users,
+        ...league.users,
         [userId]: {
-          ...prevData.users[userId],
+          ...league.users[userId],
           avatar: image,
         }
       }
@@ -109,25 +128,24 @@ export default function Home() {
   };
 
   const canEditLineup = useMemo(() => {
-    if (!currentUser) return false;
-    return currentUser.role === 'admin' || currentUser.id === appData.editorOfTheRound;
-  }, [currentUser, appData.editorOfTheRound]);
+    if (!currentUser || !currentLeague) return false;
+    return currentUser.role === 'admin' || currentUser.id === currentLeague.editorOfTheRound;
+  }, [currentUser, currentLeague]);
   
   const canEditScouts = useMemo(() => {
-    if (!currentUser) return false;
-    return currentUser.role === 'admin' || currentUser.id === appData.scoutEditor;
-  }, [currentUser, appData.scoutEditor]);
+    if (!currentUser || !currentLeague) return false;
+    return currentUser.role === 'admin' || currentUser.id === currentLeague.scoutEditor;
+  }, [currentUser, currentLeague]);
 
   const canEditPayments = useMemo(() => {
-    if (!currentUser) return false;
-    return currentUser.role === 'admin' || currentUser.id === appData.paymentEditor;
-  }, [currentUser, appData.paymentEditor]);
+    if (!currentUser || !currentLeague) return false;
+    return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
+  }, [currentUser, currentLeague]);
   
   const handleLoginSuccess = (userId: string) => {
-    const user = appData.users[userId];
+    const user = currentLeague?.users[userId];
     if (!user) {
       console.error("Login failed: User not found");
-      // Optionally show a toast error
       toast({
         title: "Erro de Login",
         description: "Usuário não encontrado.",
@@ -169,12 +187,12 @@ export default function Home() {
   };
 
   const handlePlayerImageChange = (playerId: string, image: string) => {
-    setAppData(prevData => ({
-      ...prevData,
+    updateCurrentLeague(league => ({
+      ...league,
       players: {
-        ...prevData.players,
+        ...league.players,
         [playerId]: {
-          ...prevData.players[playerId],
+          ...league.players[playerId],
           img: image,
         }
       }
@@ -221,32 +239,23 @@ export default function Home() {
   }
   
   const handleSetEditor = (userId: string | null) => {
-    setAppData(prevData => ({
-        ...prevData,
-        editorOfTheRound: userId,
-    }));
+    updateCurrentLeague(league => ({ ...league, editorOfTheRound: userId }));
   };
 
   const handleSetScoutEditor = (userId: string | null) => {
-    setAppData(prevData => ({
-        ...prevData,
-        scoutEditor: userId,
-    }));
+    updateCurrentLeague(league => ({ ...league, scoutEditor: userId }));
   };
   
   const handleSetPaymentEditor = (userId: string | null) => {
-    setAppData(prevData => ({
-        ...prevData,
-        paymentEditor: userId,
-    }));
+    updateCurrentLeague(league => ({ ...league, paymentEditor: userId }));
   };
 
   const handleUpdateStats = (updatedPlayers: Record<string, Player>, updatedScalers?: Record<string, Ranking>, updatedGoalies?: Record<string, GoalieRanking>) => {
-    setAppData(prevData => ({
-      ...prevData,
-      players: updatedPlayers,
-      ...(updatedScalers && { scalersRanking: updatedScalers }),
-      ...(updatedGoalies && { goalieRanking: updatedGoalies }),
+    updateCurrentLeague(league => ({
+        ...league,
+        players: updatedPlayers,
+        ...(updatedScalers && { scalersRanking: updatedScalers }),
+        ...(updatedGoalies && { goalieRanking: updatedGoalies }),
     }));
     toast({
       title: "Estatísticas Salvas!",
@@ -255,10 +264,7 @@ export default function Home() {
   };
 
   const handleUpdateUserPayments = (updatedUsers: Record<string, User>) => {
-    setAppData(prevData => ({
-      ...prevData,
-      users: updatedUsers
-    }));
+    updateCurrentLeague(league => ({...league, users: updatedUsers }));
     toast({
       title: "Pagamentos Salvos!",
       description: "As datas de vencimento foram atualizadas.",
@@ -321,17 +327,17 @@ export default function Home() {
 };
 
   const handleAddPlayerToMarket = (newPlayer: Omit<Player, 'last_val' | 'games'>) => {
-    setAppData(prevData => {
-      const newPlayerId = `p${Object.keys(prevData.players).length + 1}`;
+    updateCurrentLeague(league => {
+      const newPlayerId = `p${Object.keys(league.players).length + 1}`;
       const fullNewPlayer: Player = {
         ...newPlayer,
         last_val: 0,
         games: 0,
       }
       return {
-        ...prevData,
+        ...league,
         players: {
-          ...prevData.players,
+          ...league.players,
           [newPlayerId]: fullNewPlayer,
         }
       };
@@ -343,12 +349,12 @@ export default function Home() {
   };
 
   const handleRemovePlayerFromMarket = (playerId: string) => {
-    setAppData(prevData => {
-      const newPlayers = { ...prevData.players };
+    updateCurrentLeague(league => {
+      const newPlayers = { ...league.players };
       const playerName = newPlayers[playerId]?.name;
       delete newPlayers[playerId];
       return {
-        ...prevData,
+        ...league,
         players: newPlayers,
       };
     });
@@ -359,18 +365,18 @@ export default function Home() {
   };
 
   const handleUpdatePlayerInMarket = (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => {
-    setAppData(prevData => {
-      if (!prevData.players[playerId]) {
-        return prevData;
+    updateCurrentLeague(league => {
+      if (!league.players[playerId]) {
+        return league;
       }
       const updatedPlayer = {
-        ...prevData.players[playerId],
+        ...league.players[playerId],
         ...updatedData
       };
       return {
-        ...prevData,
+        ...league,
         players: {
-          ...prevData.players,
+          ...league.players,
           [playerId]: updatedPlayer
         }
       };
@@ -421,8 +427,11 @@ export default function Home() {
     });
   };
 
+  if (!currentLeague) {
+    return <div>Carregando liga...</div>; // Or some other loading state
+  }
 
-  const selectedPlayer = selectedPlayerId ? { ...appData.players[selectedPlayerId], id: selectedPlayerId } : null;
+  const selectedPlayer = selectedPlayerId ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
 
   const userForViews = useMemo(() => {
     if (!currentUser) return null;
@@ -443,10 +452,10 @@ export default function Home() {
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
   
   const allPlayersForScout = useMemo(() => {
-    return Object.entries(appData.players)
+    return Object.entries(currentLeague.players)
       .filter(([id, _]) => allScaledPlayerIds.includes(id))
       .map(([id, player]) => ({...player, id}));
-  }, [appData.players, allScaledPlayerIds]);
+  }, [currentLeague.players, allScaledPlayerIds]);
 
   // Logic to check if voting should be closed
     useEffect(() => {
@@ -464,9 +473,9 @@ export default function Home() {
 
         // Check 2: All players voted
         const scaledPlayerUsers = allScaledPlayerIds.map(pId => {
-            const player = appData.players[pId];
+            const player = currentLeague.players[pId];
             if (!player) return null;
-            const user = Object.values(appData.users).find(u => u.name.toLowerCase().includes(player.name.split(' ')[0].toLowerCase()));
+            const user = Object.values(currentLeague.users).find(u => u.name.toLowerCase().includes(player.name.split(' ')[0].toLowerCase()));
             return user;
         }).filter(Boolean) as User[];
         
@@ -477,7 +486,7 @@ export default function Home() {
             toast({ title: "Votação Encerrada", description: "Todos os jogadores escalados já votaram!" });
         }
 
-    }, [bestElevenSaved, allScaledPlayerIds, appData.players, appData.users, isVotingReleased, isBestElevenVotingClosed, toast]);
+    }, [bestElevenSaved, allScaledPlayerIds, currentLeague.players, currentLeague.users, isVotingReleased, isBestElevenVotingClosed, toast]);
 
 
   const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection';
@@ -495,10 +504,10 @@ export default function Home() {
       case 'modality-selection':
         return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
       case 'lineup':
         return <LineupView 
-                 players={appData.players} 
+                 players={currentLeague.players} 
                  onPlayerSelect={selectPlayerForDetails} 
                  onNavigate={navigateTo} 
                  onAddPlayer={handleOpenMarket} 
@@ -517,10 +526,10 @@ export default function Home() {
                  modality={selectedModality}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
       case 'market':
         return <MarketView 
-                 players={appData.players} 
+                 players={currentLeague.players} 
                  onPlayerSelect={addPlayerToLineup} 
                  onBack={goBack} 
                  position={slotToAddPlayer?.position ?? null}
@@ -531,22 +540,22 @@ export default function Home() {
                  onUpdatePlayerInMarket={handleUpdatePlayerInMarket}
                />;
       case 'partial-score':
-        return <PartialScoreView players={appData.players} users={appData.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
+        return <PartialScoreView players={currentLeague.players} users={currentLeague.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'games':
         return <GamesView onBack={goBack} gamesData={allGamesData} />;
       case 'friends-score':
-        return <FriendsScoreView onBack={goBack} user={userForViews!} players={appData.players} allUsers={appData.users} />;
+        return <FriendsScoreView onBack={goBack} user={userForViews!} players={currentLeague.players} allUsers={currentLeague.users} />;
       case 'statistics':
-        return <StatisticsView players={appData.players} users={appData.users} onBack={() => navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} />;
+        return <StatisticsView players={currentLeague.players} users={currentLeague.users} onBack={() => navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} scalersRanking={currentLeague.scalersRanking} goalieRanking={currentLeague.goalieRanking}/>;
       case 'admin':
         return <AdminView 
                   onBack={goBack} 
-                  users={Object.values(appData.users)} 
-                  editorOfTheRound={appData.editorOfTheRound} 
+                  users={Object.values(currentLeague.users)} 
+                  editorOfTheRound={currentLeague.editorOfTheRound} 
                   onSetEditor={handleSetEditor} 
-                  scoutEditor={appData.scoutEditor} 
+                  scoutEditor={currentLeague.scoutEditor} 
                   onSetScoutEditor={handleSetScoutEditor}
-                  paymentEditor={appData.paymentEditor}
+                  paymentEditor={currentLeague.paymentEditor}
                   onSetPaymentEditor={handleSetPaymentEditor}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                   onToggleVoteRevelation={handleToggleVoteRevelation}
@@ -555,7 +564,7 @@ export default function Home() {
         return <LiveView 
                   onBack={goBack} 
                   user={userForViews!} 
-                  players={appData.players} 
+                  players={currentLeague.players} 
                   canEditScouts={canEditScouts}
                   liveEvents={liveEvents}
                   onAddLiveEvent={handleAddLiveEvent}
@@ -568,16 +577,16 @@ export default function Home() {
         return <PaymentsView
                   onBack={goBack}
                   currentUser={currentUser!}
-                  users={appData.users}
+                  users={currentLeague.users}
                   canEdit={canEditPayments && !isPersonalPaymentsView}
                   onSave={handleUpdateUserPayments}
                 />;
       case 'best-eleven':
         return <BestElevenView
                   onBack={goBack}
-                  players={appData.players}
+                  players={currentLeague.players}
                   currentUser={currentUser!}
-                  allUsers={Object.values(appData.users)}
+                  allUsers={Object.values(currentLeague.users)}
                   onVote={handleBestElevenVote}
                   userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
                   allVotes={bestElevenVotes}
@@ -591,7 +600,7 @@ export default function Home() {
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={appData.users} onUserSelect={handleLoginSuccess} players={appData.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} />;
     }
   };
 
