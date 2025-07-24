@@ -39,7 +39,7 @@ import type { BestElevenVote, Modality } from '@/app/page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '@/lib/utils';
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '3-2' | '2-3';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-3' | '3-2';
 
 export interface Vote {
   playerId: string;
@@ -99,7 +99,7 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
 const getLineupSize = (modality: Modality | null) => {
     switch (modality) {
         case 'society': return 7;
-        case 'futsal': return 6;
+        case 'futsal': return 5;
         case 'campo':
         default: return 11;
     }
@@ -266,7 +266,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         } else {
              if (lineupSize === 11) [defCount, midCount, atkCount] = [4, 3, 3];
              if (lineupSize === 7) [defCount, midCount, atkCount] = [3, 2, 1];
-             if (lineupSize === 6) [defCount, atkCount] = [2, 3];
+             if (lineupSize === 5) [defCount, atkCount] = [2, 2];
         }
 
         const topAttackers = getTopPlayersForPosition(['ATA'], atkCount);
@@ -362,7 +362,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
             // Fallback for default or incorrect formation mapping
             if (lineupSize === 11) [parsedDef, parsedMid, parsedAtk] = [4, 3, 3];
             if (lineupSize === 7) [parsedDef, parsedMid, parsedAtk] = [3, 2, 1];
-            if (lineupSize === 6) [parsedDef, parsedAtk] = [2, 3];
+            if (lineupSize === 5) [parsedDef, parsedAtk] = [2, 2];
         }
 
         let playerIndex = 0;

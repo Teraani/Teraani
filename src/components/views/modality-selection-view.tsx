@@ -11,6 +11,7 @@ import type { Modality } from '@/app/page';
 interface ModalitySelectionViewProps {
   onModalitySelect: (modality: Modality) => void;
   selectedModality: Modality | null;
+  isLeagueAdmin: boolean;
 }
 
 const modalities: { name: string; players: string; type: Modality; description: string; }[] = [
@@ -28,13 +29,13 @@ const modalities: { name: string; players: string; type: Modality; description: 
   },
   {
     name: 'Futsal',
-    players: '6 jogadores',
+    players: '5 jogadores',
     type: 'futsal',
     description: 'Técnica e habilidade na quadra.'
   },
 ];
 
-export default function ModalitySelectionView({ onModalitySelect, selectedModality }: ModalitySelectionViewProps) {
+export default function ModalitySelectionView({ onModalitySelect, selectedModality, isLeagueAdmin }: ModalitySelectionViewProps) {
 
   const handleSelect = (modalityType: Modality) => {
     onModalitySelect(modalityType);
@@ -43,11 +44,11 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
   return (
     <div className="flex flex-col min-h-screen bg-background p-6">
       <header className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Escolha a Modalidade</h1>
+        <h1 className="text-3xl font-bold text-foreground">Escolha a Modalidade da Liga</h1>
         <p className="text-muted-foreground mt-2">
-          {selectedModality 
-            ? "Você selecionou sua modalidade. Para trocar, será necessário o plano PRO."
-            : "Selecione o tipo de jogo que você quer gerenciar."
+          {isLeagueAdmin
+            ? "Como admin da liga, selecione o tipo de jogo para todos os participantes."
+            : "Aguardando o administrador da liga escolher a modalidade."
           }
         </p>
       </header>
@@ -55,7 +56,7 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
       <main className="flex-1 flex flex-col items-center justify-center space-y-6">
         {modalities.map((modality) => {
           const isSelected = selectedModality === modality.type;
-          const isDisabled = selectedModality !== null && !isSelected;
+          const isDisabled = !isLeagueAdmin || (selectedModality !== null && !isSelected);
 
           return (
             <Card
@@ -71,7 +72,7 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>{modality.name}</CardTitle>
-                  {isDisabled && (
+                  {isDisabled && !isSelected && (
                     <Lock className="w-5 h-5 text-muted-foreground" />
                   )}
                    {isSelected && (
@@ -86,18 +87,20 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
                   <span>{modality.players}</span>
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button
-                  className="w-full"
-                  disabled={isDisabled}
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent double event firing
-                    if (!isDisabled) handleSelect(modality.type);
-                  }}
-                >
-                  {isSelected ? 'Continuar' : isDisabled ? 'Bloqueado (PRO)' : 'Selecionar'}
-                </Button>
-              </CardFooter>
+              {isLeagueAdmin && (
+                 <CardFooter>
+                    <Button
+                      className="w-full"
+                      disabled={isDisabled}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent double event firing
+                        if (!isDisabled) handleSelect(modality.type);
+                      }}
+                    >
+                      {isSelected ? 'Confirmado' : 'Confirmar Modalidade'}
+                    </Button>
+                  </CardFooter>
+              )}
             </Card>
           );
         })}
@@ -105,7 +108,7 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
 
        <footer className="text-center text-xs text-muted-foreground mt-8">
             <p>
-                A troca de modalidade estará disponível em breve no plano PRO.
+                A modalidade é definida para toda a liga. Apenas o administrador pode alterá-la.
             </p>
         </footer>
     </div>

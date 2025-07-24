@@ -79,6 +79,7 @@ export interface League {
     paymentEditor: string | null;
     scalersRanking: Record<string, Ranking>;
     goalieRanking: Record<string, GoalieRanking>;
+    modality: 'campo' | 'society' | 'futsal' | null;
 }
 
 interface AppData {
@@ -86,10 +87,11 @@ interface AppData {
 }
 
 // This is now the initial state for one default league.
-const defaultLeagueData = {
+const defaultLeagueData: League = {
     id: 'defaultLeague',
     name: 'Liga Principal Amistosos FC',
     adminId: 'user27',
+    modality: 'campo', // Add default modality
     users: {
         'user1': {
             id: 'user1',
@@ -195,6 +197,7 @@ const testLeagueData: League = {
     id: 'testLeague',
     name: 'Liga de Teste',
     adminId: 'test_user_1',
+    modality: null, // This league hasn't selected a modality yet
     users: {
         'test_user_1': {
             id: 'test_user_1',

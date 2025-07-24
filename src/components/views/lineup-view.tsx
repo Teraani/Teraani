@@ -63,7 +63,7 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
     case 'society':
       return ['3-2-1', '2-3-1'];
     case 'futsal':
-      return ['2-3', '3-2'];
+      return ['2-2', '3-1']; // Common Futsal formations
     case 'campo':
     default:
       return ['4-3-3', '4-4-2', '3-5-2'];
@@ -138,7 +138,7 @@ const TeamDisplay = ({
         // Fallback for default or incorrect formation mapping
         if(lineupPlayers.length === 11) [parsedDef, parsedMid, parsedAtk] = [4,3,3];
         if(lineupPlayers.length === 7) [parsedDef, parsedMid, parsedAtk] = [3,2,1];
-        if(lineupPlayers.length === 6) [parsedDef, parsedAtk] = [2,3];
+        if(lineupPlayers.length === 5) [parsedDef, parsedAtk] = [2,2];
     }
     
     let playerIndex = 0;

@@ -45,7 +45,7 @@ const getTeamSizes = (modality: Modality | null) => {
     case 'society':
       return { lineup: 7, reserves: 4 };
     case 'futsal':
-      return { lineup: 6, reserves: 4 };
+      return { lineup: 5, reserves: 4 };
     case 'campo':
     default:
       return { lineup: 11, reserves: 5 };
@@ -65,7 +65,8 @@ export default function Home() {
 
   // These states are now league-dependent
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
-  const [selectedModality, setSelectedModality] = useState<Modality | null>(null);
+  // Modality is now part of the league data
+  const selectedModality = currentLeague?.modality ?? null;
   const [allGamesData, setAllGamesData] = useState<Record<string, Game[]>>({});
 
   
@@ -175,7 +176,13 @@ export default function Home() {
       return;
     }
     setLoggedInUserId(userId);
-    navigateTo('dashboard');
+    
+    if (currentLeague && !currentLeague.modality) {
+      navigateTo('modality-selection');
+    } else {
+      navigateTo('dashboard');
+    }
+
     toast({
       title: `Bem-vindo, ${user.name}!`,
       description: "Login realizado com sucesso.",
@@ -186,11 +193,16 @@ export default function Home() {
     // For now, just log in the default user (Admin) after "Google Sign-In"
     const firstAdmin = Object.values(currentLeague?.users || {}).find(u => u.role === 'admin');
     setLoggedInUserId(firstAdmin?.id || 'user27');
-    navigateTo('modality-selection');
+
+    if (currentLeague && !currentLeague.modality) {
+      navigateTo('modality-selection');
+    } else {
+      navigateTo('dashboard');
+    }
   }
 
   const handleModalitySelect = (modality: Modality) => {
-    setSelectedModality(modality);
+    updateCurrentLeague(league => ({ ...league, modality }));
     navigateTo('dashboard');
   };
 
@@ -524,7 +536,11 @@ export default function Home() {
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
       case 'modality-selection':
-        return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} />;
+        return <ModalitySelectionView 
+                  onModalitySelect={handleModalitySelect} 
+                  selectedModality={selectedModality}
+                  isLeagueAdmin={currentUser?.role === 'admin'}
+                />;
       case 'dashboard':
         return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
       case 'lineup':
