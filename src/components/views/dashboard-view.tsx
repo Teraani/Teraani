@@ -7,7 +7,7 @@ import type { Player, User } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail } from 'lucide-react';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -287,6 +287,10 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
                 <span>Admin</span>
               </DropdownMenuItem>
             )}
+            <DropdownMenuItem onClick={() => window.location.href = 'mailto:suporte.amistososfc@example.com'}>
+                <Mail className="mr-2 h-4 w-4" />
+                <span>Suporte</span>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onNavigate('welcome')}>
               <LogOut className="mr-2 h-4 w-4" />
