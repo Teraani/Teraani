@@ -583,6 +583,7 @@ export default function Home() {
             return user;
         }).filter(Boolean) as User[];
         
+        // This was the buggy line. If scaledPlayerUsers is empty, it would evaluate to true.
         const haveAllVoted = scaledPlayerUsers.length > 0 && scaledPlayerUsers.every(user => bestElevenSaved[user.id]);
 
         if (haveAllVoted) {
