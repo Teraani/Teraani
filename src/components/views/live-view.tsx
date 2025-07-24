@@ -41,7 +41,6 @@ interface LiveViewProps {
   liveEvents: LiveEvent[];
   onAddLiveEvent: (event: Omit<LiveEvent, 'time'>) => void;
   onFinishMatch: (team1Score: number, team2Score: number) => void;
-  allPlayers: ({id: string} & Player)[];
   team1Lineup: (string | null)[];
   team2Lineup: (string | null)[];
 }
@@ -51,8 +50,8 @@ const teamColors: { [key: string]: string } = {
   'Time 2': 'bg-yellow-400',
 };
 
-const ScoutControlPanel = ({ allPlayers, team1Lineup, team2Lineup, onAddLiveEvent }: { 
-  allPlayers: ({id: string} & Player)[], 
+const ScoutControlPanel = ({ players, team1Lineup, team2Lineup, onAddLiveEvent }: { 
+  players: Record<string, Player>, 
   team1Lineup: (string | null)[], 
   team2Lineup: (string | null)[], 
   onAddLiveEvent: (event: Omit<LiveEvent, 'time'>) => void 
@@ -61,12 +60,20 @@ const ScoutControlPanel = ({ allPlayers, team1Lineup, team2Lineup, onAddLiveEven
   const [selectedEvent, setSelectedEvent] = useState<string | undefined>();
   const [details, setDetails] = useState('');
 
+  const allPlayersInMatch = useMemo(() => {
+    const combinedIds = new Set([...team1Lineup, ...team2Lineup].filter(Boolean));
+    return Object.entries(players)
+      .filter(([id, _]) => combinedIds.has(id))
+      .map(([id, player]) => ({ ...player, id }));
+  }, [players, team1Lineup, team2Lineup]);
+
+
   const handleSubmit = () => {
     if (!selectedPlayerId || !selectedEvent) {
       // Maybe show a toast here
       return;
     }
-    const player = allPlayers.find(p => p.id === selectedPlayerId);
+    const player = allPlayersInMatch.find(p => p.id === selectedPlayerId);
     if (!player) return;
 
     let teamIdentifier = 'Time 1'; // Default
@@ -103,7 +110,7 @@ const ScoutControlPanel = ({ allPlayers, team1Lineup, team2Lineup, onAddLiveEven
         <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
           <SelectTrigger><SelectValue placeholder="Selecione o jogador" /></SelectTrigger>
           <SelectContent>
-            {allPlayers.map(player => (
+            {allPlayersInMatch.map(player => (
               <SelectItem key={player.id} value={player.id}>{player.name}</SelectItem>
             ))}
           </SelectContent>
@@ -134,7 +141,7 @@ const ScoutControlPanel = ({ allPlayers, team1Lineup, team2Lineup, onAddLiveEven
 };
 
 
-export default function LiveView({ onBack, user, players, canEditScouts, liveEvents, onAddLiveEvent, onFinishMatch, allPlayers, team1Lineup, team2Lineup }: LiveViewProps) {
+export default function LiveView({ onBack, user, players, canEditScouts, liveEvents, onAddLiveEvent, onFinishMatch, team1Lineup, team2Lineup }: LiveViewProps) {
     const [team1Score, setTeam1Score] = useState(0);
     const [team2Score, setTeam2Score] = useState(0);
     const [isFinishConfirmOpen, setIsFinishConfirmOpen] = useState(false);
@@ -221,7 +228,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
               <span>{matchDate}</span>
           </div>
 
-          {canEditScouts && <ScoutControlPanel allPlayers={allPlayers} team1Lineup={team1Lineup} team2Lineup={team2Lineup} onAddLiveEvent={onAddLiveEvent} />}
+          {canEditScouts && <ScoutControlPanel players={players} team1Lineup={team1Lineup} team2Lineup={team2Lineup} onAddLiveEvent={onAddLiveEvent} />}
 
           <Card>
               <CardHeader>

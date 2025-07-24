@@ -555,11 +555,6 @@ export default function Home() {
     return Array.from(scaledIds);
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
   
-  const allPlayersForScout = useMemo(() => {
-    return Object.entries(currentLeague.players)
-      .filter(([id, _]) => allScaledPlayerIds.includes(id))
-      .map(([id, player]) => ({...player, id}));
-  }, [currentLeague.players, allScaledPlayerIds]);
 
   // Logic to check if voting should be closed
     useEffect(() => {
@@ -679,7 +674,6 @@ export default function Home() {
                   liveEvents={liveEvents}
                   onAddLiveEvent={handleAddLiveEvent}
                   onFinishMatch={handleFinishMatch}
-                  allPlayers={allPlayersForScout}
                   team1Lineup={team1Lineup}
                   team2Lineup={team2Lineup}
                 />;
@@ -703,7 +697,7 @@ export default function Home() {
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
                   canEdit={canEditLineup}
                   isVotingReleased={isVotingReleased}
-                  isVotingClosed={isBestElevenVotingClosed}
+                  isVotingClosed={isVotingClosed}
                   onReleaseVoting={handleReleaseVoting}
                   onCloseVoting={handleCloseVoting}
                   modality={selectedModality}
