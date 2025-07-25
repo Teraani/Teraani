@@ -80,19 +80,20 @@ function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: Vi
   const isOverdue = daysDiff < 0;
 
   return (
-    <Card className="bg-card mt-4 overflow-hidden">
-        <div className="flex items-center justify-between p-4 border-l-4 border-primary">
-            <div className="flex items-center gap-3">
-                {isOverdue ? <AlertCircle className="w-6 h-6 text-destructive" /> : <CalendarClock className="w-6 h-6 text-primary"/>}
-                <div>
-                    <h4 className="font-bold">Situação da Mensalidade</h4>
-                    <p className="text-sm text-muted-foreground">
-                        {isOverdue ? "Vencida desde" : "Vence em"}: {format(dueDate, 'dd MMMM, yyyy', { locale: ptBR })}
-                    </p>
-                </div>
-            </div>
-            <Button size="sm" onClick={() => onNavigate('payments', { isPersonalPayments: true })}>Ver detalhes</Button>
+    <Card className="bg-card mt-4 overflow-hidden relative">
+      <div className="absolute left-0 top-0 h-full w-1.5 bg-primary" />
+      <div className="flex items-center justify-between p-4 pl-6">
+        <div className="flex items-center gap-3">
+          {isOverdue ? <AlertCircle className="w-6 h-6 text-destructive" /> : <CalendarClock className="w-6 h-6 text-primary" />}
+          <div>
+            <h4 className="font-bold">Situação da Mensalidade</h4>
+            <p className="text-sm text-muted-foreground">
+              {isOverdue ? "Vencida desde" : "Vence em"}: {format(dueDate, 'dd MMMM, yyyy', { locale: ptBR })}
+            </p>
+          </div>
         </div>
+        <Button size="sm" onClick={() => onNavigate('payments', { isPersonalPayments: true })}>Ver detalhes</Button>
+      </div>
     </Card>
   );
 }
