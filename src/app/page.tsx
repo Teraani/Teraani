@@ -214,22 +214,25 @@ export default function Home() {
     if (invitedToLeagueId) {
       const leagueToJoin = appData.leagues[invitedToLeagueId];
       if (leagueToJoin && !leagueToJoin.users[userId]) {
+        // User exists elsewhere, add them to the invited league
+        const updatedLeague = {
+          ...leagueToJoin,
+          users: {
+            ...leagueToJoin.users,
+            [userId]: userObject
+          }
+        };
         setAppData(prev => ({
           ...prev,
           leagues: {
             ...prev.leagues,
-            [invitedToLeagueId]: {
-              ...prev.leagues[invitedToLeagueId],
-              users: {
-                ...prev.leagues[invitedToLeagueId].users,
-                [userId]: userObject!
-              }
-            }
+            [invitedToLeagueId]: updatedLeague
           }
         }));
         setCurrentLeagueId(invitedToLeagueId);
         toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
       } else if (leagueToJoin) {
+        // User already in the invited league
         setCurrentLeagueId(invitedToLeagueId);
       }
       setInvitedToLeagueId(null);
@@ -237,6 +240,7 @@ export default function Home() {
     } else {
       const userLeagues = Object.values(appData.leagues).filter(l => l.users[userId]);
       if(userLeagues.length === 0){
+          // This should ideally not happen if registration is handled correctly
           navigateTo('league-selection');
           return;
       }
@@ -277,26 +281,31 @@ export default function Home() {
     const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
     
     setAppData(prev => {
-        const newLeagues = { ...prev.leagues };
-        let targetLeague = newLeagues[leagueIdToJoin];
-        
-        if (!targetLeague) {
-            targetLeague = newLeagues['defaultLeague'];
-        }
-        
-        newLeagues[targetLeague.id] = {
-            ...targetLeague,
-            users: {
-                ...targetLeague.users,
-                [tempUserId]: tempUser,
-            },
-        };
-        
-        return { ...prev, leagues: newLeagues };
+      const newLeagues = { ...prev.leagues };
+      let targetLeague = newLeagues[leagueIdToJoin];
+      
+      if (!targetLeague) {
+        // Fallback to default league if invite ID is somehow invalid
+        targetLeague = newLeagues['defaultLeague'];
+      }
+      
+      const updatedLeague = {
+        ...targetLeague,
+        users: {
+          ...targetLeague.users,
+          [tempUserId]: tempUser,
+        },
+      };
+      newLeagues[targetLeague.id] = updatedLeague;
+      
+      return { ...prev, leagues: newLeagues };
     });
 
+    // We call login here after setting the state. 
+    // React might batch this, but for this flow it should be sufficient.
     handleLoginSuccess(tempUserId);
   };
+
 
   const handleCreateLeague = (leagueName: string) => {
     if (!currentUser) {
@@ -784,3 +793,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
