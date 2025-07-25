@@ -700,8 +700,8 @@ export default function Home() {
                   canManageVoting={canManageVoting}
                   isVotingReleased={isVotingReleased}
                   isVotingClosed={isVotingClosed}
-                  onReleaseVoting={onReleaseVoting}
-                  onCloseVoting={onCloseVoting}
+                  onReleaseVoting={handleReleaseVoting}
+                  onCloseVoting={handleCloseVoting}
                   modality={selectedModality}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                 />;
