@@ -81,7 +81,7 @@ export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps
               <CardHeader>
                 <CardTitle>Entrar em uma Liga</CardTitle>
                 <CardDescription>Peça o código de convite para o administrador da liga.</CardDescription>
-              </CardHeader>
+              </Header>
               <CardContent className="space-y-4">
                 <Input
                   placeholder="Insira o código de convite"
