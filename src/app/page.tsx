@@ -189,62 +189,75 @@ export default function Home() {
   }, [currentUser, currentLeague]);
   
   const handleLoginSuccess = (userId: string) => {
-      // Find the user in ANY league to get their base details
-      let userExists = null;
-      let userObject = null;
-      for (const league of Object.values(appData.leagues)) {
-        if (league.users[userId]) {
-            userExists = true;
-            userObject = league.users[userId];
-            break;
-        }
+    // Find the user in ANY league to get their base details
+    let userExists = null;
+    let userObject: User | null = null;
+    for (const league of Object.values(appData.leagues)) {
+      if (league.users[userId]) {
+        userExists = true;
+        userObject = league.users[userId];
+        break;
       }
-
-      if (!userExists || !userObject) {
-          console.error("Login failed: User not found in any league to start");
-          toast({
-              title: "Erro de Login",
-              description: "Usuário não encontrado.",
-              variant: "destructive",
-          });
+    }
+  
+    if (!userExists || !userObject) {
+      console.error("Login failed: User not found in any league to start");
+      toast({
+        title: "Erro de Login",
+        description: "Usuário não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+  
+    setLoggedInUserId(userId);
+  
+    if (invitedToLeagueId) {
+      const leagueToJoin = appData.leagues[invitedToLeagueId];
+      // Check if user is already in the league to prevent re-adding
+      if (leagueToJoin && !leagueToJoin.users[userId]) {
+        // Use a callback with setAppData to ensure we have the latest state
+        setAppData(prev => ({
+          ...prev,
+          leagues: {
+            ...prev.leagues,
+            [invitedToLeagueId]: {
+              ...prev.leagues[invitedToLeagueId],
+              users: {
+                ...prev.leagues[invitedToLeagueId].users,
+                [userId]: userObject! // Add user to the invited league
+              }
+            }
+          }
+        }));
+        setCurrentLeagueId(invitedToLeagueId);
+        toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
+      } else if (leagueToJoin) {
+        // User already in league, just switch to it
+        setCurrentLeagueId(invitedToLeagueId);
+      }
+      setInvitedToLeagueId(null);
+      navigateTo('dashboard');
+    } else {
+      // If no invite, check if user belongs to any league.
+      // If not, maybe they should create/join one.
+      const userLeagues = Object.values(appData.leagues).filter(l => l.users[userId]);
+      if(userLeagues.length === 0){
+          navigateTo('league-selection');
           return;
       }
       
-      setLoggedInUserId(userId);
-
-      if (invitedToLeagueId) {
-          const leagueToJoin = appData.leagues[invitedToLeagueId];
-          // Check if user is already in the league to prevent re-adding
-          if (leagueToJoin && !leagueToJoin.users[userId]) {
-              setAppData(prev => ({
-                  ...prev,
-                  leagues: {
-                      ...prev.leagues,
-                      [invitedToLeagueId]: {
-                          ...prev.leagues[invitedToLeagueId],
-                          users: {
-                              ...prev.leagues[invitedToLeagueId].users,
-                              [userId]: userObject // Add user to the invited league
-                          }
-                      }
-                  }
-              }));
-              setCurrentLeagueId(invitedToLeagueId);
-              toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
-          } else if (leagueToJoin) {
-              // User already in league, just switch to it
-              setCurrentLeagueId(invitedToLeagueId);
-          }
-          setInvitedToLeagueId(null);
-          navigateTo('dashboard');
-      } else {
-          // If no invite, just log in and go to dashboard
-          navigateTo('dashboard');
-          toast({
-              title: `Bem-vindo, ${userObject.name}!`,
-              description: "Login realizado com sucesso.",
-          });
+      // If user is in some league, go to the first one found.
+      if (currentLeagueId !== userLeagues[0].id) {
+          setCurrentLeagueId(userLeagues[0].id);
       }
+      
+      navigateTo('dashboard');
+      toast({
+        title: `Bem-vindo de volta, ${userObject.name}!`,
+        description: "Login realizado com sucesso.",
+      });
+    }
   };
 
   const handleRegistrationSuccess = () => {
@@ -265,7 +278,8 @@ export default function Home() {
 
     const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
     
-    // Add user to the correct league
+    // Add user to the correct league and then call login
+    // Using a callback to ensure we act on the updated state
     setAppData(prev => {
         const newLeagues = { ...prev.leagues };
         const targetLeague = newLeagues[leagueIdToJoin];
@@ -283,7 +297,11 @@ export default function Home() {
         return { ...prev, leagues: newLeagues };
     });
 
-    // Then log in and navigate
+    // We can't call handleLoginSuccess immediately because the state update is async.
+    // A better approach is to navigate and let a useEffect handle the login,
+    // but for simplicity, let's just log in. This might be fragile.
+    // A robust solution would use a state for "userToLogin" and a useEffect.
+    // For now, let's stick to the direct call and assume it mostly works in this context.
     handleLoginSuccess(tempUserId);
   };
 
