@@ -192,17 +192,17 @@ export default function Home() {
     const data = newData || appData;
     let userExists = false;
     let userObject: User | null = null;
-    let userLeagues: League[] = [];
-
+    let userLeagues: string[] = [];
+  
     // Find user and their leagues
-    for (const league of Object.values(data.leagues)) {
-      if (league.users[userId]) {
+    for (const leagueId in data.leagues) {
+      if (data.leagues[leagueId].users[userId]) {
         userExists = true;
-        userObject = league.users[userId];
-        userLeagues.push(league);
+        userObject = data.leagues[leagueId].users[userId];
+        userLeagues.push(leagueId);
       }
     }
-
+  
     if (!userExists || !userObject) {
       console.error("Login failed: User not found in any league to start");
       toast({
@@ -212,14 +212,13 @@ export default function Home() {
       });
       return;
     }
-
+  
     setLoggedInUserId(userId);
-
-    // If user was invited to a new league
-    if (invitedToLeagueId) {
+  
+    // If user was invited to a new league, add them and switch
+    if (invitedToLeagueId && !userLeagues.includes(invitedToLeagueId)) {
       const leagueToJoin = data.leagues[invitedToLeagueId];
-      // Check if user is NOT already in the invited league
-      if (leagueToJoin && !leagueToJoin.users[userId]) {
+      if (leagueToJoin) {
         const updatedLeague = {
           ...leagueToJoin,
           users: { ...leagueToJoin.users, [userId]: userObject }
@@ -230,37 +229,30 @@ export default function Home() {
         };
         setAppData(newAppData);
         setCurrentLeagueId(invitedToLeagueId);
-        userLeagues.push(updatedLeague);
+        setInvitedToLeagueId(null);
+        navigateTo('dashboard');
         toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
-      } else if (leagueToJoin) {
-        // User already in the invited league, just switch to it
-        setCurrentLeagueId(invitedToLeagueId);
+        return;
       }
-      setInvitedToLeagueId(null); // Clear the invitation
-      navigateTo('dashboard');
-      return;
     }
     
-    // Standard login flow
-    if (userLeagues.length === 0) {
-      // This case handles brand new users who are not invited to any league
-      navigateTo('league-selection');
-    } else {
-      // Log into the first league the user belongs to
-      const firstLeague = userLeagues[0];
-      if (currentLeagueId !== firstLeague.id) {
-        setCurrentLeagueId(firstLeague.id);
-      }
-      
+    // If user belongs to leagues, go to the first one
+    if (userLeagues.length > 0) {
+      const firstLeagueId = userLeagues[0];
+      const firstLeague = data.leagues[firstLeagueId];
+      setCurrentLeagueId(firstLeagueId);
       if (!firstLeague.modality) {
         navigateTo('modality-selection');
       } else {
         navigateTo('dashboard');
       }
-       toast({
+      toast({
         title: `Bem-vindo de volta, ${userObject.name}!`,
         description: "Login realizado com sucesso.",
       });
+    } else {
+      // If user has no leagues and no invite, go to league selection
+      navigateTo('league-selection');
     }
   };
 
@@ -281,10 +273,10 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // Determine which league to add the user to
-    const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
     let newAppData = { ...appData };
     
+    // Determine which league to add the user to
+    const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
     const targetLeague = newAppData.leagues[leagueIdToJoin];
     
     if (targetLeague) {
@@ -296,9 +288,8 @@ export default function Home() {
         ...newAppData,
         leagues: { ...newAppData.leagues, [leagueIdToJoin]: updatedLeague },
       };
-      setAppData(newAppData);
     } else {
-       // Fallback to default league if invite link is broken for some reason
+       // Fallback for safety, though should not happen with current logic
        const defaultLg = newAppData.leagues['defaultLeague'];
        const updatedLeague = {
         ...defaultLg,
@@ -308,10 +299,9 @@ export default function Home() {
         ...newAppData,
         leagues: { ...newAppData.leagues, ['defaultLeague']: updatedLeague },
       };
-      setAppData(newAppData);
     }
-
-    // Login the new user
+    setAppData(newAppData);
+    // Directly call login with the new user and updated data
     handleLoginSuccess(tempUserId, newAppData);
   };
 
@@ -384,6 +374,9 @@ export default function Home() {
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
       setIsPersonalPaymentsView(options?.isPersonalPayments || false);
+    }
+    if (view === 'register') {
+      setLoggedInUserId(null); // Clear logged-in user when going to register
     }
     setPreviousView(currentView);
     setCurrentView(view);
@@ -643,13 +636,13 @@ export default function Home() {
   const selectedPlayer = selectedPlayerId ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
 
   const userForViews = useMemo(() => {
-    if (!loggedInUserId) {
-        // Find user "Novo Jogador" if it exists, for registration flow
-        for(const league of Object.values(appData.leagues)) {
-            const newUser = Object.values(league.users).find(u => u.name === "Novo Jogador");
-            if(newUser) return newUser;
-        }
-        return null;
+    if (!loggedInUserId && currentView !== 'register' && currentView !== 'welcome') {
+      // Find user "Novo Jogador" if it exists, for registration flow
+      for(const league of Object.values(appData.leagues)) {
+          const newUser = Object.values(league.users).find(u => u.name === "Novo Jogador");
+          if(newUser) return newUser;
+      }
+      return null;
     }
     if (!currentUser) return null;
     return {
@@ -658,7 +651,7 @@ export default function Home() {
       lineup: [],
       reserves: [],
     }
-  }, [currentUser, loggedInUserId, appData.leagues]);
+  }, [currentUser, loggedInUserId, currentView, appData.leagues]);
 
   const allScaledPlayerIds = useMemo(() => {
     const scaledIds = new Set<string>();
@@ -674,7 +667,11 @@ export default function Home() {
 
   const renderView = () => {
     if (!userForViews && showBottomNav) {
-      return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
+      // This is a fallback. If we're on a view that needs a user but don't have one,
+      // something is wrong. Let's redirect to welcome to be safe.
+      // This helps prevent crashes.
+      setCurrentView('welcome');
+      return <WelcomeView onEnter={() => navigateTo('register')} />;
     }
 
     switch (currentView) {
@@ -798,11 +795,7 @@ export default function Home() {
       <main className={cn(showBottomNav && "pb-20")}>
         {renderView()}
       </main>
-      {showBottomNav && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments} />}
+      {showBottomNav && userForViews && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments} />}
     </div>
   );
 }
-
-    
-
-    
