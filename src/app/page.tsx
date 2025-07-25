@@ -203,8 +203,8 @@ export default function Home() {
     }
     
     if (!userExists || !userObject) {
-      // This is expected for a brand new user who hasn't been added to a league yet.
-      // We will handle this by navigating to league selection.
+      // This case should ideally not happen if registration is correct,
+      // but as a fallback, we direct to league selection.
       setLoggedInUserId(userId);
       navigateTo('league-selection');
       return;
@@ -272,24 +272,36 @@ export default function Home() {
     let newAppData = { ...appData };
     
     // Add new user to a league so they exist somewhere.
-    // If invited, add to that league. Otherwise, add to default.
+    // If invited, add to that league. Otherwise, add to a temporary holding state.
     const leagueIdToAddTo = invitedToLeagueId || 'defaultLeague';
-
     const targetLeague = newAppData.leagues[leagueIdToAddTo];
+
     if (targetLeague) {
-      const updatedLeague = {
-        ...targetLeague,
-        users: { ...targetLeague.users, [tempUserId]: tempUser },
-      };
-      newAppData = {
-        ...newAppData,
-        leagues: { ...newAppData.leagues, [leagueIdToAddTo]: updatedLeague },
-      };
-      setAppData(newAppData);
+       // Create a new temporary league for the new user to force league selection
+       const tempLeagueForNewUser: League = {
+         id: `temp_league_${tempUserId}`,
+         name: "Holding League",
+         adminId: tempUserId,
+         modality: null, // Crucially, no modality
+         users: { [tempUserId]: tempUser },
+         players: {},
+         editorOfTheRound: null,
+         scoutEditor: null,
+         paymentEditor: null,
+         scalersRanking: {},
+         goalieRanking: {},
+       };
+
+        newAppData = {
+            ...newAppData,
+            leagues: {
+                ...newAppData.leagues,
+                [tempLeagueForNewUser.id]: tempLeagueForNewUser
+            }
+        };
+        setAppData(newAppData);
+        handleLoginSuccess(tempUserId, newAppData);
     }
-    
-    // Log in the user. The login function will handle navigation.
-    handleLoginSuccess(tempUserId, newAppData);
   };
 
 
@@ -309,8 +321,22 @@ export default function Home() {
     }
 
     if (!creator) {
-      toast({ title: "Erro", description: "Não foi possível encontrar os dados do usuário para criar a liga.", variant: "destructive" });
-      return;
+      // Fallback: If user is somehow not in any league (e.g., temporary holding league was deleted),
+      // we can't create a new league for them. This is an edge case.
+      const tempCreator: User = {
+        id: loggedInUserId,
+        name: "Novo Admin",
+        email: "admin@temp.com",
+        teamName: "Admin FC",
+        partialScore: 0,
+        totalScore: 0,
+        valuation: 100,
+        lineup: [],
+        reserves: [],
+        role: 'admin',
+        paymentDueDate: new Date().toISOString().split('T')[0],
+      };
+      creator = tempCreator;
     }
 
 
