@@ -39,7 +39,7 @@ import type { BestElevenVote, Modality } from '@/app/page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '@/lib/utils';
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-2';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-1';
 
 export interface Vote {
   playerId: string;
@@ -85,7 +85,7 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
     case 'society':
       return ['3-2-1', '2-3-1'];
     case 'futsal':
-      return ['2-2', '3-2'];
+      return ['2-2', '3-1'];
     case 'campo':
     default:
       return ['4-3-3', '4-4-2', '3-5-2'];
@@ -345,7 +345,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         setPlayerActionState(null);
     };
 
-    const lineupToDisplay = isVotingClosed ? finalEleven : lineup;
+    const lineupToDisplay = isVotingClosed ? finalEleven : (userLineup || lineup);
 
     const { attackers, midfielders, defenders, goalkeeper, atkCount, midCount, defCount } = useMemo(() => {
         if (!lineupToDisplay) {
@@ -599,7 +599,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 </Button>
             </div>
             <div className="flex-none">
-                 <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
+                 <Select value={formation} onValueChange={(value: Formation) => setFormation(value as Formation)}>
                     <SelectTrigger className="w-auto bg-muted border-none h-12">
                         <SelectValue />
                     </SelectTrigger>
