@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Trophy, PlusCircle, LogIn } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
-interface LeagueSelectionViewProps {
+interface LeagueEntryViewProps {
   onCreateLeague: (leagueName: string) => void;
 }
 
@@ -23,7 +23,7 @@ const SignalIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-export default function LeagueSelectionView({ onCreateLeague }: LeagueSelectionViewProps) {
+export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps) {
   const [leagueName, setLeagueName] = useState('');
   const [inviteCode, setInviteCode] = useState('');
 
@@ -62,7 +62,7 @@ export default function LeagueSelectionView({ onCreateLeague }: LeagueSelectionV
               <CardHeader>
                 <CardTitle>Crie sua Liga</CardTitle>
                 <CardDescription>Dê um nome para sua nova liga e comece a convidar seus amigos.</CardDescription>
-              </CardHeader>
+              </Header>
               <CardContent className="space-y-4">
                 <Input
                   placeholder="Ex: Liga dos Amigos de Quinta"

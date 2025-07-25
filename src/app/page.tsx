@@ -23,13 +23,14 @@ import type { LiveEvent } from '@/components/views/live-view';
 import PaymentsView from '@/components/views/payments-view';
 import { cn } from '@/lib/utils';
 import ModalitySelectionView from '@/components/views/modality-selection-view';
-import LeagueSelectionView from '@/components/views/league-selection-view';
+import LeagueEntryView from '@/components/views/league-entry-view';
 import BestElevenView from '@/components/views/best-eleven-view';
 import type { Vote } from '@/components/views/best-eleven-view';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import LeaguesView from '@/components/views/leagues-view';
 
-export type View = 'welcome' | 'register' | 'league-selection' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
+export type View = 'welcome' | 'register' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
 export type Modality = 'campo' | 'society' | 'futsal';
 
@@ -152,6 +153,7 @@ export default function Home() {
             title: `Liga Alterada: ${newLeague.name}`,
         });
     }
+    navigateTo('dashboard');
   };
 
 
@@ -243,8 +245,8 @@ export default function Home() {
         });
       }
     } else {
-      // If user exists but has no leagues and no invite, go to league selection.
-      navigateTo('league-selection');
+      // If user exists but has no leagues and no invite, go to league entry.
+      navigateTo('league-entry');
     }
   };
 
@@ -266,14 +268,23 @@ export default function Home() {
     };
 
     // To ensure a new user can create a league, they need to exist *somewhere*.
-    // We'll add them to a temporary holding state in the default league.
+    // We'll add them to a temporary holding state in a temporary league.
     // This state will be cleaned up when they create their own league.
+    const holdingLeagueId = `holding_${tempUserId}`;
+    const holdingLeague: League = {
+      ...defaultLeagueData,
+      id: holdingLeagueId,
+      name: 'Holding League',
+      modality: null, // No modality to force selection
+      users: {
+        [tempUserId]: tempUser
+      },
+      players: {}, // No players needed
+    };
+
     setAppData(prevData => {
       const newAppData = { ...prevData };
-      const defaultLeague = newAppData.leagues.defaultLeague;
-      if (defaultLeague) {
-        defaultLeague.users[tempUserId] = tempUser;
-      }
+      newAppData.leagues[holdingLeagueId] = holdingLeague;
       return newAppData;
     });
 
@@ -413,7 +424,7 @@ export default function Home() {
         if (index >= 0 && index < newLineup.length) {
           newLineup[index] = playerId;
         }
-        return newLineup;
+        return newReserves;
       });
     }
 
@@ -525,6 +536,7 @@ export default function Home() {
         ...newPlayer,
         last_val: 0,
         games: 0,
+        stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 },
       }
       return {
         ...league,
@@ -619,7 +631,7 @@ export default function Home() {
     });
   };
 
-  if (!currentLeague && currentView !== 'welcome' && currentView !== 'register' && currentView !== 'league-selection') {
+  if (!currentLeague && currentView !== 'welcome' && currentView !== 'register' && currentView !== 'league-entry') {
     return <div>Carregando liga...</div>; // Or some other loading state
   }
 
@@ -653,7 +665,7 @@ export default function Home() {
   
 
 
-  const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection' && currentView !== 'league-selection';
+  const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection' && currentView !== 'league-entry';
 
   const renderView = () => {
     if (!userForViews && showBottomNav) {
@@ -669,8 +681,17 @@ export default function Home() {
         return <WelcomeView onEnter={() => navigateTo('register')} />;
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
-      case 'league-selection':
-        return <LeagueSelectionView onCreateLeague={handleCreateLeague} />;
+      case 'league-entry':
+        return <LeagueEntryView onCreateLeague={handleCreateLeague} />;
+      case 'leagues':
+        return <LeaguesView 
+                  onBack={goBack} 
+                  leagues={appData.leagues} 
+                  currentLeagueId={currentLeagueId}
+                  onLeagueChange={handleLeagueChange}
+                  onNavigate={navigateTo}
+                  currentUser={currentUser!}
+                />;
       case 'modality-selection':
         if (!loggedInUserId || !currentLeague) {
            setCurrentView('welcome');

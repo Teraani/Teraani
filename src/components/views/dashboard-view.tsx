@@ -118,13 +118,14 @@ function PlayerSummary({ user, players, onNavigate, onAvatarChange }: { user: Us
     const { totalGames, totalPoints, performancePercentage } = useMemo(() => {
         const userAsPlayer = Object.values(players).find(p => p.name.toLowerCase().includes(user.name.split(' ')[0].toLowerCase()));
         
-        if (!userAsPlayer) {
+        if (!userAsPlayer || !userAsPlayer.stats) {
           return { totalGames: 0, totalPoints: 0, performancePercentage: '0%' };
         }
 
         const totalGames = userAsPlayer.games || 0;
         const totalPoints = userAsPlayer.points || 0;
-        const performance = userAsPlayer.stats?.performance || 0;
+        
+        const performance = totalGames > 0 ? ((totalPoints / (totalGames * 3)) * 100) : 0;
         
         return {
             totalGames,
@@ -256,22 +257,10 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                    <Landmark className="mr-2 h-4 w-4" />
-                    <span>Trocar de Liga</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                    {Object.values(leagues).map(league => (
-                        <DropdownMenuItem key={league.id} onClick={() => onLeagueChange(league.id)}>
-                            {league.name}
-                            {currentLeagueId === league.id && <Check className="ml-auto h-4 w-4" />}
-                        </DropdownMenuItem>
-                    ))}
-                    </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-            </DropdownMenuSub>
+            <DropdownMenuItem onClick={() => onNavigate('leagues')}>
+                <Landmark className="mr-2 h-4 w-4" />
+                <span>Trocar/Gerenciar Ligas</span>
+            </DropdownMenuItem>
             {user.role === 'admin' && (
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger>
