@@ -62,7 +62,7 @@ export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps
               <CardHeader>
                 <CardTitle>Crie sua Liga</CardTitle>
                 <CardDescription>Dê um nome para sua nova liga e comece a convidar seus amigos.</CardDescription>
-              </Header>
+              </CardHeader>
               <CardContent className="space-y-4">
                 <Input
                   placeholder="Ex: Liga dos Amigos de Quinta"
@@ -81,7 +81,7 @@ export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps
               <CardHeader>
                 <CardTitle>Entrar em uma Liga</CardTitle>
                 <CardDescription>Peça o código de convite para o administrador da liga.</CardDescription>
-              </Header>
+              </CardHeader>
               <CardContent className="space-y-4">
                 <Input
                   placeholder="Insira o código de convite"
