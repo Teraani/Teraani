@@ -109,27 +109,37 @@ export default function AdminView({
     const message = `Ei! Use este link para entrar na minha liga no Amistosos FC: ${inviteLink}`;
 
     try {
-        await navigator.clipboard.writeText(message);
-        toast({
-            title: 'Link de Convite Copiado!',
-            description: 'O link foi copiado para sua área de transferência. Compartilhe com seus amigos!',
-        });
+      await navigator.clipboard.writeText(message);
+      toast({
+        title: 'Link de Convite Copiado!',
+        description: 'O link foi copiado para sua área de transferência. Compartilhe com seus amigos!',
+      });
+    } catch (err) {
+      console.error('Falha ao copiar o link:', err);
+      toast({
+        title: 'Erro ao Copiar',
+        description: 'Não foi possível copiar o link. Por favor, tente manualmente.',
+        variant: 'destructive',
+      });
+      return; // Stop if copying failed
+    }
 
-        if (navigator.share) {
-            await navigator.share({
-                title: 'Convite para a Liga Amistosos FC',
-                text: message,
-            });
-        }
-    } catch (error) {
-        console.error('Falha ao usar a API de compartilhamento/copiar:', error);
-        // O toast de sucesso ao copiar ainda fornece um bom feedback, mesmo se o compartilhamento falhar.
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Convite para a Liga Amistosos FC',
+          text: message,
+        });
+      } catch (err) {
+        // Silently fail if user cancels share or API is not supported.
+        // The main action (copying) has already succeeded.
+        console.log('API de compartilhamento não utilizada ou cancelada.', err);
+      }
     }
   };
 
 
   const filteredUsers = useMemo(() => {
-    // Show everyone except the current user
     return users.filter(user => user.id !== currentUser.id && user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [users, searchTerm, currentUser.id]);
 
