@@ -189,7 +189,6 @@ export default function Home() {
   }, [currentUser, currentLeague]);
   
   const handleLoginSuccess = (userId: string) => {
-    // Find the user in ANY league to get their base details
     let userExists = null;
     let userObject: User | null = null;
     for (const league of Object.values(appData.leagues)) {
@@ -214,9 +213,7 @@ export default function Home() {
   
     if (invitedToLeagueId) {
       const leagueToJoin = appData.leagues[invitedToLeagueId];
-      // Check if user is already in the league to prevent re-adding
       if (leagueToJoin && !leagueToJoin.users[userId]) {
-        // Use a callback with setAppData to ensure we have the latest state
         setAppData(prev => ({
           ...prev,
           leagues: {
@@ -225,7 +222,7 @@ export default function Home() {
               ...prev.leagues[invitedToLeagueId],
               users: {
                 ...prev.leagues[invitedToLeagueId].users,
-                [userId]: userObject! // Add user to the invited league
+                [userId]: userObject!
               }
             }
           }
@@ -233,26 +230,27 @@ export default function Home() {
         setCurrentLeagueId(invitedToLeagueId);
         toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
       } else if (leagueToJoin) {
-        // User already in league, just switch to it
         setCurrentLeagueId(invitedToLeagueId);
       }
       setInvitedToLeagueId(null);
       navigateTo('dashboard');
     } else {
-      // If no invite, check if user belongs to any league.
-      // If not, maybe they should create/join one.
       const userLeagues = Object.values(appData.leagues).filter(l => l.users[userId]);
       if(userLeagues.length === 0){
           navigateTo('league-selection');
           return;
       }
       
-      // If user is in some league, go to the first one found.
-      if (currentLeagueId !== userLeagues[0].id) {
-          setCurrentLeagueId(userLeagues[0].id);
+      const firstLeague = userLeagues[0];
+      if (currentLeagueId !== firstLeague.id) {
+          setCurrentLeagueId(firstLeague.id);
       }
       
-      navigateTo('dashboard');
+      if (!firstLeague.modality) {
+        navigateTo('modality-selection');
+      } else {
+        navigateTo('dashboard');
+      }
       toast({
         title: `Bem-vindo de volta, ${userObject.name}!`,
         description: "Login realizado com sucesso.",
@@ -278,39 +276,26 @@ export default function Home() {
 
     const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
     
-    // Add user to the correct league and then call login
-    // We update the state, then immediately call the login function
-    // with the newly created user data.
     setAppData(prev => {
         const newLeagues = { ...prev.leagues };
-        const targetLeague = newLeagues[leagueIdToJoin];
+        let targetLeague = newLeagues[leagueIdToJoin];
         
-        if (targetLeague) {
-            newLeagues[leagueIdToJoin] = {
-                ...targetLeague,
-                users: {
-                    ...targetLeague.users,
-                    [tempUserId]: tempUser,
-                },
-            };
+        if (!targetLeague) {
+            targetLeague = newLeagues['defaultLeague'];
         }
+        
+        newLeagues[targetLeague.id] = {
+            ...targetLeague,
+            users: {
+                ...targetLeague.users,
+                [tempUserId]: tempUser,
+            },
+        };
         
         return { ...prev, leagues: newLeagues };
     });
 
-    // Since state update is async, we can't rely on it for the next step.
-    // Instead of calling handleLoginSuccess, which relies on the updated state,
-    // let's manually set the logged-in user and navigate.
-    setLoggedInUserId(tempUserId);
-    if(invitedToLeagueId) {
-        setCurrentLeagueId(invitedToLeagueId);
-        setInvitedToLeagueId(null);
-    }
-    navigateTo('dashboard');
-    toast({
-        title: `Bem-vindo!`,
-        description: "Sua conta foi criada com sucesso.",
-    });
+    handleLoginSuccess(tempUserId);
   };
 
   const handleCreateLeague = (leagueName: string) => {
