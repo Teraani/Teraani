@@ -188,64 +188,60 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  const handleLoginSuccess = (userId: string, data = appData) => {
+  const handleLoginSuccess = (userId: string) => {
     let userExists = false;
     let userObject: User | null = null;
     let userLeagues: string[] = [];
 
+    let currentAppData = appData;
+
     // Find user and their leagues across all leagues in the app
-    for (const leagueId in data.leagues) {
-        if (data.leagues[leagueId].users[userId]) {
+    for (const leagueId in currentAppData.leagues) {
+        if (currentAppData.leagues[leagueId].users[userId]) {
             userExists = true;
-            userObject = data.leagues[leagueId].users[userId];
+            userObject = currentAppData.leagues[leagueId].users[userId];
             userLeagues.push(leagueId);
         }
     }
     
-    if (!userExists || !userObject) {
-      // This case should ideally not happen if registration is correct,
-      // but as a fallback, we direct to league selection.
-      setLoggedInUserId(userId);
-      navigateTo('league-selection');
-      return;
-    }
-    
-    setLoggedInUserId(userId);
-
     // If user was invited to a new league, add them and switch
     if (invitedToLeagueId && !userLeagues.includes(invitedToLeagueId)) {
-      const leagueToJoin = data.leagues[invitedToLeagueId];
-      if (leagueToJoin) {
+      const leagueToJoin = currentAppData.leagues[invitedToLeagueId];
+      if (leagueToJoin && userObject) {
         const updatedLeague = {
           ...leagueToJoin,
           users: { ...leagueToJoin.users, [userId]: userObject }
         };
         const newAppData = {
-          ...data,
-          leagues: { ...data.leagues, [invitedToLeagueId]: updatedLeague }
+          ...currentAppData,
+          leagues: { ...currentAppData.leagues, [invitedToLeagueId]: updatedLeague }
         };
         setAppData(newAppData);
         setCurrentLeagueId(invitedToLeagueId);
         setInvitedToLeagueId(null); // Clear invite after use
-        navigateTo('dashboard');
-        toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
-        return;
+        userLeagues.push(invitedToLeagueId);
+        currentAppData = newAppData; // update for the next checks
       }
     }
     
+    setLoggedInUserId(userId);
+
     if (userLeagues.length > 0) {
       const firstLeagueId = userLeagues[0];
-      const firstLeague = data.leagues[firstLeagueId];
+      const firstLeague = currentAppData.leagues[firstLeagueId];
       setCurrentLeagueId(firstLeagueId);
+      
       if (!firstLeague.modality) {
         navigateTo('modality-selection');
       } else {
         navigateTo('dashboard');
       }
-      toast({
-        title: `Bem-vindo de volta, ${userObject.name}!`,
-        description: "Login realizado com sucesso.",
-      });
+      if (userObject) {
+        toast({
+          title: `Bem-vindo de volta, ${userObject.name}!`,
+          description: "Login realizado com sucesso.",
+        });
+      }
     } else {
       // If user exists but has no leagues and no invite, go to league selection.
       navigateTo('league-selection');
@@ -269,39 +265,19 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    let newAppData = { ...appData };
-    
-    // Add new user to a league so they exist somewhere.
-    // If invited, add to that league. Otherwise, add to a temporary holding state.
-    const leagueIdToAddTo = invitedToLeagueId || 'defaultLeague';
-    const targetLeague = newAppData.leagues[leagueIdToAddTo];
+    // To ensure a new user can create a league, they need to exist *somewhere*.
+    // We'll add them to a temporary holding state in the default league.
+    // This state will be cleaned up when they create their own league.
+    setAppData(prevData => {
+      const newAppData = { ...prevData };
+      const defaultLeague = newAppData.leagues.defaultLeague;
+      if (defaultLeague) {
+        defaultLeague.users[tempUserId] = tempUser;
+      }
+      return newAppData;
+    });
 
-    if (targetLeague) {
-       // Create a new temporary league for the new user to force league selection
-       const tempLeagueForNewUser: League = {
-         id: `temp_league_${tempUserId}`,
-         name: "Holding League",
-         adminId: tempUserId,
-         modality: null, // Crucially, no modality
-         users: { [tempUserId]: tempUser },
-         players: {},
-         editorOfTheRound: null,
-         scoutEditor: null,
-         paymentEditor: null,
-         scalersRanking: {},
-         goalieRanking: {},
-       };
-
-        newAppData = {
-            ...newAppData,
-            leagues: {
-                ...newAppData.leagues,
-                [tempLeagueForNewUser.id]: tempLeagueForNewUser
-            }
-        };
-        setAppData(newAppData);
-        handleLoginSuccess(tempUserId, newAppData);
-    }
+    handleLoginSuccess(tempUserId);
   };
 
 
@@ -310,7 +286,7 @@ export default function Home() {
         toast({ title: "Erro", description: "Nenhum usuário logado para criar a liga.", variant: "destructive" });
         return;
     }
-
+    
     // Find the logged-in user's data from ANY league to use as the creator
     let creator: User | null = null;
     for (const league of Object.values(appData.leagues)) {
@@ -321,22 +297,8 @@ export default function Home() {
     }
 
     if (!creator) {
-      // Fallback: If user is somehow not in any league (e.g., temporary holding league was deleted),
-      // we can't create a new league for them. This is an edge case.
-      const tempCreator: User = {
-        id: loggedInUserId,
-        name: "Novo Admin",
-        email: "admin@temp.com",
-        teamName: "Admin FC",
-        partialScore: 0,
-        totalScore: 0,
-        valuation: 100,
-        lineup: [],
-        reserves: [],
-        role: 'admin',
-        paymentDueDate: new Date().toISOString().split('T')[0],
-      };
-      creator = tempCreator;
+      toast({ title: "Erro", description: "Não foi possível encontrar os dados do usuário para criar a liga.", variant: "destructive" });
+      return;
     }
 
 
@@ -833,4 +795,3 @@ export default function Home() {
     </div>
   );
 }
-
