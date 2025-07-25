@@ -566,35 +566,6 @@ export default function Home() {
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
   
 
-  // Logic to check if voting should be closed
-    useEffect(() => {
-        if (!isVotingReleased || isBestElevenVotingClosed) return;
-
-        // Check 1: Time-based closure
-        const now = new Date();
-        const day = now.getDay(); // 0 (Sun) - 6 (Sat)
-        const hour = now.getHours();
-        if (day > 4 || (day === 4 && hour >= 0)) {
-            setIsBestElevenVotingClosed(true);
-            toast({ title: "Votação Encerrada", description: "O prazo para a votação da Seleção da Rodada terminou." });
-            return;
-        }
-        
-        // Find users who were scaled in the match
-        const scaledPlayerUsers = Object.values(currentLeague.users).filter(user => 
-            user.playerId && allScaledPlayerIds.includes(user.playerId)
-        );
-
-        if (scaledPlayerUsers.length > 0) {
-            const haveAllVoted = scaledPlayerUsers.every(user => bestElevenSaved[user.id]);
-            if (haveAllVoted) {
-                setIsBestElevenVotingClosed(true);
-                toast({ title: "Votação Encerrada", description: "Todos os jogadores escalados já votaram!" });
-            }
-        }
-
-    }, [bestElevenSaved, allScaledPlayerIds, currentLeague.users, isVotingReleased, isBestElevenVotingClosed, toast]);
-
 
   const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection' && currentView !== 'league-selection';
 
