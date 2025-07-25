@@ -302,6 +302,10 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     };
 
     const handleSelectPlayerForSlot = (playerId: string) => {
+        const player = players[playerId];
+        if (!player) return;
+
+        // Allow admin/voter to vote for themselves
         const isAlreadyInLineup = lineup.some(vote => vote?.playerId === playerId);
         if (isAlreadyInLineup) {
             toast({
@@ -567,7 +571,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 <Clock className="w-5 h-5" />
                 <span>{votingStatus.message}</span>
             </div>
-            {canManageVoting && !isVotingReleased && (
+             {canManageVoting && !isVotingReleased && (
               <Button onClick={onReleaseVoting} className="bg-blue-600 hover:bg-blue-700">
                 <Send className="mr-2 h-4 w-4" />
                 Liberar Votação
@@ -608,3 +612,4 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
 }
 
     
+
