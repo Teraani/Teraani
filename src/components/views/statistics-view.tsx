@@ -35,7 +35,7 @@ interface StatisticsViewProps {
 type StatCategory = 'general' | 'scorers' | 'assists' | 'avgGoals' | 'scalers' | 'defense';
 
 const statCategories: { key: StatCategory; label: string; icon: React.ElementType }[] = [
-  { key: 'general', label: 'Geral', icon: Star },
+  { key: 'general', label: 'Pontuação dos Jogadores', icon: Star },
   { key: 'scorers', label: 'Artilharia', icon: Target },
   { key: 'assists', label: 'Assistências', icon: Footprints },
   { key: 'avgGoals', label: 'Média de Gols', icon: Percent },
