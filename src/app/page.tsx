@@ -76,7 +76,7 @@ export default function Home() {
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
   const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
   const [isVotingReleased, setIsVotingReleased] = useState(false);
-  const [isVotingClosedState, setIsVotingClosedState] = useState(false);
+  const [isVotingClosed, setIsVotingClosed] = useState(false);
   const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
 
 
@@ -591,7 +591,7 @@ export default function Home() {
   };
 
   const handleCloseVoting = () => {
-    setIsVotingClosedState(true);
+    setIsVotingClosed(true);
     toast({
       title: "Votação Encerrada Manualmente",
       description: "O administrador encerrou a votação.",
@@ -641,7 +641,7 @@ export default function Home() {
 
     switch (currentView) {
       case 'welcome':
-        return <WelcomeView onEnter={() => navigateTo('league-selection')} />;
+        return <WelcomeView onEnter={() => navigateTo('register')} />;
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
       case 'league-selection':
@@ -744,7 +744,7 @@ export default function Home() {
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
                   canManageVoting={canManageVoting}
                   isVotingReleased={isVotingReleased}
-                  isVotingClosed={isVotingClosedState}
+                  isVotingClosed={isVotingClosed}
                   onReleaseVoting={handleReleaseVoting}
                   onCloseVoting={handleCloseVoting}
                   modality={selectedModality}
