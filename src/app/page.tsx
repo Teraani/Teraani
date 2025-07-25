@@ -285,7 +285,6 @@ export default function Home() {
       let targetLeague = newLeagues[leagueIdToJoin];
       
       if (!targetLeague) {
-        // Fallback to default league if invite ID is somehow invalid
         targetLeague = newLeagues['defaultLeague'];
       }
       
@@ -301,8 +300,6 @@ export default function Home() {
       return { ...prev, leagues: newLeagues };
     });
 
-    // We call login here after setting the state. 
-    // React might batch this, but for this flow it should be sufficient.
     handleLoginSuccess(tempUserId);
   };
 
@@ -793,5 +790,7 @@ export default function Home() {
     </div>
   );
 }
+
+    
 
     
