@@ -102,10 +102,9 @@ export default function Home() {
     const inviteCode = urlParams.get('invite');
     if (inviteCode && appData.leagues[inviteCode]) {
       setInvitedToLeagueId(inviteCode);
-      // Redirect to registration if not logged in, or directly handle if logged in
-      if (!currentUser) {
-        navigateTo('register');
-      }
+      // If there's an invite code, always go to the registration screen.
+      // The logic inside onRegisterSuccess will handle adding the user to the league.
+      navigateTo('register');
     }
   }, []);
 
@@ -642,7 +641,7 @@ export default function Home() {
 
     switch (currentView) {
       case 'welcome':
-        return <WelcomeView onEnter={() => navigateTo('register')} />;
+        return <WelcomeView onEnter={() => navigateTo('league-selection')} />;
       case 'register':
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
       case 'league-selection':
