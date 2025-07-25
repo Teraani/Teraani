@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 14% 97%;
+    --foreground: 224 71% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 224 71% 4%;
     --primary: 142.1 76.2% 36.3%;
     --primary-foreground: 355.7 100% 97.3%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 98%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 40%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 224 71% 4%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
     --ring: 142.1 76.2% 36.3%;
     --radius: 0.5rem;
     --chart-1: 142.1 76.2% 36.3%;
@@ -65,20 +65,5 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-  .dark body {
-    background-image: linear-gradient(to bottom, rgba(16, 22, 33, 0.9), rgba(16, 22, 33, 0.9)), 
-                      radial-gradient(ellipse at top, #012811, #011408), 
-                      radial-gradient(ellipse at bottom, #011408, #012811);
-    background-size: cover;
-    background-attachment: fixed;
-  }
-  .dark .bg-card {
-      background-color: rgba(26, 33, 46, 0.7);
-      backdrop-filter: blur(2px);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  .dark .bg-background {
-      background-color: transparent;
   }
 }
