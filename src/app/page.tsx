@@ -243,32 +243,37 @@ export default function Home() {
       valuation: 100,
       lineup: [],
       reserves: [],
-      role: 'player', // Default to player, will be admin if they create a league
+      role: 'player',
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    setLoggedInUserId(tempUserId);
-
     if (invitedToLeagueId) {
-        setAppData(prev => ({
-            ...prev,
-            leagues: {
-                ...prev.leagues,
-                [invitedToLeagueId]: {
-                    ...prev.leagues[invitedToLeagueId],
-                    users: {
-                        ...prev.leagues[invitedToLeagueId].users,
-                        [tempUserId]: tempUser
-                    }
-                }
-            }
-        }));
-        setCurrentLeagueId(invitedToLeagueId);
-        toast({ title: "Bem-vindo!", description: `Você foi adicionado à liga ${appData.leagues[invitedToLeagueId].name}.` });
-        navigateTo('dashboard');
+        const leagueToJoin = appData.leagues[invitedToLeagueId];
+        if (leagueToJoin) {
+            setAppData(prev => ({
+                ...prev,
+                leagues: {
+                    ...prev.leagues,
+                    [invitedToLeagueId]: {
+                        ...prev.leagues[invitedToLeagueId],
+                        users: {
+                            ...prev.leagues[invitedToLeagueId].users,
+                            [tempUserId]: tempUser,
+                        },
+                    },
+                },
+            }));
+            setCurrentLeagueId(invitedToLeagueId);
+            setLoggedInUserId(tempUserId);
+            toast({
+                title: 'Bem-vindo!',
+                description: `Você foi adicionado à liga ${leagueToJoin.name}.`,
+            });
+            navigateTo('dashboard');
+        }
         setInvitedToLeagueId(null);
     } else {
-        // This is a temporary solution for non-invited registration
+        // Fallback if no invitation - user is added to default and sent to league selection
         setAppData(prev => ({
             ...prev,
             leagues: {
@@ -277,14 +282,15 @@ export default function Home() {
                     ...prev.leagues.defaultLeague,
                     users: {
                         ...prev.leagues.defaultLeague.users,
-                        [tempUserId]: tempUser
-                    }
-                }
-            }
+                        [tempUserId]: tempUser,
+                    },
+                },
+            },
         }));
+        setLoggedInUserId(tempUserId);
         navigateTo('league-selection');
     }
-  }
+}
 
   const handleCreateLeague = (leagueName: string) => {
     if (!currentUser) {
