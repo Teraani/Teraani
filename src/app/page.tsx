@@ -189,49 +189,58 @@ export default function Home() {
   }, [currentUser, currentLeague]);
   
   const handleLoginSuccess = (userId: string) => {
-    const user = currentLeague?.users[userId];
-    if (!user) {
-      console.error("Login failed: User not found");
-      toast({
-        title: "Erro de Login",
-        description: "Usuário não encontrado.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setLoggedInUserId(userId);
+      let userInDefaultLeague = appData.leagues.defaultLeague?.users[userId];
 
-    if (invitedToLeagueId) {
-        const leagueToJoin = appData.leagues[invitedToLeagueId];
-        if (leagueToJoin && !leagueToJoin.users[userId]) {
-            // Add user to the invited league
-            setAppData(prev => ({
-                ...prev,
-                leagues: {
-                    ...prev.leagues,
-                    [invitedToLeagueId]: {
-                        ...prev.leagues[invitedToLeagueId],
-                        users: {
-                            ...prev.leagues[invitedToLeagueId].users,
-                            [userId]: user
-                        }
-                    }
-                }
-            }));
-            setCurrentLeagueId(invitedToLeagueId);
-            toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
-        }
-        setInvitedToLeagueId(null); // Clear invitation
-    }
-    
-    navigateTo('dashboard');
-    toast({
-      title: `Bem-vindo, ${user.name}!`,
-      description: "Login realizado com sucesso.",
-    });
+      if (!userInDefaultLeague) {
+          console.error("Login failed: User not found in any league to start");
+          toast({
+              title: "Erro de Login",
+              description: "Usuário não encontrado.",
+              variant: "destructive",
+          });
+          return;
+      }
+      
+      setLoggedInUserId(userId);
+
+      if (invitedToLeagueId) {
+          const leagueToJoin = appData.leagues[invitedToLeagueId];
+          // Check if user is already in the league to prevent re-adding
+          if (leagueToJoin && !leagueToJoin.users[userId]) {
+              setAppData(prev => ({
+                  ...prev,
+                  leagues: {
+                      ...prev.leagues,
+                      [invitedToLeagueId]: {
+                          ...prev.leagues[invitedToLeagueId],
+                          users: {
+                              ...prev.leagues[invitedToLeagueId].users,
+                              [userId]: userInDefaultLeague // Add user to the invited league
+                          }
+                      }
+                  }
+              }));
+              setCurrentLeagueId(invitedToLeagueId);
+              toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
+          } else if (leagueToJoin) {
+              // User already in league, just switch to it
+              setCurrentLeagueId(invitedToLeagueId);
+          }
+          setInvitedToLeagueId(null);
+          navigateTo('dashboard');
+      } else {
+          // If no invite, just log in to their default context
+          navigateTo('dashboard');
+          toast({
+              title: `Bem-vindo, ${userInDefaultLeague.name}!`,
+              description: "Login realizado com sucesso.",
+          });
+      }
   };
 
 const handleRegistrationSuccess = () => {
+    // This function will now be simpler. It adds the user to the default league data
+    // and then triggers the login flow, which will handle invitations.
     const tempUserId = `newUser_${Date.now()}`;
     const tempUser: User = {
       id: tempUserId,
@@ -247,35 +256,7 @@ const handleRegistrationSuccess = () => {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    if (invitedToLeagueId) {
-        const leagueToJoin = appData.leagues[invitedToLeagueId];
-        if (leagueToJoin) {
-            setAppData(prev => ({
-                ...prev,
-                leagues: {
-                    ...prev.leagues,
-                    [invitedToLeagueId]: {
-                        ...prev.leagues[invitedToLeagueId],
-                        users: {
-                            ...prev.leagues[invitedToLeagueId].users,
-                            [tempUserId]: tempUser,
-                        },
-                    },
-                },
-            }));
-            setCurrentLeagueId(invitedToLeagueId);
-            setLoggedInUserId(tempUserId);
-            toast({
-                title: 'Bem-vindo!',
-                description: `Você foi adicionado à liga ${leagueToJoin.name}.`,
-            });
-            setInvitedToLeagueId(null);
-            navigateTo('dashboard');
-            return;
-        }
-    }
-
-    // Fallback if no invitation - user is added to default and sent to league selection
+    // Add the new user to the default league's user list
     setAppData(prev => ({
         ...prev,
         leagues: {
@@ -289,8 +270,10 @@ const handleRegistrationSuccess = () => {
             },
         },
     }));
-    setLoggedInUserId(tempUserId);
-    navigateTo('league-selection');
+
+    // Now, call the login function for the new user
+    // The login function contains the logic to handle the invitation
+    handleLoginSuccess(tempUserId);
 }
 
   const handleCreateLeague = (leagueName: string) => {
