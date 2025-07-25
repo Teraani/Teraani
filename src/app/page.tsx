@@ -522,6 +522,7 @@ export default function Home() {
     });
 
     setLiveEvents([]); // Clear events for next match
+    setLineupsSaved(false); // Allow saving new lineups for the next round
     toast({
         title: "Partida Finalizada!",
         description: `O placar de ${team1Score} a ${team2Score} foi salvo nos resultados.`,
