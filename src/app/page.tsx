@@ -75,7 +75,7 @@ export default function Home() {
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
   const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
   const [isVotingReleased, setIsVotingReleased] = useState(false);
-  const [isBestElevenVotingClosed, setIsBestElevenVotingClosed] = useState(false);
+  const [isVotingClosed, setIsVotingClosed] = useState(false);
   const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
 
 
@@ -547,7 +547,7 @@ export default function Home() {
   };
 
   const handleCloseVoting = () => {
-    setIsBestElevenVotingClosed(true);
+    setIsVotingClosed(true);
     toast({
       title: "Votação Encerrada Manualmente",
       description: "O administrador encerrou a votação.",
