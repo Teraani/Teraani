@@ -271,19 +271,21 @@ export default function Home() {
 
     let newAppData = { ...appData };
     
-    if (invitedToLeagueId) {
-      const targetLeague = newAppData.leagues[invitedToLeagueId];
-      if (targetLeague) {
-        const updatedLeague = {
-          ...targetLeague,
-          users: { ...targetLeague.users, [tempUserId]: tempUser },
-        };
-        newAppData = {
-          ...newAppData,
-          leagues: { ...newAppData.leagues, [invitedToLeagueId]: updatedLeague },
-        };
-        setAppData(newAppData);
-      }
+    // Add new user to a league so they exist somewhere.
+    // If invited, add to that league. Otherwise, add to default.
+    const leagueIdToAddTo = invitedToLeagueId || 'defaultLeague';
+
+    const targetLeague = newAppData.leagues[leagueIdToAddTo];
+    if (targetLeague) {
+      const updatedLeague = {
+        ...targetLeague,
+        users: { ...targetLeague.users, [tempUserId]: tempUser },
+      };
+      newAppData = {
+        ...newAppData,
+        leagues: { ...newAppData.leagues, [leagueIdToAddTo]: updatedLeague },
+      };
+      setAppData(newAppData);
     }
     
     // Log in the user. The login function will handle navigation.
@@ -292,10 +294,25 @@ export default function Home() {
 
 
   const handleCreateLeague = (leagueName: string) => {
-    if (!currentUser) {
-      toast({ title: "Erro", description: "Nenhum usuário logado para criar a liga.", variant: "destructive" });
+    if (!loggedInUserId) {
+        toast({ title: "Erro", description: "Nenhum usuário logado para criar a liga.", variant: "destructive" });
+        return;
+    }
+
+    // Find the logged-in user's data from ANY league to use as the creator
+    let creator: User | null = null;
+    for (const league of Object.values(appData.leagues)) {
+        if (league.users[loggedInUserId]) {
+            creator = league.users[loggedInUserId];
+            break;
+        }
+    }
+
+    if (!creator) {
+      toast({ title: "Erro", description: "Não foi possível encontrar os dados do usuário para criar a liga.", variant: "destructive" });
       return;
     }
+
 
     const newLeagueId = `league_${Date.now()}`;
     
@@ -320,11 +337,11 @@ export default function Home() {
     const newLeague: League = {
       id: newLeagueId,
       name: leagueName,
-      adminId: currentUser.id,
+      adminId: creator.id,
       modality: null,
       users: {
-        [currentUser.id]: {
-          ...currentUser,
+        [creator.id]: {
+          ...creator,
           role: 'admin' // Ensure the creator is the admin of this league
         },
         ...testUsers
@@ -667,14 +684,15 @@ export default function Home() {
       case 'league-selection':
         return <LeagueSelectionView onCreateLeague={handleCreateLeague} />;
       case 'modality-selection':
-        if (!userForViews) {
+        if (!loggedInUserId) {
            setCurrentView('welcome');
            return <WelcomeView onEnter={() => navigateTo('register')} />;
         }
+        const creatorUser = userForViews || Object.values(appData.leagues).flatMap(l => Object.values(l.users)).find(u => u.id === loggedInUserId)
         return <ModalitySelectionView 
                   onModalitySelect={handleModalitySelect} 
                   selectedModality={selectedModality}
-                  isLeagueAdmin={userForViews?.role === 'admin'}
+                  isLeagueAdmin={creatorUser?.role === 'admin'}
                 />;
       case 'dashboard':
         return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
