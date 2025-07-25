@@ -188,33 +188,30 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  const handleLoginSuccess = (userId: string, newData?: AppData) => {
-    const data = newData || appData;
+  const handleLoginSuccess = (userId: string, data = appData) => {
     let userExists = false;
     let userObject: User | null = null;
     let userLeagues: string[] = [];
-  
-    // Find user and their leagues
+
+    // Find user and their leagues across all leagues in the app
     for (const leagueId in data.leagues) {
-      if (data.leagues[leagueId].users[userId]) {
-        userExists = true;
-        userObject = data.leagues[leagueId].users[userId];
-        userLeagues.push(leagueId);
-      }
+        if (data.leagues[leagueId].users[userId]) {
+            userExists = true;
+            userObject = data.leagues[leagueId].users[userId];
+            userLeagues.push(leagueId);
+        }
     }
-  
+    
     if (!userExists || !userObject) {
-      console.error("Login failed: User not found in any league to start");
-      toast({
-        title: "Erro de Login",
-        description: "Usuário não encontrado.",
-        variant: "destructive",
-      });
+      // This is expected for a brand new user who hasn't been added to a league yet.
+      // We will handle this by navigating to league selection.
+      setLoggedInUserId(userId);
+      navigateTo('league-selection');
       return;
     }
-  
+    
     setLoggedInUserId(userId);
-  
+
     // If user was invited to a new league, add them and switch
     if (invitedToLeagueId && !userLeagues.includes(invitedToLeagueId)) {
       const leagueToJoin = data.leagues[invitedToLeagueId];
@@ -229,14 +226,13 @@ export default function Home() {
         };
         setAppData(newAppData);
         setCurrentLeagueId(invitedToLeagueId);
-        setInvitedToLeagueId(null);
+        setInvitedToLeagueId(null); // Clear invite after use
         navigateTo('dashboard');
         toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
         return;
       }
     }
     
-    // If user belongs to leagues, go to the first one
     if (userLeagues.length > 0) {
       const firstLeagueId = userLeagues[0];
       const firstLeague = data.leagues[firstLeagueId];
@@ -251,7 +247,7 @@ export default function Home() {
         description: "Login realizado com sucesso.",
       });
     } else {
-      // If user has no leagues and no invite, go to league selection
+      // If user exists but has no leagues and no invite, go to league selection.
       navigateTo('league-selection');
     }
   };
@@ -275,33 +271,22 @@ export default function Home() {
 
     let newAppData = { ...appData };
     
-    // Determine which league to add the user to
-    const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
-    const targetLeague = newAppData.leagues[leagueIdToJoin];
-    
-    if (targetLeague) {
-       const updatedLeague = {
-        ...targetLeague,
-        users: { ...targetLeague.users, [tempUserId]: tempUser },
-      };
-      newAppData = {
-        ...newAppData,
-        leagues: { ...newAppData.leagues, [leagueIdToJoin]: updatedLeague },
-      };
-    } else {
-       // Fallback for safety, though should not happen with current logic
-       const defaultLg = newAppData.leagues['defaultLeague'];
-       const updatedLeague = {
-        ...defaultLg,
-        users: { ...defaultLg.users, [tempUserId]: tempUser },
-      };
-      newAppData = {
-        ...newAppData,
-        leagues: { ...newAppData.leagues, ['defaultLeague']: updatedLeague },
-      };
+    if (invitedToLeagueId) {
+      const targetLeague = newAppData.leagues[invitedToLeagueId];
+      if (targetLeague) {
+        const updatedLeague = {
+          ...targetLeague,
+          users: { ...targetLeague.users, [tempUserId]: tempUser },
+        };
+        newAppData = {
+          ...newAppData,
+          leagues: { ...newAppData.leagues, [invitedToLeagueId]: updatedLeague },
+        };
+        setAppData(newAppData);
+      }
     }
-    setAppData(newAppData);
-    // Directly call login with the new user and updated data
+    
+    // Log in the user. The login function will handle navigation.
     handleLoginSuccess(tempUserId, newAppData);
   };
 
@@ -629,11 +614,11 @@ export default function Home() {
     });
   };
 
-  if (!currentLeague) {
+  if (!currentLeague && currentView !== 'welcome' && currentView !== 'register' && currentView !== 'league-selection') {
     return <div>Carregando liga...</div>; // Or some other loading state
   }
 
-  const selectedPlayer = selectedPlayerId ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
+  const selectedPlayer = selectedPlayerId && currentLeague ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
 
   const userForViews = useMemo(() => {
     if (!loggedInUserId && currentView !== 'register' && currentView !== 'welcome') {
@@ -682,16 +667,20 @@ export default function Home() {
       case 'league-selection':
         return <LeagueSelectionView onCreateLeague={handleCreateLeague} />;
       case 'modality-selection':
+        if (!userForViews) {
+           setCurrentView('welcome');
+           return <WelcomeView onEnter={() => navigateTo('register')} />;
+        }
         return <ModalitySelectionView 
                   onModalitySelect={handleModalitySelect} 
                   selectedModality={selectedModality}
-                  isLeagueAdmin={currentUser?.role === 'admin'}
+                  isLeagueAdmin={userForViews?.role === 'admin'}
                 />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
       case 'lineup':
         return <LineupView 
-                 players={currentLeague.players} 
+                 players={currentLeague!.players} 
                  onPlayerSelect={selectPlayerForDetails} 
                  onNavigate={navigateTo} 
                  onAddPlayer={handleOpenMarket} 
@@ -710,10 +699,10 @@ export default function Home() {
                  modality={selectedModality}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
+        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
       case 'market':
         return <MarketView 
-                 players={currentLeague.players} 
+                 players={currentLeague!.players} 
                  onPlayerSelect={addPlayerToLineup} 
                  onBack={goBack} 
                  position={slotToAddPlayer?.position ?? null}
@@ -724,33 +713,33 @@ export default function Home() {
                  onUpdatePlayerInMarket={handleUpdatePlayerInMarket}
                />;
       case 'partial-score':
-        return <PartialScoreView players={currentLeague.players} users={currentLeague.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
+        return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'games':
         return <GamesView onBack={goBack} gamesData={allGamesData} />;
       case 'friends-score':
-        return <FriendsScoreView onBack={goBack} user={userForViews!} players={currentLeague.players} allUsers={currentLeague.users} />;
+        return <FriendsScoreView onBack={goBack} user={userForViews!} players={currentLeague!.players} allUsers={currentLeague!.users} />;
       case 'statistics':
-        return <StatisticsView players={currentLeague.players} users={currentLeague.users} onBack={() => navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} scalersRanking={currentLeague.scalersRanking} goalieRanking={currentLeague.goalieRanking}/>;
+        return <StatisticsView players={currentLeague!.players} users={currentLeague!.users} onBack={() => navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} scalersRanking={currentLeague!.scalersRanking} goalieRanking={currentLeague!.goalieRanking}/>;
       case 'admin':
         return <AdminView 
                   onBack={goBack} 
-                  users={Object.values(currentLeague.users)} 
+                  users={Object.values(currentLeague!.users)} 
                   currentUser={currentUser!}
-                  editorOfTheRound={currentLeague.editorOfTheRound} 
+                  editorOfTheRound={currentLeague!.editorOfTheRound} 
                   onSetEditor={handleSetEditor} 
-                  scoutEditor={currentLeague.scoutEditor} 
+                  scoutEditor={currentLeague!.scoutEditor} 
                   onSetScoutEditor={handleSetScoutEditor}
-                  paymentEditor={currentLeague.paymentEditor}
+                  paymentEditor={currentLeague!.paymentEditor}
                   onSetPaymentEditor={handleSetPaymentEditor}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                   onToggleVoteRevelation={handleToggleVoteRevelation}
-                  leagueId={currentLeague.id}
+                  leagueId={currentLeague!.id}
                 />;
        case 'live':
         return <LiveView 
                   onBack={goBack} 
                   user={userForViews!} 
-                  players={currentLeague.players} 
+                  players={currentLeague!.players} 
                   canEditScouts={canEditScouts}
                   liveEvents={liveEvents}
                   onAddLiveEvent={handleAddLiveEvent}
@@ -762,16 +751,16 @@ export default function Home() {
         return <PaymentsView
                   onBack={goBack}
                   currentUser={currentUser!}
-                  users={currentLeague.users}
+                  users={currentLeague!.users}
                   canEdit={canEditPayments && !isPersonalPaymentsView}
                   onSave={handleUpdateUserPayments}
                 />;
       case 'best-eleven':
         return <BestElevenView
                   onBack={goBack}
-                  players={currentLeague.players}
+                  players={currentLeague!.players}
                   currentUser={currentUser!}
-                  allUsers={Object.values(currentLeague.users)}
+                  allUsers={Object.values(currentLeague!.users)}
                   allScaledPlayerIds={allScaledPlayerIds}
                   onVote={handleBestElevenVote}
                   userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
@@ -786,7 +775,7 @@ export default function Home() {
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={currentLeague.users} onUserSelect={handleLoginSuccess} players={currentLeague.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
     }
   };
 
