@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 
-interface LineupViewProps {
+export interface LineupViewProps {
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
   onNavigate: (view: View) => void;
@@ -46,9 +46,13 @@ interface LineupViewProps {
   onSaveLineups: () => void;
   lineupsSaved: boolean;
   modality: Modality | null;
+  team1ShirtColor: ShirtColor;
+  setTeam1ShirtColor: (color: ShirtColor) => void;
+  team2ShirtColor: ShirtColor;
+  setTeam2ShirtColor: (color: ShirtColor) => void;
 }
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '3-2' | '2-3';
+type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-1';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
 interface PlayerActionState {
@@ -220,7 +224,8 @@ export default function LineupView(props: LineupViewProps) {
     currentUser, canEdit,
     team1Lineup, setTeam1Lineup, team1Reserves, setTeam1Reserves,
     team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves,
-    onSaveLineups, lineupsSaved, modality
+    onSaveLineups, lineupsSaved, modality,
+    team1ShirtColor, setTeam1ShirtColor, team2ShirtColor, setTeam2ShirtColor
   } = props;
     
   const availableFormations = useMemo(() => getFormationsForModality(modality), [modality]);
@@ -230,9 +235,6 @@ export default function LineupView(props: LineupViewProps) {
     setFormation(getFormationsForModality(modality)[0]);
   }, [modality]);
 
-
-  const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('verde');
-  const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('amarelo');
   const [isMarketOpen, setIsMarketOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('team1');
   const [isBalancing, setIsBalancing] = useState(false);

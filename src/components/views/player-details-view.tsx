@@ -1,4 +1,5 @@
 
+
 import type { Player, Game } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import Image from 'next/image';
 import { useRef, useMemo } from 'react';
+import type { ShirtColor } from './lineup-view';
+import { cn } from '@/lib/utils';
 
 interface PlayerDetailsViewProps {
   player: { id: string } & Player;
@@ -15,6 +18,14 @@ interface PlayerDetailsViewProps {
   onBack: () => void;
   onImageChange: (playerId: string, image: string) => void;
 }
+
+const teamShirtColors: Record<ShirtColor, string> = {
+  verde: 'bg-green-500',
+  amarelo: 'bg-yellow-400',
+  preto: 'bg-gray-800',
+  vermelho: 'bg-red-500',
+  branco: 'bg-gray-200',
+};
 
 export default function PlayerDetailsView({ player, games, onBack, onImageChange }: PlayerDetailsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -32,18 +43,19 @@ export default function PlayerDetailsView({ player, games, onBack, onImageChange
   }, [lastGamePerformance, games]);
 
   const matchesByTeam = useMemo(() => {
-    const teams: Record<string, { points: number; games: number }> = {};
+    const teams: Record<string, { points: number; games: number; color: ShirtColor }> = {};
     if (player.performanceHistory) {
-        player.performanceHistory.forEach(perf => {
-            if (!teams[perf.team]) {
-                teams[perf.team] = { points: 0, games: 0 };
-            }
-            teams[perf.team].points += perf.points;
-            teams[perf.team].games += 1;
-        });
+      player.performanceHistory.forEach(perf => {
+        const colorKey = perf.shirtColor || 'verde';
+        if (!teams[colorKey]) {
+            teams[colorKey] = { points: 0, games: 0, color: colorKey };
+        }
+        teams[colorKey].points += perf.points;
+        teams[colorKey].games += 1;
+      });
     }
-    return Object.entries(teams).map(([team, data]) => ({
-      team,
+    return Object.entries(teams).map(([color, data]) => ({
+      color: color as ShirtColor,
       ...data,
       average: data.games > 0 ? data.points / data.games : 0
     })).sort((a,b) => b.average - a.average);
@@ -173,8 +185,11 @@ export default function PlayerDetailsView({ player, games, onBack, onImageChange
                               </div>
                           </div>
                           {matchesByTeam.map((match) => (
-                              <div key={match.team} className="flex justify-between items-center bg-muted/50 dark:bg-muted/20 p-3 rounded-lg">
-                              <span className="font-bold text-foreground">{match.team}</span>
+                              <div key={match.color} className="flex justify-between items-center bg-muted/50 dark:bg-muted/20 p-3 rounded-lg">
+                                <div className="flex items-center gap-2">
+                                  <div className={cn("w-4 h-4 rounded-full", teamShirtColors[match.color])} />
+                                  <span className="font-bold text-foreground capitalize">{match.color}</span>
+                                </div>
                               <div className="flex gap-8 text-right">
                                   <span className="font-bold text-md w-10 text-foreground">{match.average.toFixed(2)}</span>
                                   <span className="font-bold text-md w-10 text-foreground">{match.points.toFixed(2)}</span>

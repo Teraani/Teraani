@@ -1,5 +1,7 @@
 
 
+import type { ShirtColor } from "@/components/views/lineup-view";
+
 export interface PlayerPerformance {
   round: number;
   points: number;
@@ -7,6 +9,7 @@ export interface PlayerPerformance {
   goals: number;
   assists: number;
   gameId: string; // To link to the specific game
+  shirtColor: ShirtColor;
 }
 
 export interface Player {
@@ -142,7 +145,7 @@ export const defaultLeagueData: League = {
         'user15': { id: 'user15', name: 'Gustavo Reis (Titânio)', email: 'user15@example.com', teamName: 'User 15 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p15' },
         'user16': { id: 'user16', name: 'Isaias Souza', email: 'user16@example.com', teamName: 'User 16 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p16' },
         'user17': { id: 'user17', name: 'Beto', email: 'user17@example.com', teamName: 'User 17 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p17' },
-        'user18': { id: 'user18', name: 'Diego Nunes', email: 'user18@example.com', teamName: 'User 18 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p18' },
+        'user18': { id: 'user18', name: 'Diego Nunes', email: 'user18@example.com', teamName: 'User 18 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p19' },
         'user19': { id: 'user19', name: 'Thiago Santos', email: 'user19@example.com', teamName: 'User 19 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p19' },
         'user20': { id: 'user20', name: 'Carlos Souza', email: 'user20@example.com', teamName: 'User 20 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p20' },
         'user21': { id: 'user21', name: 'Heitor (Totti)', email: 'user21@example.com', teamName: 'User 21 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p21' },
@@ -164,27 +167,27 @@ export const defaultLeagueData: League = {
     players: {
       'p1': { name: 'Rafael Ohy', team: 'AVA', pos: 'MEI', value: 49.5, points: 48, last_val: 0.5, games: 21, img: 'https://placehold.co/60x60', stats: { wins: 15, losses: 3, draws: 3, goalsFor: 60, goalsAgainst: 46, goalDifference: 14, performance: 78.57, points: 48, goals: 10, assists: 10, yellowCards: 1, redCards: 0 }, 
         performanceHistory: [
-            { round: 1, points: 8, team: 'Time 1', goals: 1, assists: 0, gameId: 'game_1' },
-            { round: 2, points: 1, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_2' },
-            { round: 3, points: 0, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_3' },
-            { round: 4, points: 3, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_4' },
-            { round: 5, points: 9, team: 'Time 2', goals: 1, assists: 1, gameId: 'game_5' },
-            { round: 6, points: -2, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_6' },
-            { round: 7, points: 5, team: 'Time 2', goals: 1, assists: 0, gameId: 'game_7' },
-            { round: 8, points: 2.5, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_8' },
-            { round: 9, points: 1.5, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_9' },
-            { round: 10, points: 4, team: 'Time 1', goals: 0, assists: 1, gameId: 'game_10' },
-            { round: 11, points: 3, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_11' },
-            { round: 12, points: 6, team: 'Time 1', goals: 1, assists: 0, gameId: 'game_12' },
-            { round: 13, points: 0, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_13' },
-            { round: 14, points: 3.5, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_14' },
-            { round: 15, points: -1, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_15' },
-            { round: 16, points: 7, team: 'Time 1', goals: 1, assists: 0, gameId: 'game_16' },
-            { round: 17, points: 8, team: 'Time 2', goals: 1, assists: 1, gameId: 'game_17' },
-            { round: 18, points: 2, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_18' },
-            { round: 19, points: 5.5, team: 'Time 2', goals: 1, assists: 0, gameId: 'game_19' },
-            { round: 20, points: 1, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_20' },
-            { round: 21, points: 3, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_21' },
+            { round: 1, points: 8, team: 'Time 1', goals: 1, assists: 0, gameId: 'game_1', shirtColor: 'verde' },
+            { round: 2, points: 1, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_2', shirtColor: 'amarelo' },
+            { round: 3, points: 0, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_3', shirtColor: 'verde' },
+            { round: 4, points: 3, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_4', shirtColor: 'branco' },
+            { round: 5, points: 9, team: 'Time 2', goals: 1, assists: 1, gameId: 'game_5', shirtColor: 'preto' },
+            { round: 6, points: -2, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_6', shirtColor: 'verde' },
+            { round: 7, points: 5, team: 'Time 2', goals: 1, assists: 0, gameId: 'game_7', shirtColor: 'amarelo' },
+            { round: 8, points: 2.5, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_8', shirtColor: 'branco' },
+            { round: 9, points: 1.5, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_9', shirtColor: 'preto' },
+            { round: 10, points: 4, team: 'Time 1', goals: 0, assists: 1, gameId: 'game_10', shirtColor: 'verde' },
+            { round: 11, points: 3, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_11', shirtColor: 'amarelo' },
+            { round: 12, points: 6, team: 'Time 1', goals: 1, assists: 0, gameId: 'game_12', shirtColor: 'verde' },
+            { round: 13, points: 0, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_13', shirtColor: 'preto' },
+            { round: 14, points: 3.5, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_14', shirtColor: 'branco' },
+            { round: 15, points: -1, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_15', shirtColor: 'amarelo' },
+            { round: 16, points: 7, team: 'Time 1', goals: 1, assists: 0, gameId: 'game_16', shirtColor: 'verde' },
+            { round: 17, points: 8, team: 'Time 2', goals: 1, assists: 1, gameId: 'game_17', shirtColor: 'preto' },
+            { round: 18, points: 2, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_18', shirtColor: 'branco' },
+            { round: 19, points: 5.5, team: 'Time 2', goals: 1, assists: 0, gameId: 'game_19', shirtColor: 'amarelo' },
+            { round: 20, points: 1, team: 'Time 1', goals: 0, assists: 0, gameId: 'game_20', shirtColor: 'verde' },
+            { round: 21, points: 3, team: 'Time 2', goals: 0, assists: 0, gameId: 'game_21', shirtColor: 'amarelo' },
         ]},
       'p2': { name: 'Renan Ropeiro', team: 'BOT', pos: 'MEI', value: 27, points: 29, last_val: 0.5, games: 14, img: 'https://placehold.co/60x60', stats: { wins: 9, losses: 3, draws: 2, goalsFor: 35, goalsAgainst: 28, goalDifference: 7, performance: 69.23, points: 29, goals: 1, assists: 0, yellowCards: 0, redCards: 0 }, performanceHistory: [] },
       'p3': { name: 'André Corsini', team: 'CAM', pos: 'MEI', value: 46.5, points: 47, last_val: 0.5, games: 25, img: 'https://placehold.co/60x60', stats: { wins: 15, losses: 8, draws: 2, goalsFor: 68, goalsAgainst: 53, goalDifference: 15, performance: 62, points: 47, goals: 1, assists: 5, yellowCards: 0, redCards: 0 }, performanceHistory: [] },
@@ -216,8 +219,8 @@ export const defaultLeagueData: League = {
       'p29': { name: 'Lucca', team: 'JUV', pos: 'ATA', value: 7.5, points: 6, last_val: 0.5, games: 5, img: 'https://placehold.co/60x60', stats: { wins: 2, losses: 3, draws: 0, goalsFor: 24, goalsAgainst: 31, goalDifference: -7, performance: 45.83, points: 6, goals: 1, assists: 0, yellowCards: 0, redCards: 0 }, performanceHistory: [] },
       'p30': { name: 'Pedro Roberto', team: 'SAN', pos: 'ATA', value: 4.5, points: 4, last_val: 0.5, games: 9, img: 'https://placehold.co/60x60', stats: { wins: 1, losses: 7, draws: 1, goalsFor: 15, goalsAgainst: 28, goalDifference: -13, performance: 16.67, points: 4, goals: 3, assists: 0, yellowCards: 0, redCards: 0 }, performanceHistory: [] },
       'p31': { name: 'Vinícius Conceição', team: 'VAS', pos: 'GOL', value: 5.0, points: 23, last_val: 0, games: 14, img: 'https://placehold.co/60x60', stats: { wins: 7, losses: 5, draws: 2, goalsFor: 0, goalsAgainst: 29, goalDifference: 0, performance: 50, points: 23, goals: 0, assists: 0, yellowCards: 0, redCards: 0 }, performanceHistory: [] },
-      'p32': { name: 'Walex Leek', team: 'CFC', pos: 'GOL', value: 5.0, points: 27, last_val: 0, games: 19, img: 'https://placehold.co/60x60', stats: { wins: 8, losses: 8, draws: 3, goalsFor: 0, goalsAgainst: 44, goalDifference: 0, performance: 42, points: 27, goals: 0, assists: 0, yellowCards: 1, redCards: 0 }, performanceHistory: [] },
-      'p33': { name: 'Tom', team: 'SAO', pos: 'GOL', value: 5.0, points: 20, last_val: 0, games: 13, img: 'https://placehold.co/60x60', stats: { wins: 6, losses: 5, draws: 2, goalsFor: 0, goalsAgainst: 34, goalDifference: 0, performance: 46, points: 20, goals: 0, assists: 0, yellowCards: 0, redCards: 0 }, performanceHistory: [] },
+      'p32': { name: 'Walex Leek', team: 'CFC', pos: 'GOL', value: 5.0, points: 27, last_val: 0, games: 19, img: 'https://placehold.co/60x60', stats: { wins: 8, losses: 8, draws: 3, goalsFor: 0, against: 44, goalDifference: 0, performance: 42, points: 27, goals: 0, assists: 0, yellowCards: 1, redCards: 0 }, performanceHistory: [] },
+      'p33': { name: 'Tom', team: 'SAO', pos: 'GOL', value: 5.0, points: 20, last_val: 0, games: 13, img: 'https://placehold.co/60x60', stats: { wins: 6, losses: 5, draws: 2, goalsFor: 0, against: 34, goalDifference: 0, performance: 46, points: 20, goals: 0, assists: 0, yellowCards: 0, redCards: 0 }, performanceHistory: [] },
     },
     scalersRanking: {
         'scaler1': { id: 'scaler1', name: 'Gustavo', games: 5, resultsDifference: 5, avgDifference: 1.00 },

@@ -29,6 +29,7 @@ import type { Vote } from '@/components/views/best-eleven-view';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
+import type { ShirtColor } from '@/components/views/lineup-view';
 
 export type View = 'welcome' | 'register' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
@@ -95,6 +96,8 @@ export default function Home() {
   const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
+  const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('verde');
+  const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('amarelo');
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   
@@ -426,7 +429,7 @@ export default function Home() {
         if (index >= 0 && index < newLineup.length) {
           newLineup[index] = playerId;
         }
-        return newLineup;
+        return newReserves;
       });
     }
 
@@ -550,8 +553,8 @@ export default function Home() {
 
             player.stats.games = (player.stats.games || 0) + 1;
             
-            const playerTeam = team1PlayerIds.has(playerId) ? 'team1' : 'team2';
-            const playerResult = (playerTeam === 'team1' ? matchResult : (matchResult === 'win' ? 'loss' : (matchResult === 'loss' ? 'win' : 'draw')));
+            const playerTeamIdentifier = team1PlayerIds.has(playerId) ? 'team1' : 'team2';
+            const playerResult = (playerTeamIdentifier === 'team1' ? matchResult : (matchResult === 'win' ? 'loss' : (matchResult === 'loss' ? 'win' : 'draw')));
 
             if (playerResult === 'win') {
                 player.stats.wins++;
@@ -570,10 +573,11 @@ export default function Home() {
             player.performanceHistory.push({
                 round: roundNumber,
                 points: roundPoints,
-                team: playerTeam === 'team1' ? newGame.homeTeam : newGame.awayTeam,
+                team: playerTeamIdentifier === 'team1' ? newGame.homeTeam : newGame.awayTeam,
                 goals: roundGoals,
                 assists: roundAssists,
                 gameId: gameId,
+                shirtColor: playerTeamIdentifier === 'team1' ? team1ShirtColor : team2ShirtColor,
             });
         });
 
@@ -791,6 +795,10 @@ export default function Home() {
                  onSaveLineups={handleSaveLineups}
                  lineupsSaved={lineupsSaved}
                  modality={selectedModality}
+                 team1ShirtColor={team1ShirtColor}
+                 setTeam1ShirtColor={setTeam1ShirtColor}
+                 team2ShirtColor={team2ShirtColor}
+                 setTeam2ShirtColor={setTeam2ShirtColor}
                />;
       case 'player-details':
         return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
