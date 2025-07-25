@@ -509,6 +509,59 @@ export default function Home() {
     const playersOfLastRound = allScaledPlayerIds;
     setLastRoundPlayerIds(playersOfLastRound);
 
+    updateCurrentLeague(league => {
+      const updatedPlayers = { ...league.players };
+      const team1PlayerIds = new Set([...team1Lineup, ...team1Reserves].filter(Boolean));
+      const team2PlayerIds = new Set([...team2Lineup, ...team2Reserves].filter(Boolean));
+      
+      const matchResult = team1Score > team2Score ? 'team1_win' : team2Score > team1Score ? 'team2_win' : 'draw';
+
+      // Update stats based on match result
+      allScaledPlayerIds.forEach(playerId => {
+        const player = updatedPlayers[playerId];
+        if (player) {
+          player.games = (player.games || 0) + 1;
+          if (!player.stats) {
+            player.stats = { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, performance: 0, points: 0 };
+          }
+
+          if (team1PlayerIds.has(playerId)) {
+            if (matchResult === 'team1_win') player.stats.wins++;
+            else if (matchResult === 'team2_win') player.stats.losses++;
+            else player.stats.draws++;
+          } else if (team2PlayerIds.has(playerId)) {
+            if (matchResult === 'team2_win') player.stats.wins++;
+            else if (matchResult === 'team1_win') player.stats.losses++;
+            else player.stats.draws++;
+          }
+        }
+      });
+      
+      // Update stats from live events
+      liveEvents.forEach(event => {
+        const player = updatedPlayers[event.playerId];
+        if (player && player.stats) {
+          if (event.event === 'Gol') {
+            player.stats.goals = (player.stats.goals || 0) + 1;
+          } else if (event.event === 'Assistência') {
+            player.stats.assists = (player.stats.assists || 0) + 1;
+          }
+        }
+      });
+
+      // Recalculate total points for each player
+      Object.values(updatedPlayers).forEach(player => {
+        if(player.stats) {
+            player.points = (player.stats.wins * 3) + player.stats.draws;
+        }
+      });
+
+      return {
+        ...league,
+        players: updatedPlayers
+      }
+    });
+
     setAllGamesData(prevGames => {
         const nextRoundNumber = Object.keys(prevGames).length + 1;
         const newRoundKey = `${nextRoundNumber}`;
@@ -539,13 +592,11 @@ export default function Home() {
     // Reset all round-specific states
     setLiveEvents([]); 
     setLineupsSaved(false);
-
     const { lineup: lineupSizeValue, reserves: reservesSizeValue } = getTeamSizes(selectedModality);
     setTeam1Lineup(Array(lineupSizeValue).fill(null));
     setTeam1Reserves(Array(reservesSizeValue).fill(null));
     setTeam2Lineup(Array(lineupSizeValue).fill(null));
     setTeam2Reserves(Array(reservesSizeValue).fill(null));
-
     setBestElevenVotes({});
     setBestElevenSaved({});
     setIsVotingReleased(false);
@@ -554,7 +605,7 @@ export default function Home() {
 
     toast({
         title: "Partida Finalizada!",
-        description: `O placar de ${team1Score} a ${team2Score} foi salvo nos resultados.`,
+        description: `O placar de ${team1Score} a ${team2Score} foi salvo nos resultados e as estatísticas dos jogadores foram atualizadas.`,
     });
     navigateTo('games');
 };
