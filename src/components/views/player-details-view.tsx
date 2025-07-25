@@ -1,5 +1,5 @@
 
-import type { Player } from '@/lib/data';
+import type { Player, Game } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Upload } from 'lucide-react';
@@ -11,19 +11,43 @@ import { useRef, useMemo } from 'react';
 
 interface PlayerDetailsViewProps {
   player: { id: string } & Player;
+  games: Record<string, Game>;
   onBack: () => void;
   onImageChange: (playerId: string, image: string) => void;
 }
 
-export default function PlayerDetailsView({ player, onBack, onImageChange }: PlayerDetailsViewProps) {
+export default function PlayerDetailsView({ player, games, onBack, onImageChange }: PlayerDetailsViewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const averagePoints = player.games > 0 && player.points ? (player.points / player.games) : 0;
+  
+  const lastGamePerformance = useMemo(() => {
+    if (!player.performanceHistory || player.performanceHistory.length === 0) return null;
+    return player.performanceHistory[player.performanceHistory.length - 1];
+  }, [player.performanceHistory]);
 
-  const matchesByTeam = [
-    { team: 'Verde', points: 120.5, games: 10, average: 12.05 },
-    { team: 'Amarelo', points: 80.2, games: 8, average: 10.03 },
-  ];
+  const lastGame = useMemo(() => {
+    if (!lastGamePerformance) return null;
+    return games[lastGamePerformance.gameId];
+  }, [lastGamePerformance, games]);
+
+  const matchesByTeam = useMemo(() => {
+    const teams: Record<string, { points: number; games: number }> = {};
+    if (player.performanceHistory) {
+        player.performanceHistory.forEach(perf => {
+            if (!teams[perf.team]) {
+                teams[perf.team] = { points: 0, games: 0 };
+            }
+            teams[perf.team].points += perf.points;
+            teams[perf.team].games += 1;
+        });
+    }
+    return Object.entries(teams).map(([team, data]) => ({
+      team,
+      ...data,
+      average: data.games > 0 ? data.points / data.games : 0
+    })).sort((a,b) => b.average - a.average);
+  }, [player.performanceHistory]);
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -41,37 +65,15 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
   };
 
   const chartData = useMemo(() => {
-    if (!player.games) return [];
-    
-    // Simulate per-game scores
-    const data = [];
-    let remainingPoints = player.points;
-    const basePointsPerGame = player.points / player.games;
-
-    for (let i = 1; i <= player.games; i++) {
-        // Add some randomness, but keep it around the average
-        const fluctuation = (Math.random() - 0.5) * basePointsPerGame * 0.8;
-        let gamePoints = basePointsPerGame + fluctuation;
-
-        if (i === player.games) {
-            // Ensure total points match
-            gamePoints = remainingPoints;
-        }
-
-        data.push({
-            round: `${i}`,
-            points: parseFloat(gamePoints.toFixed(2)),
-        });
-        remainingPoints -= gamePoints;
+    if (!player.performanceHistory || player.performanceHistory.length === 0) {
+       return [{ round: '1', points: player.points }];
     }
     
-    // Fallback in case of no games
-    if (data.length === 0) {
-        return [{ round: '1', points: player.points }];
-    }
-
-    return data;
-  }, [player.games, player.points]);
+    return player.performanceHistory.map(perf => ({
+        round: `${perf.round}`,
+        points: perf.points
+    }));
+  }, [player.performanceHistory, player.points]);
 
 
   return (
@@ -119,8 +121,15 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
                 <TabsContent value="resumo">
                      <div className="mt-4 p-4">
                         <h4 className="font-bold text-foreground">Último Jogo</h4>
-                        <p className="text-sm text-muted-foreground mt-2">Quinta - VI Guarani - 19:00hs</p>
-                        <p className="text-sm text-muted-foreground">Verde 1 x 2 Amarelo</p>
+                        {lastGame ? (
+                          <>
+                            <p className="text-sm text-muted-foreground mt-2">{lastGame.date}</p>
+                            <p className="text-sm text-muted-foreground">{lastGame.homeTeam} {lastGame.homeScore} x {lastGame.awayScore} {lastGame.awayTeam}</p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-muted-foreground mt-2">Nenhum jogo recente registrado.</p>
+                        )}
+
 
                         <h4 className="font-bold text-foreground mt-4">Índice por Rodada</h4>
                         <Button className="mt-2 h-auto py-1 px-4 bg-primary/20 hover:bg-primary/30 text-primary-foreground">Pontuação</Button>
@@ -154,24 +163,28 @@ export default function PlayerDetailsView({ player, onBack, onImageChange }: Pla
 
                     <div>
                       <h3 className="text-lg font-bold text-foreground mb-3">Pontuação por time</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm font-semibold text-muted-foreground mb-2 px-2">
-                            <span>Time</span>
-                            <div className="flex gap-8">
-                              <span>Média</span>
-                              <span>Total</span>
-                            </div>
+                       {matchesByTeam.length > 0 ? (
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm font-semibold text-muted-foreground mb-2 px-2">
+                              <span>Time</span>
+                              <div className="flex gap-8">
+                                <span>Média</span>
+                                <span>Total</span>
+                              </div>
+                          </div>
+                          {matchesByTeam.map((match) => (
+                              <div key={match.team} className="flex justify-between items-center bg-muted/50 dark:bg-muted/20 p-3 rounded-lg">
+                              <span className="font-bold text-foreground">{match.team}</span>
+                              <div className="flex gap-8 text-right">
+                                  <span className="font-bold text-md w-10 text-foreground">{match.average.toFixed(2)}</span>
+                                  <span className="font-bold text-md w-10 text-foreground">{match.points.toFixed(2)}</span>
+                              </div>
+                          </div>
+                          ))}
                         </div>
-                        {matchesByTeam.map((match) => (
-                            <div key={match.team} className="flex justify-between items-center bg-muted/50 dark:bg-muted/20 p-3 rounded-lg">
-                            <span className="font-bold text-foreground">{match.team}</span>
-                            <div className="flex gap-8 text-right">
-                                <span className="font-bold text-md w-10 text-foreground">{match.average.toFixed(2)}</span>
-                                <span className="font-bold text-md w-10 text-foreground">{match.points.toFixed(2)}</span>
-                            </div>
-                        </div>
-                        ))}
-                      </div>
+                       ) : (
+                         <p className="text-sm text-muted-foreground text-center py-4">Sem dados de jogos por time.</p>
+                       )}
                     </div>
                  </TabsContent>
                  <TabsContent value="heatmap" className="p-4 space-y-4">

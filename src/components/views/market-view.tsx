@@ -41,7 +41,7 @@ interface MarketViewProps {
   position: Position;
   scaledPlayerIds: string[];
   canEdit: boolean;
-  onAddPlayerToMarket: (player: Omit<Player, 'last_val' | 'games'>) => void;
+  onAddPlayerToMarket: (player: Omit<Player, 'last_val' | 'games' | 'performanceHistory'>) => void;
   onRemovePlayerFromMarket: (playerId: string) => void;
   onUpdatePlayerInMarket: (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => void;
 }
@@ -258,7 +258,7 @@ export default function MarketView({ players, onPlayerSelect, onBack, position, 
         </DialogTrigger>}
         <PlayerForm
             formType="add"
-            onSave={(data) => onAddPlayerToMarket(data)}
+            onSave={(data) => onAddPlayerToMarket(data as any)}
             onClose={() => setIsAddPlayerOpen(false)}
         />
        </Dialog>

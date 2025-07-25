@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import type { Player, User, Ranking, GoalieRanking, Game, League } from '@/lib/data';
+import type { Player, User, Ranking, GoalieRanking, Game, League, PlayerPerformance } from '@/lib/data';
 import { initialData, defaultLeagueData } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
@@ -70,8 +70,6 @@ export default function Home() {
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   // Modality is now part of the league data
   const selectedModality = currentLeague?.modality ?? null;
-  const [allGamesData, setAllGamesData] = useState<Record<string, Game[]>>({});
-
   
   // Maps userId -> best eleven lineup
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
@@ -143,7 +141,6 @@ export default function Home() {
     const firstUserId = Object.keys(newLeague.users)[0] || null;
     setLoggedInUserId(firstUserId);
     setLiveEvents([]);
-    setAllGamesData({});
     setBestElevenVotes({});
     setBestElevenSaved({});
     setLineupsSaved(false);
@@ -283,6 +280,7 @@ export default function Home() {
         [tempUserId]: tempUser
       },
       players: {}, // No players needed
+      games: {},
     };
 
     setAppData(prevData => {
@@ -349,6 +347,7 @@ export default function Home() {
         ...testUsers
       },
       players: defaultLeagueData.players, // Start with default players
+      games: {},
       editorOfTheRound: null,
       scoutEditor: null,
       paymentEditor: null,
@@ -505,88 +504,80 @@ export default function Home() {
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
   const handleFinishMatch = (team1Score: number, team2Score: number) => {
-    // Capture players from the finished match *before* resetting lineups
     const playersOfLastRound = allScaledPlayerIds;
     setLastRoundPlayerIds(playersOfLastRound);
 
     updateCurrentLeague(league => {
-      const updatedPlayers = { ...league.players };
-      const team1PlayerIds = new Set([...team1Lineup, ...team1Reserves].filter(Boolean));
-      const team2PlayerIds = new Set([...team2Lineup, ...team2Reserves].filter(Boolean));
-      
-      const matchResult = team1Score > team2Score ? 'team1_win' : team2Score > team1Score ? 'team2_win' : 'draw';
-
-      // Update stats based on match result
-      allScaledPlayerIds.forEach(playerId => {
-        const player = updatedPlayers[playerId];
-        if (player) {
-          player.games = (player.games || 0) + 1;
-          if (!player.stats) {
-            player.stats = { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, performance: 0, points: 0 };
-          }
-
-          if (team1PlayerIds.has(playerId)) {
-            if (matchResult === 'team1_win') player.stats.wins++;
-            else if (matchResult === 'team2_win') player.stats.losses++;
-            else player.stats.draws++;
-          } else if (team2PlayerIds.has(playerId)) {
-            if (matchResult === 'team2_win') player.stats.wins++;
-            else if (matchResult === 'team1_win') player.stats.losses++;
-            else player.stats.draws++;
-          }
-        }
-      });
-      
-      // Update stats from live events
-      liveEvents.forEach(event => {
-        const player = updatedPlayers[event.playerId];
-        if (player && player.stats) {
-          if (event.event === 'Gol') {
-            player.stats.goals = (player.stats.goals || 0) + 1;
-          } else if (event.event === 'Assistência') {
-            player.stats.assists = (player.stats.assists || 0) + 1;
-          }
-        }
-      });
-
-      // Recalculate total points for each player
-      Object.values(updatedPlayers).forEach(player => {
-        if(player.stats) {
-            player.points = (player.stats.wins * 3) + player.stats.draws;
-        }
-      });
-
-      return {
-        ...league,
-        players: updatedPlayers
-      }
-    });
-
-    setAllGamesData(prevGames => {
-        const nextRoundNumber = Object.keys(prevGames).length + 1;
-        const newRoundKey = `${nextRoundNumber}`;
+        const updatedPlayers = { ...league.players };
+        const updatedGames = { ...league.games };
+        const roundNumber = Object.keys(updatedGames).length + 1;
+        const gameId = `game_${roundNumber}_${Date.now()}`;
         
-        const scorers = liveEvents
-            .filter(event => event.event === 'Gol')
-            .map(event => ({ player: event.player, team: event.team }));
-
         const newGame: Game = {
+            id: gameId,
             date: format(new Date(), "dd 'de' MMMM - HH:mm'hs'", { locale: ptBR }),
             homeTeam: 'Time 1',
             awayTeam: 'Time 2',
             homeScore: team1Score,
             awayScore: team2Score,
             status: 'Finalizado',
-            scorers: scorers,
+            scorers: liveEvents.filter(event => event.event === 'Gol').map(event => ({ player: event.player, team: event.team })),
         };
-        
-        const updatedGames = { ...prevGames };
-        if (updatedGames[newRoundKey]) {
-            updatedGames[newRoundKey].push(newGame);
-        } else {
-            updatedGames[newRoundKey] = [newGame];
-        }
-        return updatedGames;
+        updatedGames[gameId] = newGame;
+
+        const team1PlayerIds = new Set([...team1Lineup, ...team1Reserves].filter(Boolean));
+        const team2PlayerIds = new Set([...team2Lineup, ...team2Reserves].filter(Boolean));
+        const matchResult = team1Score > team2Score ? 'win' : team2Score > team1Score ? 'loss' : 'draw';
+
+        playersOfLastRound.forEach(playerId => {
+            const player = updatedPlayers[playerId];
+            if (!player) return;
+
+            // Initialize stats if they don't exist
+            if (!player.stats) {
+                player.stats = { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, performance: 0, points: 0 };
+            }
+             if (!player.performanceHistory) {
+                player.performanceHistory = [];
+            }
+
+            let roundPoints = 0;
+            const roundGoals = liveEvents.filter(e => e.playerId === playerId && e.event === 'Gol').length;
+            const roundAssists = liveEvents.filter(e => e.playerId === playerId && e.event === 'Assistência').length;
+
+            roundPoints += roundGoals * 5; // 5 points for a goal
+            roundPoints += roundAssists * 3; // 3 points for an assist
+
+            player.stats.games = (player.stats.games || 0) + 1;
+            
+            const playerTeam = team1PlayerIds.has(playerId) ? 'team1' : 'team2';
+            const playerResult = (playerTeam === 'team1' ? matchResult : (matchResult === 'win' ? 'loss' : (matchResult === 'loss' ? 'win' : 'draw')));
+
+            if (playerResult === 'win') {
+                player.stats.wins++;
+                roundPoints += 3; // 3 points for a win
+            } else if (playerResult === 'draw') {
+                player.stats.draws++;
+                roundPoints += 1; // 1 point for a draw
+            } else {
+                player.stats.losses++;
+            }
+            
+            player.stats.goals += roundGoals;
+            player.stats.assists += roundAssists;
+            player.points += roundPoints;
+
+            player.performanceHistory.push({
+                round: roundNumber,
+                points: roundPoints,
+                team: playerTeam === 'team1' ? newGame.homeTeam : newGame.awayTeam,
+                goals: roundGoals,
+                assists: roundAssists,
+                gameId: gameId,
+            });
+        });
+
+        return { ...league, players: updatedPlayers, games: updatedGames };
     });
 
     // Reset all round-specific states
@@ -597,20 +588,21 @@ export default function Home() {
     setTeam1Reserves(Array(reservesSizeValue).fill(null));
     setTeam2Lineup(Array(lineupSizeValue).fill(null));
     setTeam2Reserves(Array(reservesSizeValue).fill(null));
+    
+    // Reset voting state
     setBestElevenVotes({});
     setBestElevenSaved({});
     setIsVotingReleased(false);
     setIsVotingClosed(false);
 
-
     toast({
         title: "Partida Finalizada!",
-        description: `O placar de ${team1Score} a ${team2Score} foi salvo nos resultados e as estatísticas dos jogadores foram atualizadas.`,
+        description: `O placar de ${team1Score} a ${team2Score} foi salvo. As estatísticas foram atualizadas.`,
     });
     navigateTo('games');
 };
 
-  const handleAddPlayerToMarket = (newPlayer: Omit<Player, 'last_val' | 'games'>) => {
+  const handleAddPlayerToMarket = (newPlayer: Omit<Player, 'last_val' | 'games' | 'performanceHistory'>) => {
     updateCurrentLeague(league => {
       const newPlayerId = `p${Object.keys(league.players).length + 1}`;
       const fullNewPlayer: Player = {
@@ -618,6 +610,7 @@ export default function Home() {
         last_val: 0,
         games: 0,
         stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 },
+        performanceHistory: [],
       }
       return {
         ...league,
@@ -800,7 +793,7 @@ export default function Home() {
                  modality={selectedModality}
                />;
       case 'player-details':
-        return selectedPlayer ? <PlayerDetailsView player={selectedPlayer} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
+        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
       case 'market':
         return <MarketView 
                  players={currentLeague!.players} 
@@ -816,7 +809,7 @@ export default function Home() {
       case 'partial-score':
         return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
       case 'games':
-        return <GamesView onBack={goBack} gamesData={allGamesData} />;
+        return <GamesView onBack={goBack} gamesData={currentLeague!.games} />;
       case 'friends-score':
         return <FriendsScoreView onBack={goBack} user={userForViews!} players={currentLeague!.players} allUsers={currentLeague!.users} />;
       case 'statistics':

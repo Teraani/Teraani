@@ -10,16 +10,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import type { Game } from '@/lib/data';
 import { Separator } from '../ui/separator';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 
 interface GamesViewProps {
   onBack: () => void;
-  gamesData: Record<string, Game[]>;
+  gamesData: Record<string, Game>;
 }
 
 const teamColors: { [key: string]: string } = {
@@ -31,11 +31,23 @@ const teamColors: { [key: string]: string } = {
   'Vermelho': 'bg-red-500',
 };
 
-type Round = keyof GamesViewProps['gamesData'];
+type RoundKey = string; // e.g., 'game_1_12345'
 
 export default function GamesView({ onBack, gamesData }: GamesViewProps) {
-  const rounds = Object.keys(gamesData);
-  const [activeTab, setActiveTab] = useState<Round>(rounds.length > 0 ? rounds[rounds.length - 1] : '1');
+  const gamesByRound = useMemo(() => {
+    const grouped: Record<string, Game[]> = {};
+    Object.values(gamesData).forEach(game => {
+        const roundNum = game.id.split('_')[1];
+        if (!grouped[roundNum]) {
+            grouped[roundNum] = [];
+        }
+        grouped[roundNum].push(game);
+    });
+    return grouped;
+  }, [gamesData]);
+
+  const rounds = Object.keys(gamesByRound).sort((a,b) => parseInt(b) - parseInt(a));
+  const [activeTab, setActiveTab] = useState<string>(rounds.length > 0 ? rounds[0] : '1');
 
   return (
     <div>
@@ -49,7 +61,7 @@ export default function GamesView({ onBack, gamesData }: GamesViewProps) {
 
       <main>
         {rounds.length > 0 ? (
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Round)} className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as RoundKey)} className="w-full">
             <div className="px-4 pt-4">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -69,11 +81,11 @@ export default function GamesView({ onBack, gamesData }: GamesViewProps) {
             </div>
             
             <div className="p-4">
-              {Object.entries(gamesData).map(([round, games]) => (
+              {Object.entries(gamesByRound).map(([round, games]) => (
                 <TabsContent key={round} value={round} className="mt-0">
                   <div className="space-y-3">
                     {games.map((game, index) => (
-                      <Card key={index} className="bg-card border border-border">
+                      <Card key={game.id} className="bg-card border border-border">
                         <CardContent className="p-4">
                             <div className="flex justify-between items-center text-center">
                                 <div className="flex flex-col items-center gap-2 w-1/3">
