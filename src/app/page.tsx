@@ -279,7 +279,8 @@ export default function Home() {
     const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
     
     // Add user to the correct league and then call login
-    // Using a callback to ensure we act on the updated state
+    // We update the state, then immediately call the login function
+    // with the newly created user data.
     setAppData(prev => {
         const newLeagues = { ...prev.leagues };
         const targetLeague = newLeagues[leagueIdToJoin];
@@ -297,12 +298,19 @@ export default function Home() {
         return { ...prev, leagues: newLeagues };
     });
 
-    // We can't call handleLoginSuccess immediately because the state update is async.
-    // A better approach is to navigate and let a useEffect handle the login,
-    // but for simplicity, let's just log in. This might be fragile.
-    // A robust solution would use a state for "userToLogin" and a useEffect.
-    // For now, let's stick to the direct call and assume it mostly works in this context.
-    handleLoginSuccess(tempUserId);
+    // Since state update is async, we can't rely on it for the next step.
+    // Instead of calling handleLoginSuccess, which relies on the updated state,
+    // let's manually set the logged-in user and navigate.
+    setLoggedInUserId(tempUserId);
+    if(invitedToLeagueId) {
+        setCurrentLeagueId(invitedToLeagueId);
+        setInvitedToLeagueId(null);
+    }
+    navigateTo('dashboard');
+    toast({
+        title: `Bem-vindo!`,
+        description: "Sua conta foi criada com sucesso.",
+    });
   };
 
   const handleCreateLeague = (leagueName: string) => {
@@ -632,6 +640,14 @@ export default function Home() {
   const selectedPlayer = selectedPlayerId ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
 
   const userForViews = useMemo(() => {
+    if (!loggedInUserId) {
+        // Find user "Novo Jogador" if it exists, for registration flow
+        for(const league of Object.values(appData.leagues)) {
+            const newUser = Object.values(league.users).find(u => u.name === "Novo Jogador");
+            if(newUser) return newUser;
+        }
+        return null;
+    }
     if (!currentUser) return null;
     return {
       ...currentUser,
@@ -639,7 +655,7 @@ export default function Home() {
       lineup: [],
       reserves: [],
     }
-  }, [currentUser]);
+  }, [currentUser, loggedInUserId, appData.leagues]);
 
   const allScaledPlayerIds = useMemo(() => {
     const scaledIds = new Set<string>();
