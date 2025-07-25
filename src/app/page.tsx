@@ -231,7 +231,7 @@ export default function Home() {
     });
   };
 
-  const handleRegistrationSuccess = () => {
+const handleRegistrationSuccess = () => {
     const tempUserId = `newUser_${Date.now()}`;
     const tempUser: User = {
       id: tempUserId,
@@ -269,27 +269,28 @@ export default function Home() {
                 title: 'Bem-vindo!',
                 description: `Você foi adicionado à liga ${leagueToJoin.name}.`,
             });
+            setInvitedToLeagueId(null);
             navigateTo('dashboard');
+            return;
         }
-        setInvitedToLeagueId(null);
-    } else {
-        // Fallback if no invitation - user is added to default and sent to league selection
-        setAppData(prev => ({
-            ...prev,
-            leagues: {
-                ...prev.leagues,
-                defaultLeague: {
-                    ...prev.leagues.defaultLeague,
-                    users: {
-                        ...prev.leagues.defaultLeague.users,
-                        [tempUserId]: tempUser,
-                    },
+    }
+
+    // Fallback if no invitation - user is added to default and sent to league selection
+    setAppData(prev => ({
+        ...prev,
+        leagues: {
+            ...prev.leagues,
+            defaultLeague: {
+                ...prev.leagues.defaultLeague,
+                users: {
+                    ...prev.leagues.defaultLeague.users,
+                    [tempUserId]: tempUser,
                 },
             },
-        }));
-        setLoggedInUserId(tempUserId);
-        navigateTo('league-selection');
-    }
+        },
+    }));
+    setLoggedInUserId(tempUserId);
+    navigateTo('league-selection');
 }
 
   const handleCreateLeague = (leagueName: string) => {
