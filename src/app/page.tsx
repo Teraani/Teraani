@@ -157,7 +157,7 @@ export default function Home() {
 
   const canEditLineup = useMemo(() => {
     if (!currentUser || !currentLeague) return false;
-    return currentUser.role === 'admin';
+    return currentUser.role === 'admin' || currentUser.id === currentLeague.editorOfTheRound;
   }, [currentUser, currentLeague]);
 
   const canManageVoting = useMemo(() => {
