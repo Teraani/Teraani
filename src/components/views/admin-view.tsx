@@ -105,7 +105,7 @@ export default function AdminView({
 
   const filteredUsers = useMemo(() => {
     return users
-        .filter(user => user.id !== currentUser.id) // Show all users except the admin him/herself.
+        .filter(user => user.id !== currentUser.id)
         .filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [users, searchTerm, currentUser.id]);
 
