@@ -635,6 +635,7 @@ export default function Home() {
         return <AdminView 
                   onBack={goBack} 
                   users={Object.values(currentLeague.users)} 
+                  currentUser={currentUser!}
                   editorOfTheRound={currentLeague.editorOfTheRound} 
                   onSetEditor={handleSetEditor} 
                   scoutEditor={currentLeague.scoutEditor} 

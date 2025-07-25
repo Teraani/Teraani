@@ -24,6 +24,7 @@ import { Label } from '../ui/label';
 interface AdminViewProps {
   onBack: () => void;
   users: User[];
+  currentUser: User;
   editorOfTheRound: string | null;
   onSetEditor: (userId: string | null) => void;
   scoutEditor: string | null;
@@ -37,6 +38,7 @@ interface AdminViewProps {
 export default function AdminView({ 
     onBack, 
     users, 
+    currentUser,
     editorOfTheRound, 
     onSetEditor, 
     scoutEditor, 
@@ -102,11 +104,10 @@ export default function AdminView({
 
 
   const filteredUsers = useMemo(() => {
-    // Show all users except the admin him/herself.
     return users
-        .filter(user => user.role !== 'admin')
+        .filter(user => user.id !== currentUser.id) // Show all users except the admin him/herself.
         .filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [users, searchTerm]);
+  }, [users, searchTerm, currentUser.id]);
 
   return (
     <div>
