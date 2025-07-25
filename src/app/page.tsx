@@ -189,9 +189,18 @@ export default function Home() {
   }, [currentUser, currentLeague]);
   
   const handleLoginSuccess = (userId: string) => {
-      let userInDefaultLeague = appData.leagues.defaultLeague?.users[userId];
+      // Find the user in ANY league to get their base details
+      let userExists = null;
+      let userObject = null;
+      for (const league of Object.values(appData.leagues)) {
+        if (league.users[userId]) {
+            userExists = true;
+            userObject = league.users[userId];
+            break;
+        }
+      }
 
-      if (!userInDefaultLeague) {
+      if (!userExists || !userObject) {
           console.error("Login failed: User not found in any league to start");
           toast({
               title: "Erro de Login",
@@ -215,7 +224,7 @@ export default function Home() {
                           ...prev.leagues[invitedToLeagueId],
                           users: {
                               ...prev.leagues[invitedToLeagueId].users,
-                              [userId]: userInDefaultLeague // Add user to the invited league
+                              [userId]: userObject // Add user to the invited league
                           }
                       }
                   }
@@ -229,18 +238,16 @@ export default function Home() {
           setInvitedToLeagueId(null);
           navigateTo('dashboard');
       } else {
-          // If no invite, just log in to their default context
+          // If no invite, just log in and go to dashboard
           navigateTo('dashboard');
           toast({
-              title: `Bem-vindo, ${userInDefaultLeague.name}!`,
+              title: `Bem-vindo, ${userObject.name}!`,
               description: "Login realizado com sucesso.",
           });
       }
   };
 
 const handleRegistrationSuccess = () => {
-    // This function will now be simpler. It adds the user to the default league data
-    // and then triggers the login flow, which will handle invitations.
     const tempUserId = `newUser_${Date.now()}`;
     const tempUser: User = {
       id: tempUserId,
@@ -256,23 +263,26 @@ const handleRegistrationSuccess = () => {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // Add the new user to the default league's user list
-    setAppData(prev => ({
-        ...prev,
-        leagues: {
-            ...prev.leagues,
-            defaultLeague: {
-                ...prev.leagues.defaultLeague,
+    // If invited, add to the invited league, otherwise add to default.
+    const targetLeagueId = invitedToLeagueId || 'defaultLeague';
+
+    setAppData(prev => {
+        const newLeagues = { ...prev.leagues };
+        const targetLeague = newLeagues[targetLeagueId];
+        
+        if (targetLeague) {
+            newLeagues[targetLeagueId] = {
+                ...targetLeague,
                 users: {
-                    ...prev.leagues.defaultLeague.users,
+                    ...targetLeague.users,
                     [tempUserId]: tempUser,
                 },
-            },
-        },
-    }));
+            };
+        }
+        
+        return { ...prev, leagues: newLeagues };
+    });
 
-    // Now, call the login function for the new user
-    // The login function contains the logic to handle the invitation
     handleLoginSuccess(tempUserId);
 }
 
@@ -286,7 +296,7 @@ const handleRegistrationSuccess = () => {
     
     const testUsers: Record<string, User> = {};
     for (let i=1; i<=3; i++) {
-        const userId = `new_test_user_${i}`;
+        const userId = `new_test_user_${i}_${newLeagueId}`;
         testUsers[userId] = {
             id: userId,
             name: `Jogador de Teste ${i}`,
