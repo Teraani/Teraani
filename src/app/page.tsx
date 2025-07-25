@@ -79,7 +79,6 @@ export default function Home() {
   const [isVotingClosed, setIsVotingClosed] = useState(false);
   const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
 
-  const [lastRegisteredUserId, setLastRegisteredUserId] = useState<string | null>(null);
 
   // Simulate a logged-in user. By default, it's the admin.
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
@@ -108,15 +107,6 @@ export default function Home() {
       navigateTo('register');
     }
   }, []);
-  
-  useEffect(() => {
-    // If a new user was just registered, log them in.
-    if (lastRegisteredUserId && appData.leagues[currentLeagueId]?.users[lastRegisteredUserId]) {
-        handleLoginSuccess(lastRegisteredUserId);
-        setLastRegisteredUserId(null); // Reset after login
-    }
-  }, [lastRegisteredUserId, appData.leagues]);
-
 
   useEffect(() => {
     const { lineup, reserves } = getTeamSizes(selectedModality);
@@ -257,7 +247,7 @@ export default function Home() {
       }
   };
 
-const handleRegistrationSuccess = () => {
+  const handleRegistrationSuccess = () => {
     const tempUserId = `newUser_${Date.now()}`;
     const tempUser: User = {
       id: tempUserId,
@@ -273,15 +263,15 @@ const handleRegistrationSuccess = () => {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // If invited, add to the invited league, otherwise add to default.
-    const targetLeagueId = invitedToLeagueId || 'defaultLeague';
-
+    const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
+    
+    // Add user to the correct league
     setAppData(prev => {
         const newLeagues = { ...prev.leagues };
-        const targetLeague = newLeagues[targetLeagueId];
+        const targetLeague = newLeagues[leagueIdToJoin];
         
         if (targetLeague) {
-            newLeagues[targetLeagueId] = {
+            newLeagues[leagueIdToJoin] = {
                 ...targetLeague,
                 users: {
                     ...targetLeague.users,
@@ -293,10 +283,9 @@ const handleRegistrationSuccess = () => {
         return { ...prev, leagues: newLeagues };
     });
 
-    // We can't log in immediately, as the state update is asynchronous.
-    // Instead, we'll set the ID and let a useEffect handle the login.
-    setLastRegisteredUserId(tempUserId);
-}
+    // Then log in and navigate
+    handleLoginSuccess(tempUserId);
+  };
 
   const handleCreateLeague = (leagueName: string) => {
     if (!currentUser) {
