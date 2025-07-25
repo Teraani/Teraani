@@ -70,19 +70,14 @@ interface PlayerActionState {
   index: number;
 }
 
-const getVotingStatus = (isClosed: boolean) => {
-  if (isClosed) {
-    return { isOpen: false, message: "Votação da rodada encerrada." };
-  }
-  const now = new Date();
-  const day = now.getDay(); // 0 (Sun) - 6 (Sat)
-  const hour = now.getHours();
-
-  // Deadline is Thursday (4) at 00:00
-  if (day > 4 || (day === 4 && hour >= 0)) {
-    return { isOpen: false, message: "Votação da rodada encerrada." };
-  }
-  return { isOpen: true, message: "A votação encerra Quinta-feira às 00:00h." };
+const getVotingStatus = (isReleased: boolean, isClosed: boolean) => {
+    if (isClosed) {
+        return { isOpen: false, message: "Votação da rodada encerrada." };
+    }
+    if (isReleased) {
+        return { isOpen: true, message: "A votação está aberta!" };
+    }
+    return { isOpen: false, message: "Aguardando liberação da votação." };
 };
 
 const getFormationsForModality = (modality: Modality | null): Formation[] => {
@@ -193,7 +188,6 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 
 export default function BestElevenView({ onBack, players, currentUser, allUsers, allScaledPlayerIds, onVote, userLineup, allVotes, isSaved, canManageVoting, isVotingReleased, isVotingClosed, onReleaseVoting, onCloseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
     const { toast } = useToast();
-    const [votingStatus, setVotingStatus] = useState(getVotingStatus(isVotingClosed));
     const lineupSize = getLineupSize(modality);
     
     const [lineup, setLineup] = useState<(BestElevenVote | null)[]>(userLineup || Array(lineupSize).fill(null));
@@ -209,13 +203,6 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         setFormation(getFormationsForModality(modality)[0]);
         setLineup(Array(getLineupSize(modality)).fill(null))
     }, [modality]);
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setVotingStatus(getVotingStatus(isVotingClosed));
-        }, 60000); // Check every minute
-        return () => clearInterval(timer);
-    }, [isVotingClosed]);
 
     const finalEleven = useMemo(() => {
         if (!isVotingClosed) return null;
@@ -280,14 +267,14 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     }, [isVotingClosed, allVotes, players, formation, modality, lineupSize]);
 
 
-    const isVotingActive = votingStatus.isOpen && isVotingReleased && !isVotingClosed;
+    const votingStatus = getVotingStatus(isVotingReleased, isVotingClosed);
+    const isVotingActive = votingStatus.isOpen;
 
     const handleAddPlayerClick = (index: number) => {
       if (!isVotingActive || isSaved) {
         let description = "Não é mais possível alterar a seleção.";
         if (!isVotingReleased) description = "Aguarde o administrador da liga liberar a votação.";
         else if (isVotingClosed) description = "A votação já foi encerrada.";
-        else if (!votingStatus.isOpen) description = "O prazo para votação encerrou.";
         
         toast({ title: "Votação Indisponível", description, variant: 'destructive' });
         return;
@@ -610,7 +597,3 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     </div>
   );
 }
-
-    
-
-
