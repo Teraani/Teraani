@@ -710,15 +710,16 @@ export default function Home() {
       case 'league-selection':
         return <LeagueSelectionView onCreateLeague={handleCreateLeague} />;
       case 'modality-selection':
-        if (!loggedInUserId) {
+        if (!loggedInUserId || !currentLeague) {
            setCurrentView('welcome');
            return <WelcomeView onEnter={() => navigateTo('register')} />;
         }
-        const creatorUser = userForViews || Object.values(appData.leagues).flatMap(l => Object.values(l.users)).find(u => u.id === loggedInUserId)
+        // The user who created the league is the admin.
+        const isLeagueAdmin = currentLeague.adminId === loggedInUserId;
         return <ModalitySelectionView 
                   onModalitySelect={handleModalitySelect} 
                   selectedModality={selectedModality}
-                  isLeagueAdmin={creatorUser?.role === 'admin'}
+                  isLeagueAdmin={isLeagueAdmin}
                 />;
       case 'dashboard':
         return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
@@ -832,3 +833,4 @@ export default function Home() {
     </div>
   );
 }
+
