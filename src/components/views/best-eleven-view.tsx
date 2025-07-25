@@ -206,47 +206,51 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
 
     const finalEleven = useMemo(() => {
         if (!isVotingClosed) return null;
-
-        const playerScores: Record<string, { totalRating: number; voteCount: number }> = {};
-
+    
+        const playerScores: Record<string, { totalRating: number; voteCount: number; id: string }> = {};
+    
         Object.values(allVotes).forEach(userVote => {
             userVote.forEach(vote => {
                 if (vote) {
                     if (!playerScores[vote.playerId]) {
-                        playerScores[vote.playerId] = { totalRating: 0, voteCount: 0 };
+                        playerScores[vote.playerId] = { totalRating: 0, voteCount: 0, id: vote.playerId };
                     }
                     playerScores[vote.playerId].totalRating += vote.rating;
                     playerScores[vote.playerId].voteCount += 1;
                 }
             });
         });
-
+    
+        const allVotedPlayers = Object.values(playerScores).sort((a, b) => b.totalRating - a.totalRating);
+        let remainingPlayers = [...allVotedPlayers];
+    
         const getTopPlayersForPosition = (
           positions: Player['pos'][],
           count: number
         ): (BestElevenVote | null)[] => {
-            const eligiblePlayers = Object.entries(playerScores)
-                .filter(([playerId]) => positions.includes(players[playerId]?.pos))
-                .sort(([, a], [, b]) => b.totalRating - a.totalRating)
-                .slice(0, count);
-
-            const results: (BestElevenVote | null)[] = eligiblePlayers.map(([playerId, score]) => ({
-                playerId,
-                rating: score.totalRating / score.voteCount,
-            }));
+            const results: (BestElevenVote | null)[] = [];
+            const playersForPosition = remainingPlayers.filter(p => positions.includes(players[p.id]?.pos));
+    
+            for(let i = 0; i < count && i < playersForPosition.length; i++) {
+                const playerToAdd = playersForPosition[i];
+                results.push({
+                    playerId: playerToAdd.id,
+                    rating: playerToAdd.totalRating / playerToAdd.voteCount
+                });
+                remainingPlayers = remainingPlayers.filter(p => p.id !== playerToAdd.id);
+            }
             
-            // Fill with null if not enough players were voted for
             while(results.length < count) {
                 results.push(null);
             }
-
+    
             return results;
         };
         
         const formationParts = formation.split('-').map(Number);
         let defCount = 0, midCount = 0, atkCount = 0;
         const gkCount = 1;
-
+    
         if ((modality === 'campo' || modality === 'society') && formationParts.length === 3) {
             [defCount, midCount, atkCount] = formationParts;
         } else if (modality === 'futsal' && formationParts.length === 2) {
@@ -256,14 +260,27 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
              if (lineupSize === 7) [defCount, midCount, atkCount] = [3, 2, 1];
              if (lineupSize === 5) [defCount, atkCount] = [2, 2];
         }
-
+    
         const topAttackers = getTopPlayersForPosition(['ATA'], atkCount);
         const topMidfielders = getTopPlayersForPosition(['MEI', 'VOL'], midCount);
         const topDefenders = getTopPlayersForPosition(['ZAG', 'LAT'], defCount);
         const topGoalkeeper = getTopPlayersForPosition(['GOL'], gkCount);
         
-        return [...topAttackers, ...topMidfielders, ...topDefenders, ...topGoalkeeper];
-
+        const finalLineup = [...topAttackers, ...topMidfielders, ...topDefenders, ...topGoalkeeper];
+        
+        // Fill empty spots with best remaining players, regardless of position
+        for (let i = 0; i < finalLineup.length; i++) {
+            if (finalLineup[i] === null && remainingPlayers.length > 0) {
+                const playerToAdd = remainingPlayers.shift()!;
+                finalLineup[i] = {
+                    playerId: playerToAdd.id,
+                    rating: playerToAdd.totalRating / playerToAdd.voteCount
+                };
+            }
+        }
+    
+        return finalLineup;
+    
     }, [isVotingClosed, allVotes, players, formation, modality, lineupSize]);
 
 
@@ -558,7 +575,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 <Clock className="w-5 h-5" />
                 <span>{votingStatus.message}</span>
             </div>
-             {canManageVoting && !isVotingReleased && (
+             {canManageVoting && !isVotingReleased && !isVotingClosed && (
               <Button onClick={onReleaseVoting} className="bg-blue-600 hover:bg-blue-700">
                 <Send className="mr-2 h-4 w-4" />
                 Liberar Votação
