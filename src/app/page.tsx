@@ -79,6 +79,7 @@ export default function Home() {
   const [isVotingClosed, setIsVotingClosed] = useState(false);
   const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
 
+  const [lastRegisteredUserId, setLastRegisteredUserId] = useState<string | null>(null);
 
   // Simulate a logged-in user. By default, it's the admin.
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
@@ -107,6 +108,15 @@ export default function Home() {
       navigateTo('register');
     }
   }, []);
+  
+  useEffect(() => {
+    // If a new user was just registered, log them in.
+    if (lastRegisteredUserId && appData.leagues[currentLeagueId]?.users[lastRegisteredUserId]) {
+        handleLoginSuccess(lastRegisteredUserId);
+        setLastRegisteredUserId(null); // Reset after login
+    }
+  }, [lastRegisteredUserId, appData.leagues]);
+
 
   useEffect(() => {
     const { lineup, reserves } = getTeamSizes(selectedModality);
@@ -283,7 +293,9 @@ const handleRegistrationSuccess = () => {
         return { ...prev, leagues: newLeagues };
     });
 
-    handleLoginSuccess(tempUserId);
+    // We can't log in immediately, as the state update is asynchronous.
+    // Instead, we'll set the ID and let a useEffect handle the login.
+    setLastRegisteredUserId(tempUserId);
 }
 
   const handleCreateLeague = (leagueName: string) => {
