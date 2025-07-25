@@ -80,9 +80,8 @@ function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: Vi
   const isOverdue = daysDiff < 0;
 
   return (
-    <Card className="bg-card mt-4 overflow-hidden relative">
-      <div className="absolute left-0 top-0 h-full w-1.5 bg-primary" />
-      <div className="flex items-center justify-between p-4 pl-6">
+    <Card className="bg-card mt-4 p-0">
+      <div className="flex items-center justify-between p-4 border-l-4 border-primary rounded">
         <div className="flex items-center gap-3">
           {isOverdue ? <AlertCircle className="w-6 h-6 text-destructive" /> : <CalendarClock className="w-6 h-6 text-primary" />}
           <div>
