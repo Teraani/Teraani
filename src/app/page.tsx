@@ -248,6 +248,26 @@ export default function Home() {
     }
 
     const newLeagueId = `league_${Date.now()}`;
+    
+    // Create 3 dummy players for the new league
+    const testUsers: Record<string, User> = {};
+    for (let i=1; i<=3; i++) {
+        const userId = `new_test_user_${i}`;
+        testUsers[userId] = {
+            id: userId,
+            name: `Jogador de Teste ${i}`,
+            email: `teste${i}@liga.com`,
+            teamName: `Time Teste ${i}`,
+            partialScore: 0,
+            totalScore: 0,
+            valuation: 100,
+            lineup: [],
+            reserves: [],
+            role: 'player',
+            paymentDueDate: new Date().toISOString().split('T')[0],
+        };
+    }
+
     const newLeague: League = {
       id: newLeagueId,
       name: leagueName,
@@ -257,7 +277,8 @@ export default function Home() {
         [currentUser.id]: {
           ...currentUser,
           role: 'admin' // Ensure the creator is the admin of this league
-        }
+        },
+        ...testUsers
       },
       players: defaultLeagueData.players, // Start with default players
       editorOfTheRound: null,
@@ -678,9 +699,9 @@ export default function Home() {
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
                   canManageVoting={canManageVoting}
                   isVotingReleased={isVotingReleased}
-                  isVotingClosed={isBestElevenVotingClosed}
-                  onReleaseVoting={handleReleaseVoting}
-                  onCloseVoting={handleCloseVoting}
+                  isVotingClosed={isVotingClosed}
+                  onReleaseVoting={onReleaseVoting}
+                  onCloseVoting={onCloseVoting}
                   modality={selectedModality}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                 />;
