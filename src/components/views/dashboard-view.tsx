@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { differenceInDays, parseISO, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Input } from '../ui/input';
+import { ThemeToggle } from '../theme-toggle';
 
 interface DashboardViewProps {
   user: User;
@@ -257,6 +258,10 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <ThemeToggle />
+            </DropdownMenuItem>
+             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onNavigate('leagues')}>
                 <Landmark className="mr-2 h-4 w-4" />
                 <span>Trocar/Gerenciar Ligas</span>
