@@ -188,17 +188,21 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  const handleLoginSuccess = (userId: string) => {
-    let userExists = null;
+  const handleLoginSuccess = (userId: string, newData?: AppData) => {
+    const data = newData || appData;
+    let userExists = false;
     let userObject: User | null = null;
-    for (const league of Object.values(appData.leagues)) {
+    let userLeagues: League[] = [];
+
+    // Find user and their leagues
+    for (const league of Object.values(data.leagues)) {
       if (league.users[userId]) {
         userExists = true;
         userObject = league.users[userId];
-        break;
+        userLeagues.push(league);
       }
     }
-  
+
     if (!userExists || !userObject) {
       console.error("Login failed: User not found in any league to start");
       toast({
@@ -208,46 +212,44 @@ export default function Home() {
       });
       return;
     }
-  
+
     setLoggedInUserId(userId);
-  
+
+    // If user was invited to a new league
     if (invitedToLeagueId) {
-      const leagueToJoin = appData.leagues[invitedToLeagueId];
+      const leagueToJoin = data.leagues[invitedToLeagueId];
+      // Check if user is NOT already in the invited league
       if (leagueToJoin && !leagueToJoin.users[userId]) {
-        // User exists elsewhere, add them to the invited league
         const updatedLeague = {
           ...leagueToJoin,
-          users: {
-            ...leagueToJoin.users,
-            [userId]: userObject
-          }
+          users: { ...leagueToJoin.users, [userId]: userObject }
         };
-        setAppData(prev => ({
-          ...prev,
-          leagues: {
-            ...prev.leagues,
-            [invitedToLeagueId]: updatedLeague
-          }
-        }));
+        const newAppData = {
+          ...data,
+          leagues: { ...data.leagues, [invitedToLeagueId]: updatedLeague }
+        };
+        setAppData(newAppData);
         setCurrentLeagueId(invitedToLeagueId);
+        userLeagues.push(updatedLeague);
         toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
       } else if (leagueToJoin) {
-        // User already in the invited league
+        // User already in the invited league, just switch to it
         setCurrentLeagueId(invitedToLeagueId);
       }
-      setInvitedToLeagueId(null);
+      setInvitedToLeagueId(null); // Clear the invitation
       navigateTo('dashboard');
+      return;
+    }
+    
+    // Standard login flow
+    if (userLeagues.length === 0) {
+      // This case handles brand new users who are not invited to any league
+      navigateTo('league-selection');
     } else {
-      const userLeagues = Object.values(appData.leagues).filter(l => l.users[userId]);
-      if(userLeagues.length === 0){
-          // This should ideally not happen if registration is handled correctly
-          navigateTo('league-selection');
-          return;
-      }
-      
+      // Log into the first league the user belongs to
       const firstLeague = userLeagues[0];
       if (currentLeagueId !== firstLeague.id) {
-          setCurrentLeagueId(firstLeague.id);
+        setCurrentLeagueId(firstLeague.id);
       }
       
       if (!firstLeague.modality) {
@@ -255,12 +257,13 @@ export default function Home() {
       } else {
         navigateTo('dashboard');
       }
-      toast({
+       toast({
         title: `Bem-vindo de volta, ${userObject.name}!`,
         description: "Login realizado com sucesso.",
       });
     }
   };
+
 
   const handleRegistrationSuccess = () => {
     const tempUserId = `newUser_${Date.now()}`;
@@ -278,29 +281,38 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
+    // Determine which league to add the user to
     const leagueIdToJoin = invitedToLeagueId || 'defaultLeague';
+    let newAppData = { ...appData };
     
-    setAppData(prev => {
-      const newLeagues = { ...prev.leagues };
-      let targetLeague = newLeagues[leagueIdToJoin];
-      
-      if (!targetLeague) {
-        targetLeague = newLeagues['defaultLeague'];
-      }
-      
-      const updatedLeague = {
+    const targetLeague = newAppData.leagues[leagueIdToJoin];
+    
+    if (targetLeague) {
+       const updatedLeague = {
         ...targetLeague,
-        users: {
-          ...targetLeague.users,
-          [tempUserId]: tempUser,
-        },
+        users: { ...targetLeague.users, [tempUserId]: tempUser },
       };
-      newLeagues[targetLeague.id] = updatedLeague;
-      
-      return { ...prev, leagues: newLeagues };
-    });
+      newAppData = {
+        ...newAppData,
+        leagues: { ...newAppData.leagues, [leagueIdToJoin]: updatedLeague },
+      };
+      setAppData(newAppData);
+    } else {
+       // Fallback to default league if invite link is broken for some reason
+       const defaultLg = newAppData.leagues['defaultLeague'];
+       const updatedLeague = {
+        ...defaultLg,
+        users: { ...defaultLg.users, [tempUserId]: tempUser },
+      };
+      newAppData = {
+        ...newAppData,
+        leagues: { ...newAppData.leagues, ['defaultLeague']: updatedLeague },
+      };
+      setAppData(newAppData);
+    }
 
-    handleLoginSuccess(tempUserId);
+    // Login the new user
+    handleLoginSuccess(tempUserId, newAppData);
   };
 
 
