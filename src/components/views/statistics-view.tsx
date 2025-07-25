@@ -91,20 +91,21 @@ const EditableStat = ({ label, value, onChange, disabled }: { label: string, val
 
 const PlayerStatsEditor = ({ player, canEditScouts, onPlayerChange }: { player: Player, canEditScouts: boolean, onPlayerChange: (updatedPlayer: Player) => void }) => {
     
-    const handleStatChange = (statName: keyof Player, value: number) => {
-        onPlayerChange({ ...player, [statName]: value });
-    };
-
     const handleSubStatChange = (statName: keyof PlayerStats, value: number) => {
-        const newStats = { ...(player.stats || {}), [statName]: value };
-        onPlayerChange({ ...player, stats: newStats as PlayerStats });
+        const newStats = { ...(player.stats || { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0 }), [statName]: value };
+        
+        const games = (newStats.wins ?? 0) + (newStats.losses ?? 0) + (newStats.draws ?? 0);
+        const points = ((newStats.wins ?? 0) * 3) + (newStats.draws ?? 0);
+
+        onPlayerChange({ ...player, stats: newStats as PlayerStats, games, points });
     };
 
     return (
         <div className="p-4 bg-muted/30 rounded-b-lg">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <EditableStat label="Pontos" value={player.points} onChange={(v) => handleStatChange('points', v)} disabled={canEditScouts} />
-                <EditableStat label="Jogos" value={player.games} onChange={(v) => handleStatChange('games', v)} disabled={canEditScouts} />
+             <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+                <EditableStat label="Vitórias" value={player.stats?.wins ?? 0} onChange={(v) => handleSubStatChange('wins', v)} disabled={canEditScouts} />
+                <EditableStat label="Empates" value={player.stats?.draws ?? 0} onChange={(v) => handleSubStatChange('draws', v)} disabled={canEditScouts} />
+                <EditableStat label="Derrotas" value={player.stats?.losses ?? 0} onChange={(v) => handleSubStatChange('losses', v)} disabled={canEditScouts} />
                 <EditableStat label="Gols" value={player.stats?.goals ?? 0} onChange={(v) => handleSubStatChange('goals', v)} disabled={canEditScouts} />
                 <EditableStat label="Assistências" value={player.stats?.assists ?? 0} onChange={(v) => handleSubStatChange('assists', v)} disabled={canEditScouts} />
                 <EditableStat label="Cartões Am." value={player.stats?.yellowCards ?? 0} onChange={(v) => handleSubStatChange('yellowCards', v)} disabled={canEditScouts} />
@@ -154,7 +155,7 @@ const EditableRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts
     }, [items, stat, type]);
 
     const getStatValue = (item: any) => {
-        if (stat === 'points') return item.points.toFixed(1);
+        if (stat === 'points') return item.points;
         return '';
     };
 
