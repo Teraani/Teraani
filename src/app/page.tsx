@@ -80,6 +80,9 @@ export default function Home() {
   const [isVotingClosed, setIsVotingClosed] = useState(false);
   const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
 
+  // State to hold player IDs from the last finished match for voting
+  const [lastRoundPlayerIds, setLastRoundPlayerIds] = useState<string[]>([]);
+
 
   // Simulate a logged-in user. By default, it's the admin.
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
@@ -424,7 +427,7 @@ export default function Home() {
         if (index >= 0 && index < newLineup.length) {
           newLineup[index] = playerId;
         }
-        return newReserves;
+        return newLineup;
       });
     }
 
@@ -493,7 +496,19 @@ export default function Home() {
     setLiveEvents(prevEvents => [newEvent, ...prevEvents]);
   };
 
+  const allScaledPlayerIds = useMemo(() => {
+    const scaledIds = new Set<string>();
+    [...team1Lineup, ...team1Reserves, ...team2Lineup, ...team2Reserves].forEach(id => {
+      if (id) scaledIds.add(id);
+    });
+    return Array.from(scaledIds);
+  }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
+
   const handleFinishMatch = (team1Score: number, team2Score: number) => {
+    // Capture players from the finished match *before* resetting lineups
+    const playersOfLastRound = allScaledPlayerIds;
+    setLastRoundPlayerIds(playersOfLastRound);
+
     setAllGamesData(prevGames => {
         const nextRoundNumber = Object.keys(prevGames).length + 1;
         const newRoundKey = `${nextRoundNumber}`;
@@ -669,14 +684,6 @@ export default function Home() {
       reserves: [],
     }
   }, [currentUser, loggedInUserId, currentView, appData.leagues]);
-
-  const allScaledPlayerIds = useMemo(() => {
-    const scaledIds = new Set<string>();
-    [...team1Lineup, ...team1Reserves, ...team2Lineup, ...team2Reserves].forEach(id => {
-      if (id) scaledIds.add(id);
-    });
-    return Array.from(scaledIds);
-  }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
   
 
 
@@ -804,7 +811,7 @@ export default function Home() {
                   players={currentLeague!.players}
                   currentUser={currentUser!}
                   allUsers={Object.values(currentLeague!.users)}
-                  allScaledPlayerIds={allScaledPlayerIds}
+                  allScaledPlayerIds={lastRoundPlayerIds}
                   onVote={handleBestElevenVote}
                   userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
                   allVotes={bestElevenVotes}
