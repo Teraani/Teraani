@@ -139,6 +139,7 @@ export const defaultLeagueData: League = {
         'user29': { id: 'user29', name: 'Lucca', email: 'user29@example.com', teamName: 'User 29 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p29' },
         'user30': { id: 'user30', name: 'Pedro Roberto', email: 'user30@example.com', teamName: 'User 30 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p30' },
         'user31': { id: 'user31', name: 'Rafael Ohy', email: 'user31@example.com', teamName: 'User 31 FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-08-01', playerId: 'p1' },
+        'user32': { id: 'user32', name: 'Novo Convidado', email: 'convidado@example.com', teamName: 'Convidado FC', partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', avatar: 'https://placehold.co/128x128.png', paymentDueDate: '2025-09-01', playerId: 'p33' },
     },
     editorOfTheRound: null,
     scoutEditor: null,

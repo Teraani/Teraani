@@ -62,6 +62,7 @@ export default function Home() {
   
   // New state for multi-league
   const [currentLeagueId, setCurrentLeagueId] = useState<string>('defaultLeague');
+  const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
   const currentLeague: League | undefined = appData.leagues[currentLeagueId];
 
   // These states are now league-dependent
@@ -75,7 +76,7 @@ export default function Home() {
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
   const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
   const [isVotingReleased, setIsVotingReleased] = useState(false);
-  const [isVotingClosed, setIsVotingClosed] = useState(false);
+  const [isVotingClosedState, setIsVotingClosedState] = useState(false);
   const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
 
 
@@ -94,6 +95,19 @@ export default function Home() {
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
+  
+  // Check for invitation link on initial load
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteCode = urlParams.get('invite');
+    if (inviteCode && appData.leagues[inviteCode]) {
+      setInvitedToLeagueId(inviteCode);
+      // Redirect to registration if not logged in, or directly handle if logged in
+      if (!currentUser) {
+        navigateTo('register');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const { lineup, reserves } = getTeamSizes(selectedModality);
@@ -187,15 +201,31 @@ export default function Home() {
       return;
     }
     setLoggedInUserId(userId);
-    
-    // This logic is simplified. In a real app, you'd check if the user belongs to ANY league.
-    // For this prototype, we'll assume if they log in via the main league, they might be new.
-    if (user.role === 'admin' || currentLeagueId !== 'defaultLeague') {
-      navigateTo('dashboard');
-    } else {
-       navigateTo('league-selection');
-    }
 
+    if (invitedToLeagueId) {
+        const leagueToJoin = appData.leagues[invitedToLeagueId];
+        if (leagueToJoin && !leagueToJoin.users[userId]) {
+            // Add user to the invited league
+            setAppData(prev => ({
+                ...prev,
+                leagues: {
+                    ...prev.leagues,
+                    [invitedToLeagueId]: {
+                        ...prev.leagues[invitedToLeagueId],
+                        users: {
+                            ...prev.leagues[invitedToLeagueId].users,
+                            [userId]: user
+                        }
+                    }
+                }
+            }));
+            setCurrentLeagueId(invitedToLeagueId);
+            toast({ title: `Bem-vindo à ${leagueToJoin.name}!` });
+        }
+        setInvitedToLeagueId(null); // Clear invitation
+    }
+    
+    navigateTo('dashboard');
     toast({
       title: `Bem-vindo, ${user.name}!`,
       description: "Login realizado com sucesso.",
@@ -203,7 +233,6 @@ export default function Home() {
   };
 
   const handleRegistrationSuccess = () => {
-    // For this prototype, we create a temporary user and navigate to league selection
     const tempUserId = `newUser_${Date.now()}`;
     const tempUser: User = {
       id: tempUserId,
@@ -215,30 +244,47 @@ export default function Home() {
       valuation: 100,
       lineup: [],
       reserves: [],
-      role: 'admin', // The creator of a league becomes its admin
+      role: 'player', // Default to player, will be admin if they create a league
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // We don't add them to a league yet, just set them as the logged-in user
     setLoggedInUserId(tempUserId);
 
-    // This is a temporary solution to make the user available without adding to a league
-    // In a real app, this would be handled differently (e.g., a separate user table)
-    setAppData(prev => ({
-        ...prev,
-        leagues: {
-            ...prev.leagues,
-            defaultLeague: {
-                ...prev.leagues.defaultLeague,
-                users: {
-                    ...prev.leagues.defaultLeague.users,
-                    [tempUserId]: tempUser
+    if (invitedToLeagueId) {
+        setAppData(prev => ({
+            ...prev,
+            leagues: {
+                ...prev.leagues,
+                [invitedToLeagueId]: {
+                    ...prev.leagues[invitedToLeagueId],
+                    users: {
+                        ...prev.leagues[invitedToLeagueId].users,
+                        [tempUserId]: tempUser
+                    }
                 }
             }
-        }
-    }));
-    
-    navigateTo('league-selection');
+        }));
+        setCurrentLeagueId(invitedToLeagueId);
+        toast({ title: "Bem-vindo!", description: `Você foi adicionado à liga ${appData.leagues[invitedToLeagueId].name}.` });
+        navigateTo('dashboard');
+        setInvitedToLeagueId(null);
+    } else {
+        // This is a temporary solution for non-invited registration
+        setAppData(prev => ({
+            ...prev,
+            leagues: {
+                ...prev.leagues,
+                defaultLeague: {
+                    ...prev.leagues.defaultLeague,
+                    users: {
+                        ...prev.leagues.defaultLeague.users,
+                        [tempUserId]: tempUser
+                    }
+                }
+            }
+        }));
+        navigateTo('league-selection');
+    }
   }
 
   const handleCreateLeague = (leagueName: string) => {
@@ -249,7 +295,6 @@ export default function Home() {
 
     const newLeagueId = `league_${Date.now()}`;
     
-    // Create 3 dummy players for the new league
     const testUsers: Record<string, User> = {};
     for (let i=1; i<=3; i++) {
         const userId = `new_test_user_${i}`;
@@ -547,7 +592,7 @@ export default function Home() {
   };
 
   const handleCloseVoting = () => {
-    setIsVotingClosed(true);
+    setIsVotingClosedState(true);
     toast({
       title: "Votação Encerrada Manualmente",
       description: "O administrador encerrou a votação.",
@@ -665,6 +710,7 @@ export default function Home() {
                   onSetPaymentEditor={handleSetPaymentEditor}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                   onToggleVoteRevelation={handleToggleVoteRevelation}
+                  leagueId={currentLeague.id}
                 />;
        case 'live':
         return <LiveView 
@@ -699,7 +745,7 @@ export default function Home() {
                   isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
                   canManageVoting={canManageVoting}
                   isVotingReleased={isVotingReleased}
-                  isVotingClosed={isVotingClosed}
+                  isVotingClosed={isVotingClosedState}
                   onReleaseVoting={handleReleaseVoting}
                   onCloseVoting={handleCloseVoting}
                   modality={selectedModality}

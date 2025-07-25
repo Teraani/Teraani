@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import type { User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check, DollarSign, Eye } from 'lucide-react';
+import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check, DollarSign, Eye, Share2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ interface AdminViewProps {
   onSetPaymentEditor: (userId: string | null) => void;
   isVoteRevelationEnabled: boolean;
   onToggleVoteRevelation: (enabled: boolean) => void;
+  leagueId: string;
 }
 
 export default function AdminView({ 
@@ -46,7 +47,8 @@ export default function AdminView({
     paymentEditor, 
     onSetPaymentEditor,
     isVoteRevelationEnabled,
-    onToggleVoteRevelation
+    onToggleVoteRevelation,
+    leagueId
 }: AdminViewProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -101,12 +103,29 @@ export default function AdminView({
       });
     }
   };
+  
+  const handleInvite = () => {
+    const inviteLink = `${window.location.origin}?invite=${leagueId}`;
+    const message = `Ei! Use este link para entrar na minha liga no Amistosos FC: ${inviteLink}`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'Convite para a Liga Amistosos FC',
+            text: message,
+        }).catch((error) => console.log('Erro ao compartilhar', error));
+    } else {
+        navigator.clipboard.writeText(message);
+        toast({
+            title: 'Link de Convite Copiado!',
+            description: 'O link foi copiado para sua área de transferência. Compartilhe com seus amigos!',
+        });
+    }
+  };
 
 
   const filteredUsers = useMemo(() => {
-    return users
-        .filter(user => user.id !== currentUser.id)
-        .filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Show everyone except the current user
+    return users.filter(user => user.id !== currentUser.id && user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [users, searchTerm, currentUser.id]);
 
   return (
@@ -120,6 +139,21 @@ export default function AdminView({
       </header>
 
       <main className="p-4 space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Convidar Jogadores</CardTitle>
+                 <CardDescription>
+                   Compartilhe o link da sua liga para que outros jogadores possam se cadastrar e entrar.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button onClick={handleInvite} className="w-full">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Convidar para a Liga
+                </Button>
+            </CardContent>
+        </Card>
+        
         <Card>
             <CardHeader>
                 <CardTitle>Configurações Gerais</CardTitle>
