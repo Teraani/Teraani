@@ -102,8 +102,9 @@ export default function AdminView({
 
 
   const filteredUsers = useMemo(() => {
+    // Show all users except the admin him/herself.
     return users
-        .filter(user => user.role === 'player')
+        .filter(user => user.role !== 'admin')
         .filter(user => user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [users, searchTerm]);
 
