@@ -521,8 +521,22 @@ export default function Home() {
         return updatedGames;
     });
 
-    setLiveEvents([]); // Clear events for next match
-    setLineupsSaved(false); // Allow saving new lineups for the next round
+    // Reset all round-specific states
+    setLiveEvents([]); 
+    setLineupsSaved(false);
+
+    const { lineup: lineupSizeValue, reserves: reservesSizeValue } = getTeamSizes(selectedModality);
+    setTeam1Lineup(Array(lineupSizeValue).fill(null));
+    setTeam1Reserves(Array(reservesSizeValue).fill(null));
+    setTeam2Lineup(Array(lineupSizeValue).fill(null));
+    setTeam2Reserves(Array(reservesSizeValue).fill(null));
+
+    setBestElevenVotes({});
+    setBestElevenSaved({});
+    setIsVotingReleased(false);
+    setIsVotingClosed(false);
+
+
     toast({
         title: "Partida Finalizada!",
         description: `O placar de ${team1Score} a ${team2Score} foi salvo nos resultados.`,
