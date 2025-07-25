@@ -104,21 +104,26 @@ export default function AdminView({
     }
   };
   
-  const handleInvite = () => {
+  const handleInvite = async () => {
     const inviteLink = `${window.location.origin}?invite=${leagueId}`;
     const message = `Ei! Use este link para entrar na minha liga no Amistosos FC: ${inviteLink}`;
-    
-    if (navigator.share) {
-        navigator.share({
-            title: 'Convite para a Liga Amistosos FC',
-            text: message,
-        }).catch((error) => console.log('Erro ao compartilhar', error));
-    } else {
-        navigator.clipboard.writeText(message);
+
+    try {
+        await navigator.clipboard.writeText(message);
         toast({
             title: 'Link de Convite Copiado!',
             description: 'O link foi copiado para sua área de transferência. Compartilhe com seus amigos!',
         });
+
+        if (navigator.share) {
+            await navigator.share({
+                title: 'Convite para a Liga Amistosos FC',
+                text: message,
+            });
+        }
+    } catch (error) {
+        console.error('Falha ao usar a API de compartilhamento/copiar:', error);
+        // O toast de sucesso ao copiar ainda fornece um bom feedback, mesmo se o compartilhamento falhar.
     }
   };
 
