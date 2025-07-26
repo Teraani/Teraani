@@ -125,7 +125,7 @@ const formationLayouts: FormationLayout = {
   '4-3-3': {
     positions: [
       // Attackers
-      { pos: 'ATA', grid: '1 / 2' }, { pos: 'ATA', grid: '1 / 3' }, { pos: 'ATA', grid: '1 / 4' },
+      { pos: 'ATA', grid: '1 / 1' }, { pos: 'ATA', grid: '1 / 3' }, { pos: 'ATA', grid: '1 / 5' },
       // Midfielders
       { pos: 'MEI', grid: '2 / 2' }, { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '2 / 4' },
       // Defenders
