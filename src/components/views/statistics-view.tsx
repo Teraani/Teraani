@@ -5,7 +5,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Player, PlayerStats, Ranking, GoalieRanking, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Save, Shield, Star, Award, Footprints, Target, Percent, Trophy, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Save, Shield, Star, Award, Footprints, Target, Percent, Trophy, ChevronDown, TrendingUp } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Card, CardContent } from '../ui/card';
 import { cn } from '@/lib/utils';
@@ -32,10 +32,11 @@ interface StatisticsViewProps {
   goalieRanking: Record<string, GoalieRanking>;
 }
 
-type StatCategory = 'general' | 'scorers' | 'assists' | 'avgGoals' | 'scalers' | 'defense';
+type StatCategory = 'general' | 'scorers' | 'assists' | 'avgGoals' | 'scalers' | 'defense' | 'performance';
 
 const statCategories: { key: StatCategory; label: string; icon: React.ElementType }[] = [
   { key: 'general', label: 'Pontuação dos Jogadores', icon: Star },
+  { key: 'performance', label: 'Aproveitamento', icon: Award },
   { key: 'scorers', label: 'Artilharia', icon: Target },
   { key: 'assists', label: 'Assistências', icon: Footprints },
   { key: 'avgGoals', label: 'Média de Gols', icon: Percent },
@@ -92,7 +93,7 @@ const EditableStat = ({ label, value, onChange, disabled }: { label: string, val
 const PlayerStatsEditor = ({ player, canEditScouts, onPlayerChange }: { player: Player, canEditScouts: boolean, onPlayerChange: (updatedPlayer: Player) => void }) => {
     
     const handleSubStatChange = (statName: keyof PlayerStats, value: number) => {
-        const newStats = { ...(player.stats || { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0 }), [statName]: value };
+        const newStats = { ...(player.stats || { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }), [statName]: value };
         
         const games = (newStats.wins ?? 0) + (newStats.losses ?? 0) + (newStats.draws ?? 0);
         const points = ((newStats.wins ?? 0) * 3) + (newStats.draws ?? 0);
@@ -155,7 +156,7 @@ const EditableRankingList = ({ items, onPlayerSelect, stat, label, canEditScouts
     }, [items, stat, type]);
 
     const getStatValue = (item: any) => {
-        if (stat === 'points') return item.points;
+        if (stat === 'points') return item.points.toFixed(2);
         return '';
     };
 
@@ -203,6 +204,9 @@ const SimpleRankingList = ({ items, onPlayerSelect, stat, label, type }: {
                     const avgB = b.games > 0 ? (b.stats?.goals ?? 0) / b.games : 0;
                     return avgB - avgA;
                  }
+                 if (stat === 'performance') {
+                    return (b.stats?.performance ?? 0) - (a.stats?.performance ?? 0);
+                 }
                  const statKey = stat as keyof PlayerStats;
                  return (b.stats?.[statKey] ?? 0) - (a.stats?.[statKey] ?? 0);
             }
@@ -219,6 +223,7 @@ const SimpleRankingList = ({ items, onPlayerSelect, stat, label, type }: {
     const getStatValue = (item: any) => {
        if (type === 'player') {
             if (stat === 'avgGoals') return item.games > 0 ? ((item.stats?.goals ?? 0) / item.games).toFixed(2) : '0.00';
+            if (stat === 'performance') return `${(item.stats?.performance ?? 0).toFixed(0)}%`;
             const statKey = stat as keyof PlayerStats;
             return item.stats?.[statKey] ?? 0;
        }
@@ -318,6 +323,8 @@ export default function StatisticsView({ players, users, onBack, onPlayerSelect,
       switch (activeStat) {
         case 'general':
           return <EditableRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="points" label="Pontos" canEditScouts={canEditScouts} onItemsChange={handlePlayerChange} type="player" />;
+        case 'performance':
+          return <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="performance" label="Aprov." type="player" />;
         case 'scorers':
           return <SimpleRankingList items={allPlayersMemo} onPlayerSelect={onPlayerSelect} stat="goals" label="Gols" type="player" />;
         case 'assists':
