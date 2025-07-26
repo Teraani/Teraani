@@ -243,7 +243,7 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user.avatar ?? undefined} alt="Avatar do Usuário" />
                 <AvatarFallback>
-                  <Users className="text-white" />
+                  <Users className="text-black" />
                 </AvatarFallback>
               </Avatar>
             </Button>
