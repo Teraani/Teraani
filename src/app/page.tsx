@@ -103,13 +103,15 @@ export default function Home() {
   
   // Check for invitation link on initial load
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteCode = urlParams.get('invite');
-    if (inviteCode && appData.leagues[inviteCode]) {
-      setInvitedToLeagueId(inviteCode);
-      // If there's an invite code, always go to the registration screen.
-      // The logic inside onRegisterSuccess will handle adding the user to the league.
-      navigateTo('register');
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const inviteCode = urlParams.get('invite');
+      if (inviteCode && appData.leagues[inviteCode]) {
+        setInvitedToLeagueId(inviteCode);
+        // If there's an invite code, always go to the registration screen.
+        // The logic inside onRegisterSuccess will handle adding the user to the league.
+        navigateTo('register');
+      }
     }
   }, []);
 
