@@ -561,7 +561,7 @@ export default function Home() {
 
             // Initialize stats if they don't exist
             if (!player.stats) {
-                player.stats = { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, performance: 0, points: 0 };
+                player.stats = { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 };
             }
              if (!player.performanceHistory) {
                 player.performanceHistory = [];
