@@ -1,11 +1,11 @@
 {
-  "name": "AmistososAI FC",
-  "short_name": "AmistososAI",
-  "description": "Escale seu time, participe de ligas e mostre que você sabe mitar!",
-  "start_url": "/",
+  "name": "Amistosos FC",
+  "short_name": "AmistososFC",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#E67E22",
-  "theme_color": "#E67E22",
+  "background_color": "#10B981",
+  "theme_color": "#10B981",
+  "description": "Escale seu time, participe de ligas e mostre que você sabe mitar!",
   "icons": [
     {
       "src": "/icon-192x192.png",

@@ -1,19 +1,16 @@
 // This is a basic service worker
-// It doesn't do much, just the minimum to be installable
-
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing.');
+  console.log('Service Worker: O service worker foi instalado.');
+  // Precaching assets can be done here if needed
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating.');
+  console.log('Service Worker: O service worker foi ativado.');
+  // Clean up old caches here if needed
 });
 
 self.addEventListener('fetch', (event) => {
-  // Basic cache-first strategy
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
+  // This is a simple pass-through fetch handler.
+  // For offline functionality, you would implement a caching strategy here.
+  event.respondWith(fetch(event.request));
 });
