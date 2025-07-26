@@ -126,7 +126,7 @@ function PlayerSummary({ user, players, onNavigate, onAvatarChange }: { user: Us
         const totalGames = userAsPlayer.games || 0;
         const totalPoints = userAsPlayer.points || 0;
         
-        const performance = totalGames > 0 ? ((totalPoints / (totalGames * 3)) * 100) : 0;
+        const performance = userAsPlayer.stats.performance || 0;
         
         return {
             totalGames,

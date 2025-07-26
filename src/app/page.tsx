@@ -570,6 +570,11 @@ export default function Home() {
             player.stats.assists += roundAssists;
             player.points += roundPoints;
 
+            const totalPointsFromResults = (player.stats.wins * 3) + player.stats.draws;
+            const totalPossiblePoints = player.stats.games * 3;
+            player.stats.performance = totalPossiblePoints > 0 ? (totalPointsFromResults / totalPossiblePoints) * 100 : 0;
+
+
             player.performanceHistory.push({
                 round: roundNumber,
                 points: roundPoints,
