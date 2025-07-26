@@ -5,7 +5,7 @@ export const Logo = ({ className }: { className?: string }) => {
     <svg
       data-v-423bf9ae=''
       xmlns='http://www.w3.org/2000/svg'
-      viewBox='0 0 75.2 14.2'
+      viewBox='0 0 90 14.2'
       className={cn('font', className)}
     >
       <g
