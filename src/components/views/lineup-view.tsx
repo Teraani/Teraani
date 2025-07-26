@@ -531,7 +531,7 @@ export default function LineupView(props: LineupViewProps) {
 
             <h2 className="text-xl font-bold">Escalação</h2>
             
-            <Button variant="ghost" className="text-primary-foreground" onClick={handleShare}>
+            <Button variant="ghost" className="text-foreground" onClick={handleShare}>
                 <Share2 className="w-5 h-5" />
             </Button>
         </div>
