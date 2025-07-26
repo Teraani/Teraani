@@ -76,7 +76,7 @@ const formationLayouts: FormationLayout = {
       // Attackers
       { pos: 'ATA', grid: '1 / 1' }, { pos: 'ATA', grid: '1 / 3' }, { pos: 'ATA', grid: '1 / 5' },
       // Midfielders
-      { pos: 'MEI', grid: '2 / 2' }, { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '2 / 4' },
+      { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '3 / 3' }, { pos: 'MEI', grid: '3 / 4' },
       // Defenders
       { pos: 'ZAG', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'ZAG', grid: '4 / 5' },
       // Goalkeeper
