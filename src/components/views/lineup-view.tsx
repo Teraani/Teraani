@@ -179,7 +179,7 @@ const TeamDisplay = ({
                 } else if (canEdit) {
                     return <AddPlayerButton variant="pitch" key={`add-${teamIdentifier}-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
                 } else {
-                    return <div key={`empty-${teamIdentifier}-${position}-${slotIndex}`} className="w-20 h-28" />;
+                    return <div key={`empty-${teamIdentifier}-${position}-${slotIndex}`} className="w-16 h-24" />;
                 }
             })}
         </div>
