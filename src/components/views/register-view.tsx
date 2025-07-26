@@ -8,18 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
-
-const SignalIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path d="M7 16V12M12 16V8M17 16V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-);
-
+import { Logo } from '../logo';
 
 interface RegisterViewProps {
   onRegisterSuccess: () => void;
@@ -59,7 +48,7 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground text-center">
        <main className="flex-1 flex flex-col items-center justify-center">
          <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
-            <SignalIcon className="w-12 h-12 text-white" />
+            <Logo className="w-16 h-auto text-white" />
         </div>
         <h1 className="text-3xl font-bold mb-1">Amistosos FC</h1>
         <p className="max-w-md mb-6">
