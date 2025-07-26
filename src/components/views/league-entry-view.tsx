@@ -27,7 +27,7 @@ export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps
   return (
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground text-center">
       <header className="text-center mb-8 flex-1 flex flex-col items-center justify-center">
-         <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+         <div className="w-20 h-20 bg-muted/80 rounded-2xl flex items-center justify-center mb-4 mx-auto">
             <Logo className="w-16 h-16 text-white" />
         </div>
         <h1 className="text-3xl font-bold">Bem-vindo ao Amistosos FC!</h1>
