@@ -460,7 +460,7 @@ export default function LineupView(props: LineupViewProps) {
         </Card>
         {canEdit && (
             <div className="mt-4 flex flex-col gap-2">
-                <Button onClick={handleBalanceTeams} className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80" disabled={isBalancing}>
+                <Button onClick={handleBalanceTeams} className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300" disabled={isBalancing}>
                     {isBalancing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                     {isBalancing ? 'Balanceando...' : 'Balancear Times'}
                 </Button>
