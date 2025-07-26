@@ -65,3 +65,22 @@ Se você não for o editor ou o scout da rodada, seu papel é acompanhar e torce
     *   Vá para **"Dashboard" -> "Partida ao vivo"** para ver o feed de eventos em tempo real.
     *   Acompanhe sua pontuação parcial e a de outros jogadores nas telas **"Parciais gerais"** e **"Parcial dos amigos"**.
 4.  **Ver Estatísticas:** Navegue para a tela de **"Estatísticas"** para ver o ranking e os dados detalhados de todos os jogadores.
+
+## Fluxo 5: Seleção da Rodada - Votando nos Melhores
+
+A "Seleção da Rodada" é uma funcionalidade PRO onde os participantes votam nos melhores jogadores da última partida finalizada.
+
+1.  **Login:** Faça login com seu usuário.
+2.  **Aguardar Liberação (Admin):**
+    *   Após o término de uma partida, o **Administrador** da liga deve liberar a votação. Ele pode fazer isso no **Painel Admin**.
+3.  **Votar na Seleção:**
+    *   Com a votação liberada, navegue para a aba **"Seleção"** (ícone de prêmio).
+    *   Você verá o campo com posições vazias. Clique nos botões **"+"** para escolher um jogador que participou da última partida.
+    *   Após selecionar um jogador, você dará uma nota para a atuação dele.
+    *   Preencha toda a sua seleção com os melhores jogadores na sua opinião.
+4.  **Salvar o Voto:**
+    *   Depois de montar sua seleção e dar as notas, clique no botão **"Salvar Seleção"**. Seu voto será computado.
+5.  **Apuração e Resultado:**
+    *   Após o encerramento da votação (pelo Admin), o resultado final da "Seleção da Rodada" será calculado com base na média de notas de todos os votos.
+    *   Você poderá ver o time final na mesma tela de **"Seleção"**.
+    *   Na aba **"Apuração"**, se o admin permitir, você poderá ver os votos de cada participante.
