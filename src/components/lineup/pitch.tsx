@@ -32,7 +32,7 @@ export default function Pitch({ children, modality }: PitchProps) {
   const { className, gradient } = getPitchStyles();
 
   return (
-    <div className={cn("pitch w-full h-[600px] rounded-lg mx-auto flex flex-col justify-around items-center relative overflow-hidden border-2 border-white/30", className)}>
+    <div className={cn("pitch w-full h-[600px] rounded-lg mx-auto flex flex-col justify-around items-center relative overflow-hidden border-2 border-white/30 p-4 box-border", className)}>
       {/* Field Lines */}
       <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/30" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-2 border-white/30 rounded-full" />
