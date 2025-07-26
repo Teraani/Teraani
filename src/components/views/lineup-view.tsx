@@ -177,7 +177,7 @@ const TeamDisplay = ({
                 if (player) {
                     return <PlayerCard key={`${teamIdentifier}-${player.id}-${slotIndex}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: slotIndex, team: teamIdentifier })} shirtColor={shirtColor} />;
                 } else if (canEdit) {
-                    return <AddPlayerButton key={`add-${teamIdentifier}-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
+                    return <AddPlayerButton variant="pitch" key={`add-${teamIdentifier}-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
                 } else {
                     return <div key={`empty-${teamIdentifier}-${position}-${slotIndex}`} className="w-20 h-28" />;
                 }
@@ -460,7 +460,7 @@ export default function LineupView(props: LineupViewProps) {
         </Card>
         {canEdit && (
             <div className="mt-4 flex flex-col gap-2">
-                <Button onClick={handleBalanceTeams} className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300" disabled={isBalancing}>
+                <Button onClick={handleBalanceTeams} className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/80" disabled={isBalancing}>
                     {isBalancing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
                     {isBalancing ? 'Balanceando...' : 'Balancear Times'}
                 </Button>
