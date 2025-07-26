@@ -63,7 +63,7 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
       return ['2-2', '3-1'];
     case 'campo':
     default:
-      return ['4-3-3', '4-4-2', '3-5-2'];
+      return ['4-4-2', '4-3-3', '3-5-2'];
   }
 };
 
