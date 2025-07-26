@@ -62,6 +62,85 @@ interface PlayerActionState {
   team: 'team1' | 'team2';
 }
 
+// Defines grid position [row, col, col-span] for each player in a formation
+type FormationLayout = {
+  [key in Formation]?: {
+    positions: { pos: Player['pos']; grid: string }[]; // "row-start/col-start"
+  };
+};
+
+const formationLayouts: FormationLayout = {
+  // Campo (11 players)
+  '4-3-3': {
+    positions: [
+      // Attackers
+      { pos: 'ATA', grid: '1 / 2' }, { pos: 'ATA', grid: '1 / 3' }, { pos: 'ATA', grid: '1 / 4' },
+      // Midfielders
+      { pos: 'MEI', grid: '2 / 2' }, { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '2 / 4' },
+      // Defenders
+      { pos: 'ZAG', grid: '3 / 1' }, { pos: 'ZAG', grid: '3 / 2' }, { pos: 'ZAG', grid: '3 / 4' }, { pos: 'ZAG', grid: '3 / 5' },
+      // Goalkeeper
+      { pos: 'GOL', grid: '4 / 3' },
+    ]
+  },
+  '4-4-2': {
+    positions: [
+      { pos: 'ATA', grid: '1 / 2' }, { pos: 'ATA', grid: '1 / 4' },
+      { pos: 'MEI', grid: '2 / 1' }, { pos: 'MEI', grid: '2 / 2' }, { pos: 'MEI', grid: '2 / 4' }, { pos: 'MEI', grid: '2 / 5' },
+      { pos: 'ZAG', grid: '3 / 1' }, { pos: 'ZAG', grid: '3 / 2' }, { pos: 'ZAG', grid: '3 / 4' }, { pos: 'ZAG', grid: '3 / 5' },
+      { pos: 'GOL', grid: '4 / 3' },
+    ]
+  },
+   '3-5-2': {
+    positions: [
+      // Attackers
+      { pos: 'ATA', grid: '1 / 2' }, { pos: 'ATA', grid: '1 / 4' },
+      // Midfielders
+      { pos: 'MEI', grid: '2 / 3' }, // CAM
+      { pos: 'MEI', grid: '2 / 1' }, // LM
+      { pos: 'MEI', grid: '2 / 5' }, // RM
+      { pos: 'VOL', grid: '3 / 2' }, // L-CDM
+      { pos: 'VOL', grid: '3 / 4' }, // R-CDM
+      // Defenders
+      { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 3' }, { pos: 'ZAG', grid: '4 / 4' },
+      // Goalkeeper
+      { pos: 'GOL', grid: '5 / 3' },
+    ]
+  },
+  // Society (7 players)
+  '3-2-1': {
+    positions: [
+      { pos: 'ATA', grid: '1 / 3' },
+      { pos: 'MEI', grid: '2 / 2' }, { pos: 'MEI', grid: '2 / 4' },
+      { pos: 'ZAG', grid: '3 / 1' }, { pos: 'ZAG', grid: '3 / 3' }, { pos: 'ZAG', grid: '3 / 5' },
+      { pos: 'GOL', grid: '4 / 3' },
+    ]
+  },
+   '2-3-1': {
+    positions: [
+      { pos: 'ATA', grid: '1 / 3' },
+      { pos: 'MEI', grid: '2 / 1' }, { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '2 / 5' },
+      { pos: 'ZAG', grid: '3 / 2' }, { pos: 'ZAG', grid: '3 / 4' },
+      { pos: 'GOL', grid: '4 / 3' },
+    ]
+  },
+  // Futsal (5 players)
+  '2-2': { // Simplified from 2-1-2
+    positions: [
+      { pos: 'ATA', grid: '1 / 2' }, { pos: 'ATA', grid: '1 / 4' },
+      { pos: 'ZAG', grid: '3 / 2' }, { pos: 'ZAG', grid: '3 / 4' },
+      { pos: 'GOL', grid: '4 / 3' },
+    ]
+  },
+  '3-1': { // Simplified from 1-2-1
+     positions: [
+      { pos: 'ATA', grid: '1 / 3' },
+      { pos: 'ZAG', grid: '2 / 1' }, { pos: 'ZAG', grid: '2 / 3' }, { pos: 'ZAG', grid: '2 / 5' },
+      { pos: 'GOL', grid: '4 / 3' },
+    ]
+  }
+};
+
 const getFormationsForModality = (modality: Modality | null): Formation[] => {
   switch (modality) {
     case 'society':
@@ -129,61 +208,34 @@ const TeamDisplay = ({
   const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
   const reservePlayers = reserves.map(id => id ? { ...players[id], id } : null);
   
-  const { attackers, midfielders, defenders, goalkeeper, atkCount, midCount, defCount } = useMemo(() => {
-    const formationParts = formation.split('-').map(Number);
-    let parsedDef = 0, parsedMid = 0, parsedAtk = 0;
+  const layout = formationLayouts[formation]?.positions;
+  
+  const renderPlayerGrid = () => {
+    if (!layout) return null;
 
-    if ((modality === 'campo' || modality === 'society') && formationParts.length === 3) {
-        [parsedDef, parsedMid, parsedAtk] = formationParts;
-    } else if (modality === 'futsal' && formationParts.length === 2) {
-        [parsedDef, parsedAtk] = formationParts;
-        parsedMid = 0;
-    } else {
-        // Fallback for default or incorrect formation mapping
-        if(lineupPlayers.length === 11) [parsedDef, parsedMid, parsedAtk] = [4,3,3];
-        if(lineupPlayers.length === 7) [parsedDef, parsedMid, parsedAtk] = [3,2,1];
-        if(lineupPlayers.length === 5) [parsedDef, parsedAtk] = [2,2];
-    }
-    
-    let playerIndex = 0;
-    
-    const assignedAttackers = lineupPlayers.slice(playerIndex, playerIndex + parsedAtk);
-    playerIndex += parsedAtk;
-    const assignedMidfielders = lineupPlayers.slice(playerIndex, playerIndex + parsedMid);
-    playerIndex += parsedMid;
-    const assignedDefenders = lineupPlayers.slice(playerIndex, playerIndex + parsedDef);
-    playerIndex += parsedDef;
-    const assignedGoalkeeper = lineupPlayers.slice(playerIndex, playerIndex + 1);
-    
-    return { 
-        attackers: assignedAttackers, 
-        midfielders: assignedMidfielders, 
-        defenders: assignedDefenders, 
-        goalkeeper: assignedGoalkeeper,
-        atkCount: parsedAtk,
-        midCount: parsedMid,
-        defCount: parsedDef,
-    };
-  }, [lineupPlayers, formation, modality]);
+    return layout.map((slot, index) => {
+      const player = lineupPlayers[index];
+      const gridStyle = { gridArea: slot.grid };
 
-
-  const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
-    if (count === 0) return null;
-    return (
-        <div className="flex justify-around items-center z-10 w-full">
-            {Array.from({ length: count }).map((_, i) => {
-                const player = assignedPlayers[i];
-                const slotIndex = startIndex + i;
-                if (player) {
-                    return <PlayerCard key={`${teamIdentifier}-${player.id}-${slotIndex}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: slotIndex, team: teamIdentifier })} shirtColor={shirtColor} />;
-                } else if (canEdit) {
-                    return <AddPlayerButton variant="pitch" key={`add-${teamIdentifier}-${position}-${slotIndex}`} onClick={() => onAddPlayer(position, slotIndex)} />;
-                } else {
-                    return <div key={`empty-${teamIdentifier}-${position}-${slotIndex}`} className="w-16 h-24" />;
-                }
-            })}
+      return (
+        <div key={`${teamIdentifier}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
+          {player ? (
+            <PlayerCard 
+              player={player} 
+              onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: teamIdentifier })} 
+              shirtColor={shirtColor} 
+            />
+          ) : canEdit ? (
+            <AddPlayerButton 
+              variant="pitch" 
+              onClick={() => onAddPlayer(slot.pos, index)} 
+            />
+          ) : (
+            <div className="w-16 h-24" /> // Placeholder for empty slot in view mode
+          )}
         </div>
-    );
+      );
+    });
   };
 
   const renderReserves = () => (
@@ -204,10 +256,7 @@ const TeamDisplay = ({
   return (
     <div className="space-y-4">
         <Pitch modality={modality}>
-            {renderPlayerRow(atkCount, attackers, 'ATA', 0)}
-            {renderPlayerRow(midCount, midfielders, 'MEI', atkCount)}
-            {renderPlayerRow(defCount, defenders, 'ZAG', atkCount + midCount)}
-            {renderPlayerRow(1, goalkeeper, 'GOL', atkCount + midCount + defCount)}
+          {renderPlayerGrid()}
         </Pitch>
         <div className="mt-8">
             <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
