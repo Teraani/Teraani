@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Shield, Goal, ChevronDown } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
