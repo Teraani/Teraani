@@ -67,6 +67,10 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
   }
 };
 
+const team2002_ids = ['p-marcos', 'p-cafu', 'p-lucio', 'p-roque-junior', 'p-roberto-carlos', 'p-edmilson', 'p-gilberto-silva', 'p-juninho-paulista', 'p-rivaldo', 'p-ronaldinho', 'p-ronaldo'];
+const team1994_ids = ['p-taffarel', 'p-jorginho', 'p-aldair', 'p-marcio-santos', 'p-branco', 'p-mauro-silva', 'p-dunga', 'p-mazinho', 'p-zinho', 'p-bebeto', 'p-romario'];
+
+
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -102,9 +106,9 @@ export default function Home() {
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
 
   // State for the two teams the editor can manage
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(team2002_ids);
   const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(team1994_ids);
   const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
@@ -379,28 +383,13 @@ export default function Home() {
         [newLeagueId]: newLeague,
       }
     }));
-
-    // Pre-populate test teams
-    const team2002_ids = ['p-marcos', 'p-cafu', 'p-lucio', 'p-roque-junior', 'p-roberto-carlos', 'p-edmilson', 'p-gilberto-silva', 'p-juninho-paulista', 'p-rivaldo', 'p-ronaldinho', 'p-ronaldo'];
-    const team1994_ids = ['p-taffarel', 'p-jorginho', 'p-aldair', 'p-marcio-santos', 'p-branco', 'p-mauro-silva', 'p-dunga', 'p-mazinho', 'p-zinho', 'p-bebeto', 'p-romario'];
-
-    // Ensure the lineup arrays match the expected size for the 'campo' modality
-    const { lineup: lineupSizeCampo } = getTeamSizes('campo'); 
-    const team1_lineup = Array(lineupSizeCampo).fill(null);
-    const team2_lineup = Array(lineupSizeCampo).fill(null);
-
-    team2002_ids.forEach((id, index) => {
-        if (index < lineupSizeCampo) team1_lineup[index] = id;
-    });
-
-    team1994_ids.forEach((id, index) => {
-        if (index < lineupSizeCampo) team2_lineup[index] = id;
-    });
-
-    setTeam1Lineup(team1_lineup);
-    setTeam2Lineup(team2_lineup);
     
     setCurrentLeagueId(newLeagueId);
+    
+    // Set the test teams for the new league
+    setTeam1Lineup(team2002_ids);
+    setTeam2Lineup(team1994_ids);
+
     navigateTo('modality-selection');
     toast({ title: "Liga Criada!", description: `Bem-vindo à ${leagueName}!` });
   };
