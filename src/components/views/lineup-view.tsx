@@ -78,17 +78,21 @@ const formationLayouts: FormationLayout = {
       // Midfielders
       { pos: 'MEI', grid: '2 / 2' }, { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '2 / 4' },
       // Defenders
-      { pos: 'ZAG', grid: '3 / 1' }, { pos: 'ZAG', grid: '3 / 2' }, { pos: 'ZAG', grid: '3 / 4' }, { pos: 'ZAG', grid: '3 / 5' },
+      { pos: 'ZAG', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'ZAG', grid: '4 / 5' },
       // Goalkeeper
-      { pos: 'GOL', grid: '4 / 3' },
+      { pos: 'GOL', grid: '5 / 3' },
     ]
   },
   '4-4-2': {
     positions: [
+      // Attackers
       { pos: 'ATA', grid: '1 / 2' }, { pos: 'ATA', grid: '1 / 4' },
-      { pos: 'MEI', grid: '2 / 1' }, { pos: 'MEI', grid: '2 / 2' }, { pos: 'MEI', grid: '2 / 4' }, { pos: 'MEI', grid: '2 / 5' },
-      { pos: 'ZAG', grid: '3 / 1' }, { pos: 'ZAG', grid: '3 / 2' }, { pos: 'ZAG', grid: '3 / 4' }, { pos: 'ZAG', grid: '3 / 5' },
-      { pos: 'GOL', grid: '4 / 3' },
+      // Midfielders
+      { pos: 'MEI', grid: '3 / 1' }, { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '3 / 4' }, { pos: 'MEI', grid: '3 / 5' },
+      // Defenders
+      { pos: 'ZAG', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'ZAG', grid: '4 / 5' },
+      // Goalkeeper
+      { pos: 'GOL', grid: '5 / 3' },
     ]
   },
    '3-5-2': {
