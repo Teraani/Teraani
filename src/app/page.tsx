@@ -114,7 +114,7 @@ export default function Home() {
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
-  const [formation, setFormation] = useState<Formation>(getFormationsForModality(selectedModality)[0]);
+  const [formation, setFormation] = useState<Formation>('4-4-2');
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   
@@ -130,15 +130,6 @@ export default function Home() {
     }
   }, [appData.leagues]);
 
-  useEffect(() => {
-    const { lineup, reserves } = getTeamSizes(selectedModality);
-    setTeam1Lineup(Array(lineup).fill(null));
-    setTeam1Reserves(Array(reserves).fill(null));
-    setTeam2Lineup(Array(lineup).fill(null));
-    setTeam2Reserves(Array(reserves).fill(null));
-    setFormation(getFormationsForModality(selectedModality)[0]);
-  }, [selectedModality]);
-  
   // Helper to update league data
   const updateCurrentLeague = (updater: (league: League) => League) => {
     if (!currentLeague) return;
