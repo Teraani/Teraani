@@ -170,7 +170,7 @@ const TeamDisplay = ({
   const renderPlayerRow = (count: number, assignedPlayers: (({ id: string } & Player) | null)[], position: Player['pos'], startIndex: number) => {
     if (count === 0) return null;
     return (
-        <div className="flex justify-around z-10 w-full">
+        <div className="flex justify-around items-center z-10 w-full">
             {Array.from({ length: count }).map((_, i) => {
                 const player = assignedPlayers[i];
                 const slotIndex = startIndex + i;
