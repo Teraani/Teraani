@@ -76,14 +76,9 @@ const formationLayouts: FormationLayout = {
       // Attackers
       { pos: 'ATA', grid: '1 / 1' }, { pos: 'ATA', grid: '1 / 3' }, { pos: 'ATA', grid: '1 / 5' },
       // Midfielders
-      { pos: 'MEI', grid: '2 / 3' }, // Advanced CM
-      { pos: 'MEI', grid: '3 / 2' }, // Left CM
-      { pos: 'MEI', grid: '3 / 4' }, // Right CM
+      { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '3 / 4' },
       // Defenders
-      { pos: 'ZAG', grid: '4 / 1' }, // LB
-      { pos: 'ZAG', grid: '4 / 2' }, // LCB
-      { pos: 'ZAG', grid: '4 / 3' }, // RCB
-      { pos: 'ZAG', grid: '4 / 4' }, // RB
+      { pos: 'ZAG', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'ZAG', grid: '4 / 5' },
       // Goalkeeper
       { pos: 'GOL', grid: '5 / 3' },
     ]
