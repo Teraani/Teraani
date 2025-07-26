@@ -42,10 +42,10 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
   };
   
   return (
-    <div className="flex flex-col min-h-screen bg-background p-6">
+    <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground">
       <header className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Escolha a Modalidade da Liga</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-3xl font-bold">Escolha a Modalidade da Liga</h1>
+        <p className="text-primary-foreground/80 mt-2">
           {isLeagueAdmin
             ? "Como admin da liga, selecione o tipo de jogo para todos os participantes."
             : "Aguardando o administrador da liga escolher a modalidade."
@@ -62,10 +62,10 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
             <Card
               key={modality.type}
               className={cn(
-                "w-full max-w-md transition-all",
-                isSelected && "border-primary border-2",
+                "w-full max-w-md transition-all text-foreground bg-card",
+                isSelected && "border-primary border-2 shadow-2xl",
                 !isDisabled && "cursor-pointer hover:shadow-lg",
-                isDisabled && "border-border bg-muted/50"
+                isDisabled && "bg-muted/50"
               )}
               onClick={() => !isDisabled && handleSelect(modality.type)}
             >
@@ -106,7 +106,7 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
         })}
       </main>
 
-       <footer className="text-center text-xs text-muted-foreground mt-8">
+       <footer className="text-center text-xs text-primary-foreground/80 mt-8">
             <p>
                 A modalidade é definida para toda a liga. Apenas o administrador pode alterá-la.
             </p>
