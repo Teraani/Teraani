@@ -2,12 +2,13 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { Chrome, Mail, Lock, User, SignalIcon } from 'lucide-react';
+import { Chrome, Mail, Lock, User } from 'lucide-react';
 import { Input } from '../ui/input';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Logo } from '../logo';
 
 interface RegisterViewProps {
   onRegisterSuccess: () => void;
@@ -47,7 +48,7 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground text-center">
        <main className="flex-1 flex flex-col items-center justify-center">
          <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
-            <SignalIcon className="w-16 h-16 text-white" />
+            <Logo className="w-16 h-16 text-white" />
         </div>
         <h1 className="text-3xl font-bold mb-1">Amistosos FC</h1>
         <p className="max-w-md mb-6">
