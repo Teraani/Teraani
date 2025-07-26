@@ -239,7 +239,7 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
       <header className="bg-primary text-primary-foreground p-4 shadow-sm flex items-center justify-between">
          <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/20">
+            <Button className="relative h-10 w-10 rounded-full hover:bg-white/20 p-0">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user.avatar ?? undefined} alt="Avatar do Usuário" />
                 <AvatarFallback>
@@ -326,3 +326,5 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
     </div>
   );
 }
+
+    
