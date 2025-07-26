@@ -5,9 +5,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '../ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Trophy, PlusCircle, LogIn } from 'lucide-react';
+import { Trophy, PlusCircle, LogIn, SignalIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Logo } from '../logo';
 
 interface LeagueEntryViewProps {
   onCreateLeague: (leagueName: string) => void;
@@ -27,7 +26,7 @@ export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps
     <div className="flex flex-col min-h-screen bg-background p-6">
       <header className="text-center mb-8">
          <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-            <Logo className="w-16 h-auto text-primary" />
+            <SignalIcon className="w-16 h-16 text-primary" />
         </div>
         <h1 className="text-3xl font-bold text-foreground">Bem-vindo ao Amistosos FC!</h1>
         <p className="text-muted-foreground mt-2 max-w-md mx-auto">
