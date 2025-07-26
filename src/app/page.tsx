@@ -431,7 +431,7 @@ export default function Home() {
         if (index >= 0 && index < newLineup.length) {
           newLineup[index] = playerId;
         }
-        return newReserves;
+        return newLineup;
       });
     }
 
