@@ -29,7 +29,7 @@ import type { Vote } from '@/components/views/best-eleven-view';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
-import type { ShirtColor } from '@/components/views/lineup-view';
+import type { ShirtColor, Formation } from '@/components/views/lineup-view';
 
 export type View = 'welcome' | 'register' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
@@ -52,6 +52,18 @@ const getTeamSizes = (modality: Modality | null) => {
     case 'campo':
     default:
       return { lineup: 11, reserves: 5 };
+  }
+};
+
+const getFormationsForModality = (modality: Modality | null): Formation[] => {
+  switch (modality) {
+    case 'society':
+      return ['3-2-1', '2-3-1'];
+    case 'futsal':
+      return ['2-2', '3-1'];
+    case 'campo':
+    default:
+      return ['4-3-3', '4-4-2', '3-5-2'];
   }
 };
 
@@ -98,6 +110,7 @@ export default function Home() {
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('verde');
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('amarelo');
+  const [formation, setFormation] = useState<Formation>(getFormationsForModality(selectedModality)[0]);
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   
@@ -108,12 +121,10 @@ export default function Home() {
       const inviteCode = urlParams.get('invite');
       if (inviteCode && appData.leagues[inviteCode]) {
         setInvitedToLeagueId(inviteCode);
-        // If there's an invite code, always go to the registration screen.
-        // The logic inside onRegisterSuccess will handle adding the user to the league.
         navigateTo('register');
       }
     }
-  }, []);
+  }, [appData.leagues]);
 
   useEffect(() => {
     const { lineup, reserves } = getTeamSizes(selectedModality);
@@ -121,6 +132,7 @@ export default function Home() {
     setTeam1Reserves(Array(reserves).fill(null));
     setTeam2Lineup(Array(lineup).fill(null));
     setTeam2Reserves(Array(reserves).fill(null));
+    setFormation(getFormationsForModality(selectedModality)[0]);
   }, [selectedModality]);
   
   // Helper to update league data
@@ -806,6 +818,8 @@ export default function Home() {
                  setTeam1ShirtColor={setTeam1ShirtColor}
                  team2ShirtColor={team2ShirtColor}
                  setTeam2ShirtColor={setTeam2ShirtColor}
+                 formation={formation}
+                 setFormation={setFormation}
                />;
       case 'player-details':
         return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
@@ -882,6 +896,7 @@ export default function Home() {
                   onCloseVoting={handleCloseVoting}
                   modality={selectedModality}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
+                  formation={formation}
                 />;
       default:
         return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;

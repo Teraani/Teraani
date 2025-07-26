@@ -38,8 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { BestElevenVote, Modality } from '@/app/page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '@/lib/utils';
-
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-1';
+import type { Formation } from './lineup-view';
 
 export interface Vote {
   playerId: string;
@@ -63,6 +62,7 @@ interface BestElevenViewProps {
   onCloseVoting: () => void;
   modality: Modality | null;
   isVoteRevelationEnabled: boolean;
+  formation: Formation;
 }
 
 interface PlayerActionState {
@@ -78,18 +78,6 @@ const getVotingStatus = (isReleased: boolean, isClosed: boolean) => {
         return { isOpen: true, message: "A votação está aberta!" };
     }
     return { isOpen: false, message: "Aguardando liberação da votação." };
-};
-
-const getFormationsForModality = (modality: Modality | null): Formation[] => {
-  switch (modality) {
-    case 'society':
-      return ['3-2-1', '2-3-1'];
-    case 'futsal':
-      return ['2-2', '3-1'];
-    case 'campo':
-    default:
-      return ['4-3-3', '4-4-2', '3-5-2'];
-  }
 };
 
 const getLineupSize = (modality: Modality | null) => {
@@ -115,7 +103,7 @@ const formationLayouts: FormationLayout = {
       // Attackers
       { pos: 'ATA', grid: '1 / 1' }, { pos: 'ATA', grid: '1 / 3' }, { pos: 'ATA', grid: '1 / 5' },
       // Midfielders
-      { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '3 / 4' },
+      { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '3 / 4' },
       // Defenders
       { pos: 'ZAG', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'ZAG', grid: '4 / 5' },
       // Goalkeeper
@@ -269,7 +257,7 @@ const RatingModal = ({ player, onRate, onCancel }: { player: Player, onRate: (ra
 }
 
 
-export default function BestElevenView({ onBack, players, currentUser, allUsers, allScaledPlayerIds, onVote, userLineup, allVotes, isSaved, canManageVoting, isVotingReleased, isVotingClosed, onReleaseVoting, onCloseVoting, modality, isVoteRevelationEnabled }: BestElevenViewProps) {
+export default function BestElevenView({ onBack, players, currentUser, allUsers, allScaledPlayerIds, onVote, userLineup, allVotes, isSaved, canManageVoting, isVotingReleased, isVotingClosed, onReleaseVoting, onCloseVoting, modality, isVoteRevelationEnabled, formation }: BestElevenViewProps) {
     const { toast } = useToast();
     const lineupSize = getLineupSize(modality);
     
@@ -279,11 +267,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
     const [playerToRate, setPlayerToRate] = useState<string | null>(null);
 
-    const availableFormations = useMemo(() => getFormationsForModality(modality), [modality]);
-    const [formation, setFormation] = useState<Formation>(availableFormations[0]);
-    
     useEffect(() => {
-        setFormation(getFormationsForModality(modality)[0]);
         setLineup(Array(getLineupSize(modality)).fill(null))
     }, [modality]);
 
@@ -647,15 +631,9 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                     Salvar Seleção
                 </Button>
             </div>
-            <div className="flex-none">
-                 <Select value={formation} onValueChange={(value: Formation) => setFormation(value as Formation)}>
-                    <SelectTrigger className="w-auto bg-muted border-none h-12">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableFormations.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                    </SelectContent>
-                </Select>
+            <div className="flex-none text-center">
+                <p className="text-xs text-muted-foreground">Esquema Tático</p>
+                <p className="font-bold">{formation}</p>
             </div>
         </div>
       )}

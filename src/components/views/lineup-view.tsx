@@ -28,6 +28,9 @@ import {
 } from "@/components/ui/alert-dialog"
 
 
+export type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-1';
+export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
+
 export interface LineupViewProps {
   players: Record<string, Player>;
   onPlayerSelect: (playerId: string) => void;
@@ -50,10 +53,10 @@ export interface LineupViewProps {
   setTeam1ShirtColor: (color: ShirtColor) => void;
   team2ShirtColor: ShirtColor;
   setTeam2ShirtColor: (color: ShirtColor) => void;
+  formation: Formation;
+  setFormation: (formation: Formation) => void;
 }
 
-type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-1';
-export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
 
 interface PlayerActionState {
   playerId: string;
@@ -76,7 +79,7 @@ const formationLayouts: FormationLayout = {
       // Attackers
       { pos: 'ATA', grid: '1 / 1' }, { pos: 'ATA', grid: '1 / 3' }, { pos: 'ATA', grid: '1 / 5' },
       // Midfielders
-      { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '3 / 4' },
+      { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '3 / 4' },
       // Defenders
       { pos: 'ZAG', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'ZAG', grid: '4 / 5' },
       // Goalkeeper
@@ -278,15 +281,17 @@ export default function LineupView(props: LineupViewProps) {
     team1Lineup, setTeam1Lineup, team1Reserves, setTeam1Reserves,
     team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves,
     onSaveLineups, lineupsSaved, modality,
-    team1ShirtColor, setTeam1ShirtColor, team2ShirtColor, setTeam2ShirtColor
+    team1ShirtColor, setTeam1ShirtColor, team2ShirtColor, setTeam2ShirtColor,
+    formation, setFormation
   } = props;
     
   const availableFormations = useMemo(() => getFormationsForModality(modality), [modality]);
-  const [formation, setFormation] = useState<Formation>(availableFormations[0]);
   
   useEffect(() => {
-    setFormation(getFormationsForModality(modality)[0]);
-  }, [modality]);
+    if (!availableFormations.includes(formation)) {
+      setFormation(availableFormations[0]);
+    }
+  }, [availableFormations, formation, setFormation]);
 
   const [isMarketOpen, setIsMarketOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('team1');
@@ -649,5 +654,3 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
-
-
