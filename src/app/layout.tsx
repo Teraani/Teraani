@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: 'Amistosos FC',
   description: 'Escale seu time, participe de ligas e mostre que você sabe mitar!',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/pwa-192x192.png',
+  },
 };
 
 export default function RootLayout({
