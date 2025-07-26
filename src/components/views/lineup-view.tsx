@@ -82,8 +82,8 @@ const formationLayouts: FormationLayout = {
       // Defenders
       { pos: 'ZAG', grid: '4 / 1' }, // LB
       { pos: 'ZAG', grid: '4 / 2' }, // LCB
-      { pos: 'ZAG', grid: '4 / 4' }, // RCB
-      { pos: 'ZAG', grid: '4 / 5' }, // RB
+      { pos: 'ZAG', grid: '4 / 3' }, // RCB
+      { pos: 'ZAG', grid: '4 / 4' }, // RB
       // Goalkeeper
       { pos: 'GOL', grid: '5 / 3' },
     ]
