@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Users, Lock } from 'lucide-react';
 import React from 'react';
 import type { Modality } from '@/app/page';
+import { Logo } from '../logo';
 
 interface ModalitySelectionViewProps {
   onModalitySelect: (modality: Modality) => void;
@@ -44,6 +45,9 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
   return (
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground">
       <header className="text-center mb-8">
+        <div className="w-20 h-20 bg-black/20 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+          <Logo className="w-16 h-16 text-white" />
+        </div>
         <h1 className="text-3xl font-bold">Escolha a Modalidade da Liga</h1>
         <p className="text-primary-foreground/80 mt-2">
           {isLeagueAdmin
@@ -62,10 +66,10 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
             <Card
               key={modality.type}
               className={cn(
-                "w-full max-w-md transition-all text-foreground bg-card",
-                isSelected && "border-primary border-2 shadow-2xl",
-                !isDisabled && "cursor-pointer hover:shadow-lg",
-                isDisabled && "bg-muted/50"
+                "w-full max-w-md transition-all bg-black/20 border-white/20 text-primary-foreground",
+                isSelected && "border-white/80 border-2 shadow-2xl",
+                !isDisabled && "cursor-pointer hover:bg-black/30",
+                isDisabled && "bg-black/10 text-primary-foreground/50"
               )}
               onClick={() => !isDisabled && handleSelect(modality.type)}
             >
@@ -73,16 +77,16 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
                 <div className="flex justify-between items-center">
                   <CardTitle>{modality.name}</CardTitle>
                   {isDisabled && !isSelected && (
-                    <Lock className="w-5 h-5 text-muted-foreground" />
+                    <Lock className="w-5 h-5 text-primary-foreground/50" />
                   )}
                    {isSelected && (
-                    <div className="text-xs font-bold text-primary-foreground bg-primary px-2 py-1 rounded-full">SELECIONADO</div>
+                    <div className="text-xs font-bold text-primary bg-primary-foreground px-2 py-1 rounded-full">SELECIONADO</div>
                   )}
                 </div>
-                <CardDescription>{modality.description}</CardDescription>
+                <CardDescription className="text-primary-foreground/80">{modality.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center text-muted-foreground">
+                <div className={cn("flex items-center", isDisabled ? "text-primary-foreground/50" : "text-primary-foreground/80")}>
                   <Users className="w-5 h-5 mr-2" />
                   <span>{modality.players}</span>
                 </div>
@@ -90,7 +94,7 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
               {isLeagueAdmin && (
                  <CardFooter>
                     <Button
-                      className="w-full"
+                      className="w-full bg-white text-primary hover:bg-gray-200"
                       disabled={isDisabled}
                       onClick={(e) => {
                         e.stopPropagation(); // Prevent double event firing
