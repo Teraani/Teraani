@@ -108,8 +108,8 @@ export default function Home() {
   const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
-  const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('verde');
-  const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('amarelo');
+  const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
+  const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
   const [formation, setFormation] = useState<Formation>(getFormationsForModality(selectedModality)[0]);
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
@@ -379,6 +379,26 @@ export default function Home() {
         [newLeagueId]: newLeague,
       }
     }));
+
+    // Pre-populate test teams
+    const team2002_ids = ['p-marcos', 'p-cafu', 'p-lucio', 'p-roque-junior', 'p-roberto-carlos', 'p-edmilson', 'p-gilberto-silva', 'p-juninho-paulista', 'p-rivaldo', 'p-ronaldinho', 'p-ronaldo'];
+    const team1994_ids = ['p-taffarel', 'p-jorginho', 'p-aldair', 'p-marcio-santos', 'p-branco', 'p-mauro-silva', 'p-dunga', 'p-mazinho', 'p-zinho', 'p-bebeto', 'p-romario'];
+
+    // Ensure the lineup arrays match the expected size for the 'campo' modality
+    const { lineup: lineupSizeCampo } = getTeamSizes('campo'); 
+    const team1_lineup = Array(lineupSizeCampo).fill(null);
+    const team2_lineup = Array(lineupSizeCampo).fill(null);
+
+    team2002_ids.forEach((id, index) => {
+        if (index < lineupSizeCampo) team1_lineup[index] = id;
+    });
+
+    team1994_ids.forEach((id, index) => {
+        if (index < lineupSizeCampo) team2_lineup[index] = id;
+    });
+
+    setTeam1Lineup(team1_lineup);
+    setTeam2Lineup(team2_lineup);
     
     setCurrentLeagueId(newLeagueId);
     navigateTo('modality-selection');
