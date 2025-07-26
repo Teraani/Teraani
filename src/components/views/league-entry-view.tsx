@@ -27,7 +27,7 @@ export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps
   return (
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground text-center">
       <header className="text-center mb-8 flex-1 flex flex-col items-center justify-center">
-         <div className="w-20 h-20 bg-black/20 rounded-2xl flex items-center justify-center mb-4 mx-auto">
+         <div className="w-20 h-20 bg-muted rounded-2xl flex items-center justify-center mb-4 mx-auto">
             <Logo className="w-16 h-16 text-white" />
         </div>
         <h1 className="text-3xl font-bold">Bem-vindo ao Amistosos FC!</h1>
@@ -51,7 +51,7 @@ export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps
           <TabsContent value="create">
             <Card className="bg-transparent border-none shadow-none text-left">
               <CardHeader className="p-2 pt-4">
-                <CardTitle>Crie sua Liga</CardTitle>
+                <CardTitle className="text-primary-foreground">Crie sua Liga</CardTitle>
                 <CardDescription className="text-primary-foreground/70">Dê um nome para sua nova liga e comece a convidar seus amigos.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 p-2">
@@ -71,7 +71,7 @@ export default function LeagueEntryView({ onCreateLeague }: LeagueEntryViewProps
           <TabsContent value="join">
              <Card className="bg-transparent border-none shadow-none text-left">
               <CardHeader className="p-2 pt-4">
-                <CardTitle>Entrar em uma Liga</CardTitle>
+                <CardTitle className="text-primary-foreground">Entrar em uma Liga</CardTitle>
                 <CardDescription className="text-primary-foreground/70">Peça o código de convite para o administrador da liga.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 p-2">
