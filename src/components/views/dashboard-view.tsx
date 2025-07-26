@@ -236,10 +236,10 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
 
   return (
     <div>
-      <header className="bg-card p-4 shadow-sm flex items-center justify-between">
+      <header className="bg-primary text-primary-foreground p-4 shadow-sm flex items-center justify-between">
          <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+            <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/20">
               <Avatar className="h-10 w-10">
                 <AvatarImage src={user.avatar ?? undefined} alt="Avatar do Usuário" />
                 <AvatarFallback>
@@ -314,7 +314,7 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <h1 className="text-xl font-bold text-foreground">{leagues[currentLeagueId].name}</h1>
+        <h1 className="text-xl font-bold">{leagues[currentLeagueId].name}</h1>
 
         <div className="w-10 h-10" />
       </header>
