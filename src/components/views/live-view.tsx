@@ -5,8 +5,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Player, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Footprints, Goal, Send, Calendar, CheckCircle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Shield, Footprints, Goal, Send, Calendar, CheckCircle, Info, X } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -145,8 +145,18 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     const [team1Score, setTeam1Score] = useState(0);
     const [team2Score, setTeam2Score] = useState(0);
     const [isFinishConfirmOpen, setIsFinishConfirmOpen] = useState(false);
+    const [showInfoCard, setShowInfoCard] = useState(false);
 
     const matchDate = useMemo(() => format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR }), []);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const hasSeenInfo = localStorage.getItem('liveViewInfoDismissed');
+            if (!hasSeenInfo && canEditScouts) {
+                setShowInfoCard(true);
+            }
+        }
+    }, [canEditScouts]);
 
     // Update score based on events
     useEffect(() => {
@@ -166,6 +176,13 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     const handleFinishClick = () => {
       onFinishMatch(team1Score, team2Score);
       setIsFinishConfirmOpen(false);
+    }
+
+    const handleDismissInfo = () => {
+        setShowInfoCard(false);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('liveViewInfoDismissed', 'true');
+        }
     }
 
   return (
@@ -194,6 +211,28 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
       </header>
 
       <main className={cn("p-4 space-y-4", canEditScouts && "pb-24")}>
+          {showInfoCard && (
+            <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="flex items-center gap-3">
+                    <Info className="w-6 h-6 text-blue-500" />
+                    <CardTitle className="text-blue-800 dark:text-blue-300">Painel de Controle Ao Vivo</CardTitle>
+                </div>
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500" onClick={handleDismissInfo}>
+                    <X className="w-5 h-5"/>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-blue-700 dark:text-blue-400">
+                  Aqui é onde o Scout da Rodada registra os eventos (gols, assistências, etc.) em tempo real. Os eventos aparecerão no feed para todos acompanharem.
+                </p>
+              </CardContent>
+              <CardFooter>
+                 <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={handleDismissInfo}>Entendi, não mostrar novamente</Button>
+              </CardFooter>
+            </Card>
+          )}
+
           <Card className="bg-card">
             <CardContent className="p-4">
                 <div className="flex justify-between items-center text-center">
