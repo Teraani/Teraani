@@ -151,14 +151,11 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     const matchDate = useMemo(() => format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR }), []);
 
     useEffect(() => {
-      // This effect runs only on the client, avoiding hydration issues
-      if (canEditScouts) {
-          const hasSeenInfo = localStorage.getItem('liveViewInfoDismissed');
-          if (!hasSeenInfo) {
-              setShowInfoCard(true);
-          }
-      }
-    }, [canEditScouts]);
+        const hasSeenInfo = localStorage.getItem('liveViewInfoDismissed_player');
+        if (!hasSeenInfo) {
+            setShowInfoCard(true);
+        }
+    }, []);
 
     // Update score based on events
     useEffect(() => {
@@ -182,8 +179,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
 
     const handleDismissInfo = () => {
         setShowInfoCard(false);
-        // This runs only on the client
-        localStorage.setItem('liveViewInfoDismissed', 'true');
+        localStorage.setItem('liveViewInfoDismissed_player', 'true');
     }
 
   return (
@@ -217,7 +213,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center gap-3">
                     <Info className="w-6 h-6 text-blue-500" />
-                    <CardTitle className="text-blue-800 dark:text-blue-300">Painel de Controle Ao Vivo</CardTitle>
+                    <CardTitle className="text-blue-800 dark:text-blue-300">Acompanhe a Partida</CardTitle>
                 </div>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500" onClick={handleDismissInfo}>
                     <X className="w-5 h-5"/>
@@ -225,11 +221,14 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-blue-700 dark:text-blue-400">
-                  Aqui é onde o Scout da Rodada registra os eventos (gols, assistências, etc.) em tempo real. Os eventos aparecerão no feed para todos acompanharem.
+                  {canEditScouts
+                    ? "Aqui é onde você, Scout da Rodada, registra os eventos (gols, assistências, etc.) em tempo real."
+                    : "O feed abaixo é atualizado em tempo real pelo Scout da Rodada com os principais lances da partida."
+                  }
                 </p>
               </CardContent>
               <CardFooter>
-                 <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={handleDismissInfo}>Entendi, não mostrar novamente</Button>
+                 <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={handleDismissInfo}>Entendi</Button>
               </CardFooter>
             </Card>
           )}
