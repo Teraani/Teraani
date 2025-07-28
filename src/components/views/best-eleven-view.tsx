@@ -266,17 +266,11 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
     const [playerToRate, setPlayerToRate] = useState<string | null>(null);
     
-    const [showInfoCard, setShowInfoCard] = useState(false);
-
+    const [hasMounted, setHasMounted] = useState(false);
+    
     useEffect(() => {
-        // Only show the card if there's a match to vote on and it hasn't been closed
-        if (allScaledPlayerIds.length > 0 && !isVotingClosed) {
-            const hasSeenInfo = localStorage.getItem('bestElevenInfoDismissed');
-            if (!hasSeenInfo) {
-                setShowInfoCard(true);
-            }
-        }
-    }, [allScaledPlayerIds, isVotingClosed]);
+        setHasMounted(true);
+    }, []);
 
     useEffect(() => {
         setLineup(Array(getLineupSize(modality)).fill(null))
@@ -461,11 +455,13 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         return allUsers.filter(user => allVotes[user.id]);
     }, [allVotes, allUsers]);
     
+    const canViewVotes = isVoteRevelationEnabled && isVotingClosed;
+    const showInfoCard = hasMounted && !localStorage.getItem('bestElevenInfoDismissed') && allScaledPlayerIds.length > 0 && !isVotingClosed;
+    
     const handleDismissInfo = () => {
-        setShowInfoCard(false);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('bestElevenInfoDismissed', 'true');
-        }
+        localStorage.setItem('bestElevenInfoDismissed', 'true');
+        setHasMounted(false); // This will re-render the component and hide the card
+        setHasMounted(true); // And we set it back to true for next time
     }
 
   return (
@@ -532,10 +528,8 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                     <p className="text-sm text-blue-700 dark:text-blue-400">
                         Após o fim de uma partida, o administrador libera a votação. Escolha os melhores jogadores em cada posição e dê uma nota para a atuação deles.
                     </p>
+                    <Button className="w-full mt-3 bg-blue-500/20 text-blue-700 hover:bg-blue-500/30 text-xs h-8" onClick={handleDismissInfo}>Entendi</Button>
                 </CardContent>
-                <CardFooter>
-                     <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30 text-xs h-8" onClick={handleDismissInfo}>Entendi</Button>
-                </CardFooter>
             </Card>
         )}
 
