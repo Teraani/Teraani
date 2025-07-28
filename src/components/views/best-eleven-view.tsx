@@ -272,13 +272,17 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     }, [modality]);
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        // Only show the info card if voting is possible (players are available)
+        // and it hasn't been dismissed before, and the voting isn't already closed.
+        if (allScaledPlayerIds.length > 0 && !isVotingClosed) {
             const hasSeenInfo = localStorage.getItem('bestElevenInfoDismissed');
             if (!hasSeenInfo) {
                 setShowInfoCard(true);
             }
+        } else {
+            setShowInfoCard(false);
         }
-    }, []);
+    }, [allScaledPlayerIds, isVotingClosed]);
 
     const finalEleven = useMemo(() => {
         if (!isVotingClosed) return null;
@@ -531,7 +535,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 <p className="text-sm text-blue-700 dark:text-blue-400 mb-4">
                     Após o fim de uma partida, o administrador libera a votação. Escolha os melhores jogadores em cada posição e dê uma nota para a atuação deles.
                 </p>
-                <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={handleDismissInfo}>Entendi, não mostrar novamente</Button>
+                <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={handleDismissInfo}>Entendi</Button>
               </CardContent>
             </Card>
         )}
