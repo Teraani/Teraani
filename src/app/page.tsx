@@ -67,8 +67,29 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
   }
 };
 
-const team2002_ids = ['p-marcos', 'p-cafu', 'p-lucio', 'p-roque-junior', 'p-roberto-carlos', 'p-edmilson', 'p-gilberto-silva', 'p-juninho-paulista', 'p-rivaldo', 'p-ronaldinho', 'p-ronaldo'];
-const team1994_ids = ['p-taffarel', 'p-jorginho', 'p-aldair', 'p-marcio-santos', 'p-branco', 'p-mauro-silva', 'p-dunga', 'p-mazinho', 'p-zinho', 'p-bebeto', 'p-romario'];
+// Player IDs reordered to match the 4-3-3 formation layout (3 ATK, 3 MEI, 4 DEF, 1 GOL)
+const team2002_ids = [
+    // Attackers
+    'p-ronaldo', 'p-rivaldo', 'p-ronaldinho',
+    // Midfielders
+    'p-gilberto-silva', 'p-juninho-paulista', 'p-edmilson',
+    // Defenders
+    'p-cafu', 'p-lucio', 'p-roque-junior', 'p-roberto-carlos',
+    // Goalkeeper
+    'p-marcos'
+];
+
+// Player IDs reordered to match the 4-4-2 formation layout (2 ATK, 4 MEI, 4 DEF, 1 GOL)
+const team1994_ids = [
+    // Attackers
+    'p-romario', 'p-bebeto',
+    // Midfielders
+    'p-mauro-silva', 'p-dunga', 'p-mazinho', 'p-zinho',
+    // Defenders
+    'p-jorginho', 'p-aldair', 'p-marcio-santos', 'p-branco',
+    // Goalkeeper
+    'p-taffarel'
+];
 
 
 export default function Home() {
@@ -114,7 +135,7 @@ export default function Home() {
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
-  const [formation, setFormation] = useState<Formation>('4-4-2');
+  const [formation, setFormation] = useState<Formation>('4-3-3');
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   
