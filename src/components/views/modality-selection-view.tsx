@@ -37,10 +37,6 @@ const modalities: { name: string; players: string; type: Modality; description: 
 ];
 
 export default function ModalitySelectionView({ onModalitySelect, selectedModality, isLeagueAdmin }: ModalitySelectionViewProps) {
-
-  const handleSelect = (modalityType: Modality) => {
-    onModalitySelect(modalityType);
-  };
   
   return (
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground">
@@ -67,10 +63,10 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
               className={cn(
                 "w-full max-w-md transition-all bg-black/20 border-white/20 text-primary-foreground",
                 isSelected && "border-white/80 border-2 shadow-2xl",
-                isLeagueAdmin && "cursor-pointer hover:bg-black/30",
+                isLeagueAdmin ? "cursor-pointer hover:bg-black/30" : "cursor-not-allowed",
                 !isLeagueAdmin && "bg-black/10 text-primary-foreground/50"
               )}
-              onClick={() => isLeagueAdmin && handleSelect(modality.type)}
+              onClick={() => isLeagueAdmin && onModalitySelect(modality.type)}
             >
               <CardHeader>
                 <div className="flex justify-between items-center">
@@ -95,14 +91,22 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
                     <Button
                       className="w-full bg-white text-primary hover:bg-gray-200"
                       onClick={(e) => {
-                        e.stopPropagation(); // Prevent double event firing
-                        handleSelect(modality.type);
+                        e.stopPropagation();
+                        onModalitySelect(modality.type);
                       }}
                     >
                       {isSelected ? 'Confirmado' : 'Confirmar Modalidade'}
                     </Button>
                   </CardFooter>
               )}
+               {!isLeagueAdmin && (
+                  <CardFooter>
+                     <Button className="w-full" disabled>
+                        <Lock className="w-4 h-4 mr-2"/>
+                        Aguardando Admin
+                    </Button>
+                  </CardFooter>
+               )}
             </Card>
           );
         })}
