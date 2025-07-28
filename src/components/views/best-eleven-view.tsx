@@ -268,17 +268,13 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     
     const [showInfoCard, setShowInfoCard] = useState(false);
     
-    // Correct way to handle client-side-only logic to prevent hydration errors.
-    const [isClient, setIsClient] = useState(false);
     useEffect(() => {
-        setIsClient(true);
-    }, []);
-
-    useEffect(() => {
-        if (isClient && !localStorage.getItem('bestElevenInfoDismissed_v4')) {
+        // This check runs only on the client, after the component has mounted.
+        // This avoids hydration errors.
+        if (!localStorage.getItem('bestElevenInfoDismissed_v4')) {
             setShowInfoCard(true);
         }
-    }, [isClient]);
+    }, []);
 
     useEffect(() => {
         setLineup(Array(getLineupSize(modality)).fill(null))
@@ -467,9 +463,8 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     
     const handleDismissInfo = () => {
         setShowInfoCard(false);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('bestElevenInfoDismissed_v4', 'true');
-        }
+        // This check is safe because this function is only called from a user interaction (click)
+        localStorage.setItem('bestElevenInfoDismissed_v4', 'true');
     }
 
   return (
@@ -521,7 +516,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
       </header>
 
       <main className="p-4 space-y-4 pb-24">
-        {isClient && showInfoCard && allScaledPlayerIds.length > 0 && !isVotingClosed && (
+        {showInfoCard && (
             <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
                 <CardHeader>
                     <CardTitle className="text-blue-800 dark:text-blue-300 flex items-center gap-2">
