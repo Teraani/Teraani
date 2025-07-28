@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
-import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, Eye } from 'lucide-react';
+import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, Eye, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -12,7 +12,7 @@ import type { View, AddPlayerSlot, Modality } from '@/app/page';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '@/components/lineup/add-player-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { generateBalancedTeam } from '@/ai/flows/suggest-player-replacements';
 import { useToast } from '@/hooks/use-toast';
@@ -298,6 +298,7 @@ export default function LineupView(props: LineupViewProps) {
   const [isBalancing, setIsBalancing] = useState(false);
   const { toast } = useToast();
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
+  const [showTestTeamInfo, setShowTestTeamInfo] = useState(true);
 
   useEffect(() => {
     const checkMarketStatus = () => {
@@ -361,6 +362,16 @@ export default function LineupView(props: LineupViewProps) {
     }
   };
   
+  const handleClearAllTestTeams = () => {
+    handleClearLineup('team1');
+    handleClearLineup('team2');
+    setShowTestTeamInfo(false);
+    toast({
+      title: "Campo Limpo!",
+      description: "Agora é com você! Escale seus times para a rodada.",
+    });
+  };
+
   const handleClearReserves = (team: 'team1' | 'team2') => {
     if (team === 'team1') {
       setTeam1Reserves(Array(team1Reserves.length).fill(null));
@@ -457,6 +468,26 @@ export default function LineupView(props: LineupViewProps) {
 
   const editorView = (
      <>
+        {showTestTeamInfo && canEdit && (
+        <Card className="mb-4 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+          <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+            <Info className="w-6 h-6 text-blue-500" />
+            <CardTitle className="text-blue-800 dark:text-blue-300">Times de Demonstração</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-blue-700 dark:text-blue-400">
+              Estes são times de teste para você explorar. Sinta-se à vontade para alterá-los ou clique abaixo para começar do zero.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button variant="ghost" className="w-full text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900" onClick={handleClearAllTestTeams}>
+              <Trash2 className="mr-2 h-4 w-4"/>
+              Limpar Times e Começar do Zero
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
+
         <Card>
             <CardHeader>
                 <CardTitle>{canEdit ? "Editor da Rodada" : "Times da Rodada"}</CardTitle>
