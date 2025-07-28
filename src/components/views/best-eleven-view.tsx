@@ -270,10 +270,8 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     
     useEffect(() => {
         // This check ensures localStorage is only accessed on the client side, avoiding hydration errors.
-        if (typeof window !== 'undefined') {
-            if (!localStorage.getItem('bestElevenInfoDismissed_v2')) {
-                setShowInfoCard(true);
-            }
+        if (typeof window !== 'undefined' && !localStorage.getItem('bestElevenInfoDismissed_v3')) {
+            setShowInfoCard(true);
         }
     }, []);
 
@@ -465,7 +463,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const handleDismissInfo = () => {
         setShowInfoCard(false);
         if (typeof window !== 'undefined') {
-            localStorage.setItem('bestElevenInfoDismissed_v2', 'true');
+            localStorage.setItem('bestElevenInfoDismissed_v3', 'true');
         }
     }
 
