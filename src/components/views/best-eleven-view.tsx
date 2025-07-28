@@ -269,6 +269,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const [showInfoCard, setShowInfoCard] = useState(false);
 
     useEffect(() => {
+        // Only show the card if there's a match to vote on and it hasn't been closed
         if (allScaledPlayerIds.length > 0 && !isVotingClosed) {
             const hasSeenInfo = localStorage.getItem('bestElevenInfoDismissed');
             if (!hasSeenInfo) {
@@ -460,8 +461,6 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         return allUsers.filter(user => allVotes[user.id]);
     }, [allVotes, allUsers]);
     
-    const canViewVotes = isVotingClosed && isVoteRevelationEnabled;
-
     const handleDismissInfo = () => {
         setShowInfoCard(false);
         if (typeof window !== 'undefined') {
@@ -535,7 +534,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                     </p>
                 </CardContent>
                 <CardFooter>
-                     <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30 text-xs h-8" onClick={handleDismissInfo}>Entendi, não mostrar novamente</Button>
+                     <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30 text-xs h-8" onClick={handleDismissInfo}>Entendi</Button>
                 </CardFooter>
             </Card>
         )}
