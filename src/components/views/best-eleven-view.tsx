@@ -269,13 +269,13 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const [showInfoCard, setShowInfoCard] = useState(false);
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (allScaledPlayerIds.length > 0 && !isVotingClosed) {
             const hasSeenInfo = localStorage.getItem('bestElevenInfoDismissed');
             if (!hasSeenInfo) {
                 setShowInfoCard(true);
             }
         }
-    }, []);
+    }, [allScaledPlayerIds, isVotingClosed]);
 
     useEffect(() => {
         setLineup(Array(getLineupSize(modality)).fill(null))
@@ -518,7 +518,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
       </header>
 
       <main className="p-4 space-y-4 pb-24">
-        {showInfoCard && allScaledPlayerIds.length > 0 && !isVotingClosed && (
+        {showInfoCard && (
              <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <div className="flex items-center gap-3">
