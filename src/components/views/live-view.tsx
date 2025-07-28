@@ -40,9 +40,10 @@ interface LiveViewProps {
   canEditScouts: boolean;
   liveEvents: LiveEvent[];
   onAddLiveEvent: (event: Omit<LiveEvent, 'time'>) => void;
-  onFinishMatch: (team1Score: number, team2Score: number) => void;
+  onFinishMatch: (team1Score: number, team2Score: number, allScaledPlayerIds: string[]) => void;
   team1Lineup: (string | null)[];
   team2Lineup: (string | null)[];
+  allScaledPlayerIds: string[];
 }
 
 const teamColors: { [key: string]: string } = {
@@ -141,7 +142,7 @@ const ScoutControlPanel = ({ players, team1Lineup, team2Lineup, onAddLiveEvent }
 };
 
 
-export default function LiveView({ onBack, user, players, canEditScouts, liveEvents, onAddLiveEvent, onFinishMatch, team1Lineup, team2Lineup }: LiveViewProps) {
+export default function LiveView({ onBack, user, players, canEditScouts, liveEvents, onAddLiveEvent, onFinishMatch, team1Lineup, team2Lineup, allScaledPlayerIds }: LiveViewProps) {
     const [team1Score, setTeam1Score] = useState(0);
     const [team2Score, setTeam2Score] = useState(0);
     const [isFinishConfirmOpen, setIsFinishConfirmOpen] = useState(false);
@@ -174,7 +175,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     };
     
     const handleFinishClick = () => {
-      onFinishMatch(team1Score, team2Score);
+      onFinishMatch(team1Score, team2Score, allScaledPlayerIds);
       setIsFinishConfirmOpen(false);
     }
 

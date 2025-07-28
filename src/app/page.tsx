@@ -555,8 +555,7 @@ export default function Home() {
     return Array.from(scaledIds);
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
-  const handleFinishMatch = (team1Score: number, team2Score: number) => {
-    const playersOfLastRound = allScaledPlayerIds;
+  const handleFinishMatch = (team1Score: number, team2Score: number, playersOfLastRound: string[]) => {
     setLastRoundPlayerIds(playersOfLastRound);
 
     updateCurrentLeague(league => {
@@ -890,6 +889,7 @@ export default function Home() {
                   onFinishMatch={handleFinishMatch}
                   team1Lineup={team1Lineup}
                   team2Lineup={team2Lineup}
+                  allScaledPlayerIds={allScaledPlayerIds}
                 />;
       case 'payments':
         return <PaymentsView
