@@ -60,7 +60,7 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
       <main className="flex-1 flex flex-col items-center justify-center space-y-6">
         {modalities.map((modality) => {
           const isSelected = selectedModality === modality.type;
-          const isDisabled = !isLeagueAdmin || (selectedModality !== null && !isSelected);
+          const isDisabled = !isLeagueAdmin;
 
           return (
             <Card
@@ -76,7 +76,7 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>{modality.name}</CardTitle>
-                  {isDisabled && !isSelected && (
+                  {isDisabled && (
                     <Lock className="w-5 h-5 text-primary-foreground/50" />
                   )}
                    {isSelected && (
