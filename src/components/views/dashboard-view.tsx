@@ -303,7 +303,7 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
                 <span>Admin</span>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={() => window.location.href = 'mailto:suporte.amistososfc@example.com'}>
+            <DropdownMenuItem onClick={() => window.location.href = 'mailto:suporte.amistosofc@gmail.com'}>
                 <Mail className="mr-2 h-4 w-4" />
                 <span>Suporte</span>
             </DropdownMenuItem>
