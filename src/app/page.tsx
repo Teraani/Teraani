@@ -314,30 +314,25 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // To ensure a new user can create a league, they need to exist *somewhere*.
-    // We'll add them to a temporary holding state in a temporary league.
-    // This state will be cleaned up when they create their own league.
-    const holdingLeagueId = `holding_${tempUserId}`;
-    const holdingLeague: League = {
+    // Temporarily add the user to the app data so they can create a league
+    const tempLeagueId = `temp_${tempUserId}`;
+    const tempLeague: League = {
       ...defaultLeagueData,
-      id: holdingLeagueId,
-      name: 'Holding League',
-      modality: null, // No modality to force selection
-      paymentsEnabled: true,
-      users: {
-        [tempUserId]: tempUser
-      },
-      players: {}, // No players needed
-      games: {},
+      id: tempLeagueId,
+      name: 'Temporary League',
+      users: { [tempUserId]: tempUser },
+      modality: null, // Ensure this forces modality selection if needed later
     };
 
     setAppData(prevData => {
       const newAppData = { ...prevData };
-      newAppData.leagues[holdingLeagueId] = holdingLeague;
+      newAppData.leagues[tempLeagueId] = tempLeague;
       return newAppData;
     });
 
-    handleLoginSuccess(tempUserId);
+    setLoggedInUserId(tempUserId);
+    setCurrentLeagueId(tempLeagueId);
+    navigateTo('league-entry');
   };
 
 
@@ -404,13 +399,16 @@ export default function Home() {
       goalieRanking: {},
     };
 
-    setAppData(prev => ({
-      ...prev,
-      leagues: {
-        ...prev.leagues,
-        [newLeagueId]: newLeague,
+    setAppData(prev => {
+      const newLeagues = { ...prev.leagues };
+      // Remove any temporary league associated with the user
+      const tempLeagueKey = Object.keys(newLeagues).find(k => k.startsWith('temp_'));
+      if (tempLeagueKey) {
+          delete newLeagues[tempLeagueKey];
       }
-    }));
+      newLeagues[newLeagueId] = newLeague;
+      return { ...prev, leagues: newLeagues };
+    });
     
     setCurrentLeagueId(newLeagueId);
     

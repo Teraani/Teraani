@@ -57,7 +57,6 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
       <main className="flex-1 flex flex-col items-center justify-center space-y-6">
         {modalities.map((modality) => {
           const isSelected = selectedModality === modality.type;
-          const isDisabled = !isLeagueAdmin;
 
           return (
             <Card
@@ -65,25 +64,25 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
               className={cn(
                 "w-full max-w-md transition-all bg-black/20 border-white/20 text-primary-foreground",
                 isSelected && "border-white/80 border-2 shadow-2xl",
-                !isDisabled && "cursor-pointer hover:bg-black/30",
-                isDisabled && "cursor-not-allowed bg-black/10 text-primary-foreground/50"
+                isLeagueAdmin && "cursor-pointer hover:bg-black/30",
+                !isLeagueAdmin && "cursor-not-allowed bg-black/10 text-primary-foreground/50"
               )}
-              onClick={() => !isDisabled && onModalitySelect(modality.type)}
+              onClick={() => isLeagueAdmin && onModalitySelect(modality.type)}
             >
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>{modality.name}</CardTitle>
-                  {isDisabled && (
+                  {!isLeagueAdmin && (
                     <Lock className="w-5 h-5 text-primary-foreground/50" />
                   )}
                    {isSelected && (
                     <div className="text-xs font-bold text-primary bg-primary-foreground px-2 py-1 rounded-full">SELECIONADO</div>
                   )}
                 </div>
-                <CardDescription className={cn(isDisabled ? "text-primary-foreground/50" : "text-primary-foreground/80")}>{modality.description}</CardDescription>
+                <CardDescription className={cn(!isLeagueAdmin ? "text-primary-foreground/50" : "text-primary-foreground/80")}>{modality.description}</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className={cn("flex items-center", isDisabled ? "text-primary-foreground/50" : "text-primary-foreground/80")}>
+                <div className={cn("flex items-center", !isLeagueAdmin ? "text-primary-foreground/50" : "text-primary-foreground/80")}>
                   <Users className="w-5 h-5 mr-2" />
                   <span>{modality.players}</span>
                 </div>
@@ -91,16 +90,16 @@ export default function ModalitySelectionView({ onModalitySelect, selectedModali
               <CardFooter>
                  <Button
                       className="w-full bg-white text-primary hover:bg-gray-200 disabled:opacity-50"
-                      disabled={isDisabled}
+                      disabled={!isLeagueAdmin}
                       onClick={(e) => {
                           e.stopPropagation();
-                          if (!isDisabled) {
+                          if (isLeagueAdmin) {
                             onModalitySelect(modality.type);
                           }
                       }}
                   >
-                      {isDisabled && <Lock className="w-4 h-4 mr-2"/>}
-                      {isSelected ? 'Confirmado' : (isDisabled ? 'Aguardando Admin' : 'Confirmar Modalidade')}
+                      {!isLeagueAdmin && <Lock className="w-4 h-4 mr-2"/>}
+                      {isSelected ? 'Confirmado' : (!isLeagueAdmin ? 'Aguardando Admin' : 'Confirmar Modalidade')}
                   </Button>
               </CardFooter>
             </Card>
