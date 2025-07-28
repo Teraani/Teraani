@@ -527,7 +527,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                     <X className="w-5 h-5"/>
                 </Button>
               </CardHeader>
-              <CardContent className="pb-4">
+              <CardContent>
                 <p className="text-sm text-blue-700 dark:text-blue-400 mb-4">
                     Após o fim de uma partida, o administrador libera a votação. Escolha os melhores jogadores em cada posição e dê uma nota para a atuação deles.
                 </p>
