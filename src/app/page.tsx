@@ -135,7 +135,7 @@ export default function Home() {
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
-  const [formation, setFormation] = useState<Formation>('4-3-3');
+  const [formation, setFormation] = useState<Formation>('4-4-2');
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   
@@ -933,3 +933,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
