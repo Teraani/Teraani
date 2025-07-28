@@ -265,16 +265,22 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const [slotToFill, setSlotToFill] = useState<number | null>(null);
     const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
     const [playerToRate, setPlayerToRate] = useState<string | null>(null);
+    
+    // State to safely handle client-side logic
+    const [isClient, setIsClient] = useState(false);
     const [isInfoCardDismissed, setIsInfoCardDismissed] = useState(true);
+
+    useEffect(() => {
+        // This effect runs only on the client, after the component has mounted.
+        setIsClient(true);
+        const hasSeenInfo = localStorage.getItem('bestElevenInfoDismissed');
+        setIsInfoCardDismissed(!!hasSeenInfo);
+    }, []);
 
     useEffect(() => {
         setLineup(Array(getLineupSize(modality)).fill(null))
     }, [modality]);
 
-    useEffect(() => {
-        const hasSeenInfo = localStorage.getItem('bestElevenInfoDismissed');
-        setIsInfoCardDismissed(!!hasSeenInfo);
-    }, []);
 
     const finalEleven = useMemo(() => {
         if (!isVotingClosed) return null;
@@ -512,7 +518,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
       </header>
 
       <main className="p-4 space-y-4 pb-24">
-        {!isInfoCardDismissed && (
+        {isClient && !isInfoCardDismissed && allScaledPlayerIds.length > 0 && !isVotingClosed && (
             <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center gap-3">
