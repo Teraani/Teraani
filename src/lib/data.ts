@@ -96,6 +96,7 @@ export interface League {
     scalersRanking: Record<string, Ranking>;
     goalieRanking: Record<string, GoalieRanking>;
     modality: 'campo' | 'society' | 'futsal' | null;
+    paymentsEnabled: boolean;
 }
 
 interface AppData {
@@ -108,6 +109,7 @@ export const defaultLeagueData: League = {
     name: 'Liga Principal Amistosos FC',
     adminId: 'user27',
     modality: 'campo', // Add default modality
+    paymentsEnabled: true,
     games: {
         'game_1': { id: 'game_1', date: '01 de Jan - 20:00hs', homeTeam: 'Time 1', awayTeam: 'Time 2', homeScore: 3, awayScore: 2, status: 'Finalizado', scorers: [{player: 'Rafael Ohy', team: 'Time 1'}] },
         'game_2': { id: 'game_2', date: '08 de Jan - 20:00hs', homeTeam: 'Time 1', awayTeam: 'Time 2', homeScore: 1, awayScore: 1, status: 'Finalizado', scorers: [] },
@@ -268,6 +270,7 @@ const testLeagueData: League = {
     name: 'Liga de Teste',
     adminId: 'test_user_1',
     modality: null, // This league hasn't selected a modality yet
+    paymentsEnabled: true,
     games: {},
     users: {
         'test_user_1': {

@@ -34,6 +34,8 @@ interface AdminViewProps {
   isVoteRevelationEnabled: boolean;
   onToggleVoteRevelation: (enabled: boolean) => void;
   leagueId: string;
+  isPaymentsEnabled: boolean;
+  onTogglePayments: (enabled: boolean) => void;
 }
 
 export default function AdminView({ 
@@ -48,7 +50,9 @@ export default function AdminView({
     onSetPaymentEditor,
     isVoteRevelationEnabled,
     onToggleVoteRevelation,
-    leagueId
+    leagueId,
+    isPaymentsEnabled,
+    onTogglePayments
 }: AdminViewProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -173,7 +177,7 @@ export default function AdminView({
             <CardHeader>
                 <CardTitle>Configurações Gerais</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
                 <div className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                         <Label className="text-base">Revelar Votos</Label>
@@ -184,6 +188,18 @@ export default function AdminView({
                     <Switch
                         checked={isVoteRevelationEnabled}
                         onCheckedChange={onToggleVoteRevelation}
+                    />
+                </div>
+                 <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label className="text-base">Gerenciar Pagamentos</Label>
+                        <p className="text-sm text-muted-foreground">
+                            Habilita o módulo de controle de mensalidades.
+                        </p>
+                    </div>
+                    <Switch
+                        checked={isPaymentsEnabled}
+                        onCheckedChange={onTogglePayments}
                     />
                 </div>
             </CardContent>
@@ -249,7 +265,7 @@ export default function AdminView({
                                   <span>Editar Scouts</span>
                                   {isScoutEditor && <Check className="ml-auto h-4 w-4 text-primary" />}
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleSetPaymentEditorClick(user)}>
+                                <DropdownMenuItem onClick={() => handleSetPaymentEditorClick(user)} disabled={!isPaymentsEnabled}>
                                   <DollarSign className="mr-2 h-4 w-4" />
                                   <span>Editar Pagamentos</span>
                                   {isPaymentEditor && <Check className="ml-auto h-4 w-4 text-primary" />}

@@ -115,6 +115,8 @@ export default function Home() {
   const [isVotingReleased, setIsVotingReleased] = useState(false);
   const [isVotingClosed, setIsVotingClosed] = useState(false);
   const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
+  const [isPaymentsEnabled, setIsPaymentsEnabled] = useState(currentLeague?.paymentsEnabled ?? true);
+
 
   // State to hold player IDs from the last finished match for voting
   const [lastRoundPlayerIds, setLastRoundPlayerIds] = useState<string[]>([]);
@@ -150,6 +152,12 @@ export default function Home() {
       }
     }
   }, [appData.leagues]);
+
+  useEffect(() => {
+    if (currentLeague) {
+      setIsPaymentsEnabled(currentLeague.paymentsEnabled);
+    }
+  }, [currentLeague]);
 
   // Helper to update league data
   const updateCurrentLeague = (updater: (league: League) => League) => {
@@ -309,6 +317,7 @@ export default function Home() {
       id: holdingLeagueId,
       name: 'Holding League',
       modality: null, // No modality to force selection
+      paymentsEnabled: true,
       users: {
         [tempUserId]: tempUser
       },
@@ -372,6 +381,7 @@ export default function Home() {
       name: leagueName,
       adminId: creator.id,
       modality: null,
+      paymentsEnabled: true,
       users: {
         [creator.id]: {
           ...creator,
@@ -726,6 +736,14 @@ export default function Home() {
     });
   };
 
+  const handleTogglePayments = (enabled: boolean) => {
+    updateCurrentLeague(league => ({ ...league, paymentsEnabled: enabled }));
+    setIsPaymentsEnabled(enabled);
+     toast({
+      title: `Módulo de Pagamentos ${enabled ? 'Ativado' : 'Desativado'}`,
+    });
+  };
+
   if (!currentLeague && currentView !== 'welcome' && currentView !== 'register' && currentView !== 'league-entry') {
     return <div>Carregando liga...</div>; // Or some other loading state
   }
@@ -792,7 +810,7 @@ export default function Home() {
                   isLeagueAdmin={isLeagueAdmin}
                 />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled}/>;
       case 'lineup':
         return <LineupView 
                  players={currentLeague!.players} 
@@ -820,7 +838,7 @@ export default function Home() {
                  setFormation={setFormation}
                />;
       case 'player-details':
-        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
+        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} />;
       case 'market':
         return <MarketView 
                  players={currentLeague!.players} 
@@ -854,6 +872,8 @@ export default function Home() {
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                   onToggleVoteRevelation={handleToggleVoteRevelation}
                   leagueId={currentLeague!.id}
+                  isPaymentsEnabled={isPaymentsEnabled}
+                  onTogglePayments={handleTogglePayments}
                 />;
        case 'live':
         return <LiveView 
@@ -896,7 +916,7 @@ export default function Home() {
                   formation={formation}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} />;
     }
   };
 
@@ -905,7 +925,7 @@ export default function Home() {
       <main className={cn(showBottomNav && "pb-20")}>
         {renderView()}
       </main>
-      {showBottomNav && userForViews && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments} />}
+      {showBottomNav && userForViews && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments && isPaymentsEnabled} />}
     </div>
   );
 }

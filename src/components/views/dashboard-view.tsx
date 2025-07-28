@@ -38,6 +38,7 @@ interface DashboardViewProps {
   leagues: Record<string, League>;
   currentLeagueId: string;
   onLeagueChange: (leagueId: string) => void;
+  isPaymentsEnabled: boolean;
 }
 
 function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void }) {
@@ -98,7 +99,7 @@ function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: Vi
 }
 
 
-function PlayerSummary({ user, players, onNavigate, onAvatarChange }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void, onAvatarChange: (userId: string, image: string) => void }) {
+function PlayerSummary({ user, players, onNavigate, onAvatarChange, isPaymentsEnabled }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void, onAvatarChange: (userId: string, image: string) => void, isPaymentsEnabled: boolean }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,7 +179,7 @@ function PlayerSummary({ user, players, onNavigate, onAvatarChange }: { user: Us
                         <p className="font-bold text-lg">{performancePercentage}</p>
                     </div>
                 </div>
-                <PaymentStatus user={user} onNavigate={onNavigate} />
+                {isPaymentsEnabled && <PaymentStatus user={user} onNavigate={onNavigate} />}
                 <Button className="w-full mt-4" onClick={() => onNavigate('lineup')}>
                     Ver Times da Rodada
                 </Button>
@@ -226,7 +227,7 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, onAvatarChange, leagues, currentLeagueId, onLeagueChange }: DashboardViewProps) {
+export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, onAvatarChange, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled }: DashboardViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const sortedUsers = useMemo(() => {
     return Object.values(allUsers)
@@ -319,12 +320,10 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
         <div className="w-10 h-10" />
       </header>
       <div className="p-4 space-y-8">
-        <PlayerSummary user={user} players={players} onNavigate={onNavigate} onAvatarChange={onAvatarChange} />
+        <PlayerSummary user={user} players={players} onNavigate={onNavigate} onAvatarChange={onAvatarChange} isPaymentsEnabled={isPaymentsEnabled}/>
         <QuickAccess onNavigate={onNavigate} />
         <ConnectSection />
       </div>
     </div>
   );
 }
-
-    
