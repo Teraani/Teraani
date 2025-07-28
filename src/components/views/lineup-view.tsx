@@ -568,16 +568,18 @@ export default function LineupView(props: LineupViewProps) {
               O que você gostaria de fazer?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col gap-2">
-            <Button variant="outline" onClick={() => { onPlayerSelect(playerActionState!.playerId); setPlayerActionState(null); }}>
-              <Eye className="mr-2 h-4 w-4" />
-              Ver Detalhes do Jogador
-            </Button>
-            <Button variant="destructive" onClick={handleRemovePlayer}>
-              <UserX className="mr-2 h-4 w-4" />
-              Remover da Escalação
-            </Button>
-            <AlertDialogCancel onClick={() => setPlayerActionState(null)}>Cancelar</AlertDialogCancel>
+          <AlertDialogFooter>
+            <div className="flex flex-col sm:flex-row-reverse gap-2 w-full">
+              <AlertDialogCancel onClick={() => setPlayerActionState(null)}>Cancelar</AlertDialogCancel>
+              <Button variant="destructive" onClick={handleRemovePlayer} className="w-full sm:w-auto">
+                <UserX className="mr-2 h-4 w-4" />
+                Remover da Escalação
+              </Button>
+              <Button variant="outline" onClick={() => { onPlayerSelect(playerActionState!.playerId); setPlayerActionState(null); }} className="w-full sm:w-auto">
+                <Eye className="mr-2 h-4 w-4" />
+                Ver Detalhes
+              </Button>
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
