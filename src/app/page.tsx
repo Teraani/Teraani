@@ -685,29 +685,6 @@ export default function Home() {
       variant: "destructive",
     });
   };
-
-  const handleUpdatePlayerInMarket = (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => {
-    updateCurrentLeague(league => {
-      if (!league.players[playerId]) {
-        return league;
-      }
-      const updatedPlayer = {
-        ...league.players[playerId],
-        ...updatedData
-      };
-      return {
-        ...league,
-        players: {
-          ...league.players,
-          [playerId]: updatedPlayer
-        }
-      };
-    });
-    toast({
-      title: "Jogador Atualizado!",
-      description: `Os dados de ${updatedData.name} foram salvos.`,
-    });
-  };
   
   const handleBestElevenVote = (lineup: (BestElevenVote | null)[]) => {
     if (!currentUser) return;
@@ -854,7 +831,6 @@ export default function Home() {
                  canEdit={canEditLineup}
                  onAddPlayerToMarket={handleAddPlayerToMarket}
                  onRemovePlayerFromMarket={handleRemovePlayerFromMarket}
-                 onUpdatePlayerInMarket={handleUpdatePlayerInMarket}
                />;
       case 'partial-score':
         return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
