@@ -266,10 +266,15 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
     const [playerToRate, setPlayerToRate] = useState<string | null>(null);
     
-    const [hasMounted, setHasMounted] = useState(false);
+    const [showInfoCard, setShowInfoCard] = useState(false);
     
     useEffect(() => {
-        setHasMounted(true);
+        // This check ensures localStorage is only accessed on the client side, avoiding hydration errors.
+        if (typeof window !== 'undefined') {
+            if (!localStorage.getItem('bestElevenInfoDismissed_v2')) {
+                setShowInfoCard(true);
+            }
+        }
     }, []);
 
     useEffect(() => {
@@ -456,12 +461,12 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     }, [allVotes, allUsers]);
     
     const canViewVotes = isVoteRevelationEnabled && isVotingClosed;
-    const showInfoCard = hasMounted && !localStorage.getItem('bestElevenInfoDismissed') && allScaledPlayerIds.length > 0 && !isVotingClosed;
     
     const handleDismissInfo = () => {
-        localStorage.setItem('bestElevenInfoDismissed', 'true');
-        setHasMounted(false); // This will re-render the component and hide the card
-        setHasMounted(true); // And we set it back to true for next time
+        setShowInfoCard(false);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('bestElevenInfoDismissed_v2', 'true');
+        }
     }
 
   return (
@@ -513,23 +518,22 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
       </header>
 
       <main className="p-4 space-y-4 pb-24">
-        {showInfoCard && (
-             <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <div className="flex items-center gap-3">
-                        <Info className="w-6 h-6 text-blue-500" />
-                        <CardTitle className="text-blue-800 dark:text-blue-300 text-base font-bold">Vote na Seleção da Rodada</CardTitle>
-                    </div>
-                     <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500" onClick={handleDismissInfo}>
-                        <X className="w-5 h-5"/>
-                    </Button>
+        {showInfoCard && allScaledPlayerIds.length > 0 && !isVotingClosed && (
+            <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+                <CardHeader>
+                    <CardTitle className="text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                        <Info className="w-5 h-5" />
+                        Vote na Seleção da Rodada
+                    </CardTitle>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-blue-700 dark:text-blue-400">
                         Após o fim de uma partida, o administrador libera a votação. Escolha os melhores jogadores em cada posição e dê uma nota para a atuação deles.
                     </p>
-                    <Button className="w-full mt-3 bg-blue-500/20 text-blue-700 hover:bg-blue-500/30 text-xs h-8" onClick={handleDismissInfo}>Entendi</Button>
                 </CardContent>
+                <CardFooter>
+                    <Button className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" onClick={handleDismissInfo}>Entendi</Button>
+                </CardFooter>
             </Card>
         )}
 
