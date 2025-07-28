@@ -151,9 +151,12 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     const matchDate = useMemo(() => format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR }), []);
 
     useEffect(() => {
-      const hasSeenInfo = localStorage.getItem('liveViewInfoDismissed');
-      if (!hasSeenInfo && canEditScouts) {
-          setShowInfoCard(true);
+      // This effect runs only on the client, avoiding hydration issues
+      if (canEditScouts) {
+          const hasSeenInfo = localStorage.getItem('liveViewInfoDismissed');
+          if (!hasSeenInfo) {
+              setShowInfoCard(true);
+          }
       }
     }, [canEditScouts]);
 
@@ -179,6 +182,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
 
     const handleDismissInfo = () => {
         setShowInfoCard(false);
+        // This runs only on the client
         localStorage.setItem('liveViewInfoDismissed', 'true');
     }
 
