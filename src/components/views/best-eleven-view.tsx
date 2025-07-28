@@ -265,24 +265,16 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const [slotToFill, setSlotToFill] = useState<number | null>(null);
     const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
     const [playerToRate, setPlayerToRate] = useState<string | null>(null);
-    const [showInfoCard, setShowInfoCard] = useState(false);
+    const [isInfoCardDismissed, setIsInfoCardDismissed] = useState(true);
 
     useEffect(() => {
         setLineup(Array(getLineupSize(modality)).fill(null))
     }, [modality]);
 
     useEffect(() => {
-        // Only show the info card if voting is possible (players are available)
-        // and it hasn't been dismissed before, and the voting isn't already closed.
-        if (allScaledPlayerIds.length > 0 && !isVotingClosed) {
-            const hasSeenInfo = localStorage.getItem('bestElevenInfoDismissed');
-            if (!hasSeenInfo) {
-                setShowInfoCard(true);
-            }
-        } else {
-            setShowInfoCard(false);
-        }
-    }, [allScaledPlayerIds, isVotingClosed]);
+        const hasSeenInfo = localStorage.getItem('bestElevenInfoDismissed');
+        setIsInfoCardDismissed(!!hasSeenInfo);
+    }, []);
 
     const finalEleven = useMemo(() => {
         if (!isVotingClosed) return null;
@@ -465,7 +457,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
     const canViewVotes = isVotingClosed && isVoteRevelationEnabled;
 
     const handleDismissInfo = () => {
-        setShowInfoCard(false);
+        setIsInfoCardDismissed(true);
         if (typeof window !== 'undefined') {
             localStorage.setItem('bestElevenInfoDismissed', 'true');
         }
@@ -520,7 +512,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
       </header>
 
       <main className="p-4 space-y-4 pb-24">
-        {showInfoCard && (
+        {!isInfoCardDismissed && (
             <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <div className="flex items-center gap-3">
