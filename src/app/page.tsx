@@ -72,12 +72,13 @@ const team2002_ids = [
     // Attackers
     'p-ronaldo', 'p-rivaldo', 'p-ronaldinho',
     // Midfielders
-    'p-gilberto-silva', 'p-juninho-paulista', 'p-edmilson',
+    'p-juninho-paulista', 'p-gilberto-silva', 'p-edmilson', 
     // Defenders
     'p-cafu', 'p-lucio', 'p-roque-junior', 'p-roberto-carlos',
     // Goalkeeper
     'p-marcos'
 ];
+
 
 // Player IDs reordered to match the 4-4-2 formation layout (2 ATK, 4 MEI, 4 DEF, 1 GOL)
 const team1994_ids = [
@@ -807,7 +808,6 @@ export default function Home() {
            setCurrentView('welcome');
            return <WelcomeView onEnter={() => navigateTo('register')} />;
         }
-        // The user who created the league is the admin.
         const isLeagueAdmin = currentLeague.adminId === loggedInUserId;
         return <ModalitySelectionView 
                   onModalitySelect={handleModalitySelect} 
@@ -935,7 +935,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
-
-    
