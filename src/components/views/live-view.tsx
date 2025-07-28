@@ -151,12 +151,10 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
     const matchDate = useMemo(() => format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR }), []);
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const hasSeenInfo = localStorage.getItem('liveViewInfoDismissed');
-            if (!hasSeenInfo && canEditScouts) {
-                setShowInfoCard(true);
-            }
-        }
+      const hasSeenInfo = localStorage.getItem('liveViewInfoDismissed');
+      if (!hasSeenInfo && canEditScouts) {
+          setShowInfoCard(true);
+      }
     }, [canEditScouts]);
 
     // Update score based on events
@@ -181,9 +179,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
 
     const handleDismissInfo = () => {
         setShowInfoCard(false);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('liveViewInfoDismissed', 'true');
-        }
+        localStorage.setItem('liveViewInfoDismissed', 'true');
     }
 
   return (
