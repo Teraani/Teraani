@@ -130,9 +130,9 @@ export default function Home() {
 
   // State for the two teams the editor can manage
   const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(team2002_ids);
-  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
+  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
   const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(team1994_ids);
-  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
+  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
@@ -270,11 +270,16 @@ export default function Home() {
     setLoggedInUserId(userId);
 
     if (userLeagues.length > 0) {
-      const firstLeagueId = userLeagues[0];
-      const firstLeague = currentAppData.leagues[firstLeagueId];
-      setCurrentLeagueId(firstLeagueId);
+      // Logic to find the best league to switch to.
+      // Prioritize invited league, otherwise the first one found.
+      const leagueToSwitchToId = invitedToLeagueId && userLeagues.includes(invitedToLeagueId) 
+        ? invitedToLeagueId 
+        : userLeagues[0];
+
+      const leagueToSwitchTo = currentAppData.leagues[leagueToSwitchToId];
+      setCurrentLeagueId(leagueToSwitchToId);
       
-      if (!firstLeague.modality) {
+      if (!leagueToSwitchTo.modality) {
         navigateTo('modality-selection');
       } else {
         navigateTo('dashboard');
@@ -849,6 +854,7 @@ export default function Home() {
                  canEdit={canEditLineup}
                  onAddPlayerToMarket={handleAddPlayerToMarket}
                  onRemovePlayerFromMarket={handleRemovePlayerFromMarket}
+                 onUpdatePlayerInMarket={() => {}}
                />;
       case 'partial-score':
         return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
@@ -929,5 +935,7 @@ export default function Home() {
     </div>
   );
 }
+
+    
 
     
