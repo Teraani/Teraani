@@ -194,7 +194,10 @@ export default function AdminView({
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold text-foreground">Gerenciar Permissões</CardTitle>
             <CardDescription>
-              Conceda ou revogue permissões de edição para os jogadores.
+              Conceda permissões para a rodada. 
+              <span className="block mt-1"><b>- Editar Times:</b> Monta as equipes.</span>
+              <span className="block"><b>- Editar Scouts:</b> Lança os eventos ao vivo.</span>
+              <span className="block"><b>- Editar Pagamentos:</b> Controla as mensalidades.</span>
             </CardDescription>
           </CardHeader>
           <CardContent>
