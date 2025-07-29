@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User, Ranking, GoalieRanking, Game, League, PlayerPerformance } from '@/lib/data';
-import { initialData, defaultLeagueData } from '@/lib/data';
+import { initialData, defaultLeagueData, jasonTestLeague } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
@@ -128,9 +128,7 @@ export default function Home() {
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                // User is logged in. The handleLoginSuccess function will be called from login/register views.
-                // This listener just ensures we know the auth state.
-                // We don't navigate here to prevent race conditions on initial load.
+                 handleLoginSuccess(user.uid, true);
             } else {
                 // User is logged out.
                 const authScreens: View[] = ['welcome', 'login', 'register'];
@@ -278,24 +276,24 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  const handleLoginSuccess = (userId: string) => {
+ const handleLoginSuccess = (userId: string, isAutoLogin = false) => {
+    // Always get the freshest data from localStorage upon login.
+    const freshSavedData = localStorage.getItem('amistosos_fc_data');
+    let currentAppData = appData;
+    if (freshSavedData) {
+        try {
+            const parsedData = JSON.parse(freshSavedData);
+            if(parsedData && parsedData.leagues) currentAppData = parsedData;
+        } catch (e) {
+            console.error("Failed to parse fresh data on login, using initial data.", e);
+        }
+    }
+
+
     let userExistsInAnyLeague = false;
     let userLeagues: string[] = [];
     let userObject: User | null = null;
     
-    // Always get the freshest data from localStorage upon login.
-    const freshSavedData = localStorage.getItem('amistosos_fc_data');
-    let currentAppData = initialData;
-    if (freshSavedData) {
-        try {
-            currentAppData = JSON.parse(freshSavedData);
-        } catch (e) {
-            console.error("Failed to parse fresh data on login, using initial data.", e);
-        }
-    } else {
-        currentAppData = appData; // Fallback to passed data or initialData
-    }
-
 
     // Find all leagues the user belongs to
     for (const leagueId in currentAppData.leagues) {
@@ -346,7 +344,7 @@ export default function Home() {
         } else {
             navigateTo('dashboard');
         }
-        if (userObject) {
+        if (userObject && !isAutoLogin) {
             toast({
                 title: `Bem-vindo de volta, ${userObject.name}!`,
                 description: "Login realizado com sucesso.",
@@ -982,3 +980,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
