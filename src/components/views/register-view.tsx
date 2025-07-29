@@ -128,26 +128,6 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
               </Button>
             </form>
           </Form>
-
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-primary-foreground/30" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-primary px-2 text-primary-foreground/80">
-                Ou
-                </span>
-            </div>
-         </div>
-
-          <Button 
-            onClick={handleGoogleSignIn}
-            variant="outline"
-            className="w-full bg-transparent border-white/80 text-white hover:bg-white/10 hover:text-white h-12 text-lg font-bold rounded-xl shadow-lg"
-          >
-              <Chrome className="mr-3 h-6 w-6"/>
-              Entrar com Google
-          </Button>
         </div>
             
         <div className="mt-8 text-center text-xs text-primary-foreground/80">
