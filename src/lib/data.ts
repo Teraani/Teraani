@@ -265,47 +265,30 @@ export const defaultLeagueData: League = {
     }
 };
 
-const testLeagueData: League = {
-    id: 'testLeague',
-    name: 'Liga de Teste',
-    adminId: 'test_user_1',
-    modality: null, // This league hasn't selected a modality yet
+const jasonTestLeague: League = {
+    id: 'jasonTestLeague',
+    name: 'teste',
+    adminId: 'user27', // Jason's user ID
+    modality: null, // User needs to select a modality
     paymentsEnabled: true,
     games: {},
     users: {
-        'test_user_1': {
-            id: 'test_user_1',
-            name: 'Admin da Liga',
-            email: 'admin_test@exemplo.com',
-            teamName: "Teste FC",
-            partialScore: 10,
-            totalScore: 100,
-            valuation: 50,
+        'user27': { // Add Jason to his own league
+            id: 'user27', 
+            name: 'Jason (Admin)', 
+            email: 'jason.teraani@gmail.com',
+            teamName: 'Jason FC',
+            partialScore: 0,
+            totalScore: 0,
+            valuation: 100,
             lineup: [],
             reserves: [],
             role: 'admin',
             avatar: 'https://placehold.co/128x128.png',
-            paymentDueDate: '2025-09-15',
-        },
-        'test_user_2': {
-            id: 'test_user_2',
-            name: 'Jogador de Teste',
-            email: 'player_test@exemplo.com',
-            teamName: "Amigos do Teste",
-            partialScore: 5,
-            totalScore: 50,
-            valuation: 40,
-            lineup: [],
-            reserves: [],
-            role: 'player',
-            avatar: 'https://placehold.co/128x128.png',
-            paymentDueDate: '2025-09-20',
+            paymentDueDate: '2025-08-01'
         },
     },
-    players: {
-      'test_p1': { name: 'Atacante Teste', team: 'AVA', pos: 'ATA', value: 10, points: 4, last_val: 1, games: 2, img: 'https://placehold.co/60x60', stats: { wins: 1, losses: 0, draws: 1, goals: 2, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 5, goalDifference: 4, performance: 0, points: 0 }, performanceHistory: [] },
-      'test_p2': { name: 'Goleiro Teste', team: 'BOT', pos: 'GOL', value: 8, points: 3, last_val: -0.5, games: 2, img: 'https://placehold.co/60x60', stats: { wins: 1, losses: 1, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 5, goalsFor: 3, goalDifference: -2, performance: 0, points: 0 }, performanceHistory: [] },
-    },
+    players: { ...defaultLeagueData.players }, // Start with the same players as the default league
     editorOfTheRound: null,
     scoutEditor: null,
     paymentEditor: null,
@@ -317,6 +300,6 @@ const testLeagueData: League = {
 export const initialData: AppData = {
     leagues: {
         'defaultLeague': defaultLeagueData,
-        'testLeague': testLeagueData,
+        'jasonTestLeague': jasonTestLeague,
     }
 }
