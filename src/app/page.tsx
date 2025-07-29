@@ -113,53 +113,56 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedData = localStorage.getItem('amistosos_fc_data');
-      let loadedData = initialData;
-      if (savedData) {
-        try {
-            const parsedData = JSON.parse(savedData);
-            if (parsedData && parsedData.leagues) {
-                loadedData = parsedData;
+        const savedData = localStorage.getItem('amistosos_fc_data');
+        if (savedData) {
+            try {
+                const parsedData = JSON.parse(savedData);
+                // Basic validation to ensure we're loading valid data
+                if (parsedData && parsedData.leagues) {
+                    setAppDataState(parsedData);
+                }
+            } catch (e) {
+                console.error("Failed to parse localStorage data, resetting.", e);
+                localStorage.removeItem('amistosos_fc_data');
             }
-        } catch (e) {
-            console.error("Failed to parse localStorage data, resetting.", e);
-            localStorage.removeItem('amistosos_fc_data');
         }
-      }
-      setAppDataState(loadedData);
 
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        const authScreens: View[] = ['welcome', 'login', 'register'];
-        const isAuthScreen = authScreens.includes(currentView);
-
-        if (user) {
-          if (!isAuthScreen) {
-            // Re-read from localStorage inside the callback to ensure we have the latest version.
-            const freshSavedData = localStorage.getItem('amistosos_fc_data');
-            let freshLoadedData = initialData;
-            if (freshSavedData) {
-                try {
-                    const parsed = JSON.parse(freshSavedData);
-                    if (parsed && parsed.leagues) {
-                        freshLoadedData = parsed;
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            const authScreens: View[] = ['welcome', 'login', 'register'];
+            // Check currentView from state, not a local variable
+            const isAuthScreen = authScreens.includes(currentView);
+            
+            if (user) {
+                // Only auto-login if NOT on an auth screen.
+                // This prevents the loop where the user is redirected away from login/register.
+                if (!isAuthScreen) {
+                    // Re-read from localStorage inside the callback to ensure we have the latest version.
+                    const freshSavedData = localStorage.getItem('amistosos_fc_data');
+                    let freshLoadedData = initialData;
+                    if (freshSavedData) {
+                        try {
+                            const parsed = JSON.parse(freshSavedData);
+                            if (parsed && parsed.leagues) {
+                                freshLoadedData = parsed;
+                            }
+                        } catch (e) {
+                            // ignore, use initialData
+                        }
                     }
-                } catch (e) {
-                    // ignore
+                    handleLoginSuccess(user.uid, freshLoadedData);
+                }
+            } else {
+                // If no user, ensure we are on an auth screen.
+                if (!isAuthScreen) {
+                    navigateTo('welcome');
                 }
             }
-            handleLoginSuccess(user.uid, freshLoadedData);
-          }
-        } else {
-          // Stay on 'welcome', 'login', or 'register' if not logged in.
-          if (!isAuthScreen) {
-            navigateTo('welcome');
-          }
-        }
-      });
-      return () => unsubscribe();
+        });
+
+        return () => unsubscribe();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Changed to run only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [currentView]); // Add currentView as a dependency
 
 
   // New state for multi-league
