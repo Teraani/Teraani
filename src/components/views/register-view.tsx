@@ -9,6 +9,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
+import { auth } from '@/lib/firebase-config';
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
+import { useToast } from '@/hooks/use-toast';
 
 interface RegisterViewProps {
   onRegisterSuccess: () => void;
@@ -21,6 +24,7 @@ const registerSchema = z.object({
 });
 
 export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
+  const { toast } = useToast();
   
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -31,17 +35,41 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
     },
   });
 
-  const handleGoogleSignIn = () => {
-    // Here you would add the Firebase Google Sign-In logic
-    // For now, we'll just simulate a successful registration/login
-    console.log("Signing in with Google...");
-    onRegisterSuccess();
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      toast({
+        title: "Login com Google bem-sucedido!",
+        description: "Você foi autenticado com sucesso.",
+      });
+      onRegisterSuccess();
+    } catch (error: any) {
+      console.error("Erro no login com Google:", error);
+      toast({
+        title: "Erro no Login",
+        description: error.message || "Não foi possível fazer login com o Google.",
+        variant: "destructive",
+      });
+    }
   }
 
-  function onSubmit(values: z.infer<typeof registerSchema>) {
-    // Here you would add the Firebase Email/Password registration logic
-    console.log("Registering with email/password:", values);
-    onRegisterSuccess();
+  async function onSubmit(values: z.infer<typeof registerSchema>) {
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Agora você pode acessar a plataforma.",
+      });
+      onRegisterSuccess();
+    } catch (error: any) {
+       console.error("Erro ao criar conta:", error);
+       toast({
+        title: "Erro ao criar conta",
+        description: error.message || "Não foi possível criar sua conta.",
+        variant: "destructive",
+      });
+    }
   }
 
   return (
