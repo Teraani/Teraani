@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -36,10 +37,7 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister }: Logi
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: "Login bem-sucedido!",
-        description: "Você foi autenticado com sucesso.",
-      });
+      // Don't toast here, let handleLoginSuccess do it.
       onLoginSuccess(userCredential.user.uid);
     } catch (error: any) {
       console.error("Erro no login:", error);
@@ -108,3 +106,5 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister }: Logi
     </div>
   );
 }
+
+    
