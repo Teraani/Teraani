@@ -117,7 +117,6 @@ export default function Home() {
       if (savedData) {
         try {
             const parsedData = JSON.parse(savedData);
-            // Quick validation to ensure it's not totally broken
             if (parsedData && parsedData.leagues) {
                 loadedData = parsedData;
             }
@@ -126,14 +125,24 @@ export default function Home() {
             localStorage.removeItem('amistosos_fc_data');
         }
       }
-      // Set the app data first from localStorage or initialData
       setAppDataState(loadedData);
 
-      // Then, set up the auth listener
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
-          // Pass the freshly loaded data to the login handler
-          handleLoginSuccess(user.uid, loadedData);
+          // Re-read from localStorage inside the callback to ensure we have the latest version.
+          const freshSavedData = localStorage.getItem('amistosos_fc_data');
+          let freshLoadedData = initialData;
+          if (freshSavedData) {
+              try {
+                  const parsed = JSON.parse(freshSavedData);
+                  if (parsed && parsed.leagues) {
+                      freshLoadedData = parsed;
+                  }
+              } catch (e) {
+                  // ignore
+              }
+          }
+          handleLoginSuccess(user.uid, freshLoadedData);
         } else {
           navigateTo('welcome');
         }
