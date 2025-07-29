@@ -116,9 +116,14 @@ export default function Home() {
       let loadedData = initialData;
       if (savedData) {
         try {
-            loadedData = JSON.parse(savedData);
+            const parsedData = JSON.parse(savedData);
+            // Quick validation to ensure it's not totally broken
+            if (parsedData && parsedData.leagues) {
+                loadedData = parsedData;
+            }
         } catch (e) {
-            console.error("Failed to parse localStorage data", e);
+            console.error("Failed to parse localStorage data, resetting.", e);
+            localStorage.removeItem('amistosos_fc_data');
         }
       }
       // Set the app data first from localStorage or initialData
@@ -986,3 +991,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
