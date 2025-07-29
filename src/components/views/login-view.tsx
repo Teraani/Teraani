@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -10,46 +9,43 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
-import { User as FirebaseUser } from 'firebase/auth';
 
-interface RegisterViewProps {
-  onRegisterSuccess: (user: FirebaseUser, name: string) => void;
-  onNavigateToLogin: () => void;
+interface LoginViewProps {
+  onLoginSuccess: (userId: string) => void;
+  onNavigateToRegister: () => void;
 }
 
-const registerSchema = z.object({
-  name: z.string().min(3, { message: "O nome deve ter pelo menos 3 caracteres." }),
+const loginSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um e-mail válido." }),
   password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres." }),
 });
 
-export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: RegisterViewProps) {
+export default function LoginView({ onLoginSuccess, onNavigateToRegister }: LoginViewProps) {
   const { toast } = useToast();
   
-  const form = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      name: "",
       email: "",
       password: "",
     },
   });
 
-  async function onSubmit(values: z.infer<typeof registerSchema>) {
+  async function onSubmit(values: z.infer<typeof loginSchema>) {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
-        title: "Conta criada com sucesso!",
-        description: "Agora você pode acessar a plataforma.",
+        title: "Login bem-sucedido!",
+        description: "Você foi autenticado com sucesso.",
       });
-      onRegisterSuccess(userCredential.user, values.name);
+      onLoginSuccess(userCredential.user.uid);
     } catch (error: any) {
-       console.error("Erro ao criar conta:", error);
+      console.error("Erro no login:", error);
        toast({
-        title: "Erro ao criar conta",
-        description: error.code === 'auth/email-already-in-use' ? 'Este e-mail já está em uso. Tente fazer login.' : (error.message || "Não foi possível criar sua conta."),
+        title: "Erro no Login",
+        description: "E-mail ou senha inválidos. Verifique seus dados e tente novamente.",
         variant: "destructive",
       });
     }
@@ -61,26 +57,14 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
          <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
             <Logo className="w-16 h-16 text-white" />
         </div>
-        <h1 className="text-3xl font-bold mb-1">Crie sua Conta</h1>
+        <h1 className="text-3xl font-bold mb-1">Entrar no Amistosos FC</h1>
         <p className="max-w-md mb-6">
-            Escale seu time, acompanhe as parciais e dispute com seus amigos.
+            Bem-vindo de volta! Insira seus dados para continuar.
         </p>
-        
+
         <div className="w-full max-w-sm space-y-4 mt-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder="Nome" {...field} className="bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/70 border-primary-foreground/20" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="email"
@@ -106,7 +90,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
                 )}
               />
               <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg">
-                Criar conta
+                Entrar
               </Button>
             </form>
           </Form>
@@ -114,9 +98,9 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
             
         <div className="mt-8 text-center text-sm text-primary-foreground/80">
             <p>
-                Já tem uma conta?{' '}
-                <Button variant="link" onClick={onNavigateToLogin} className="font-semibold underline text-white p-0">
-                  Faça login aqui.
+                Não tem uma conta?{' '}
+                <Button variant="link" onClick={onNavigateToRegister} className="font-semibold underline text-white p-0">
+                  Cadastre-se aqui.
                 </Button>
             </p>
         </div>

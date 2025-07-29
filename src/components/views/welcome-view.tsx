@@ -3,12 +3,13 @@
 
 import { Button } from '@/components/ui/button';
 import { Logo } from '../logo';
+import type { View } from '@/app/page';
 
 interface WelcomeViewProps {
-  onEnter: () => void;
+  onNavigate: (view: View) => void;
 }
 
-export default function WelcomeView({ onEnter }: WelcomeViewProps) {
+export default function WelcomeView({ onNavigate }: WelcomeViewProps) {
   return (
     <div className="flex flex-col items-center justify-between h-screen bg-primary p-8 text-primary-foreground text-center">
       <div className="flex-1 flex flex-col items-center justify-center">
@@ -19,12 +20,19 @@ export default function WelcomeView({ onEnter }: WelcomeViewProps) {
         <p className="max-w-md">Futebol de verdade, entre amigos. Porque aqui, todo jogo é clássico!</p>
       </div>
       
-      <div className="w-full">
+      <div className="w-full max-w-sm space-y-4">
         <Button
-          onClick={onEnter}
+          onClick={() => onNavigate('login')}
           className="bg-white text-primary hover:bg-gray-200 font-bold w-full py-4 h-auto text-lg rounded-xl shadow-lg transition duration-300"
         >
-          Criar Conta ou Entrar
+          Entrar
+        </Button>
+        <Button
+          onClick={() => onNavigate('register')}
+          variant="outline"
+          className="bg-transparent border-white text-white hover:bg-white/10 font-bold w-full py-4 h-auto text-lg rounded-xl shadow-lg transition duration-300"
+        >
+          Criar Conta
         </Button>
       </div>
     </div>

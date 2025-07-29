@@ -17,6 +17,7 @@ import StatisticsView from '@/components/views/statistics-view';
 import AdminView from '@/components/views/admin-view';
 import BottomNav from '@/components/bottom-nav';
 import RegisterView from '@/components/views/register-view';
+import LoginView from '@/components/views/login-view';
 import { useToast } from '@/hooks/use-toast';
 import LiveView from '@/components/views/live-view';
 import type { LiveEvent } from '@/components/views/live-view';
@@ -33,7 +34,7 @@ import type { ShirtColor, Formation } from '@/components/views/lineup-view';
 import { auth } from '@/lib/firebase-config';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 
-export type View = 'welcome' | 'register' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
+export type View = 'welcome' | 'register' | 'login' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
 export type Modality = 'campo' | 'society' | 'futsal';
 
@@ -144,7 +145,10 @@ export default function Home() {
           }
           handleLoginSuccess(user.uid, freshLoadedData);
         } else {
-          navigateTo('welcome');
+          // Stay on 'welcome', 'login', or 'register' if not logged in.
+          if (currentView !== 'login' && currentView !== 'register') {
+            navigateTo('welcome');
+          }
         }
       });
       return () => unsubscribe();
@@ -486,6 +490,8 @@ export default function Home() {
     try {
       await signOut(auth);
       // The onAuthStateChanged listener will handle navigation to 'welcome'
+      setLoggedInUserId(null);
+      navigateTo('welcome');
       toast({ title: "Você saiu!", description: "Sessão encerrada com sucesso." });
     } catch (error) {
       console.error("Logout error:", error);
@@ -497,8 +503,8 @@ export default function Home() {
     if (view === 'payments') {
       setIsPersonalPaymentsView(options?.isPersonalPayments || false);
     }
-    if (view === 'register') {
-      setLoggedInUserId(null); // Clear logged-in user when going to register
+    if (view === 'register' || view === 'login') {
+      setLoggedInUserId(null); // Clear logged-in user when going to auth pages
     }
     setPreviousView(currentView);
     setCurrentView(view);
@@ -814,48 +820,32 @@ export default function Home() {
     });
   };
 
-  if (!currentLeague && currentView !== 'welcome' && currentView !== 'register' && currentView !== 'league-entry') {
-    return <div>Carregando liga...</div>; // Or some other loading state
+  if (!currentLeague && !['welcome', 'register', 'login', 'league-entry'].includes(currentView)) {
+    return <div>Carregando liga...</div>;
   }
 
   const selectedPlayer = selectedPlayerId && currentLeague ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
 
-  const userForViews = useMemo(() => {
-    if (!loggedInUserId && currentView !== 'register' && currentView !== 'welcome') {
-      // Find user "Novo Jogador" if it exists, for registration flow
-      for(const league of Object.values(appData.leagues)) {
-          const newUser = Object.values(league.users).find(u => u.name === "Novo Jogador");
-          if(newUser) return newUser;
-      }
-      return null;
-    }
-    if (!currentUser) return null;
-    return {
-      ...currentUser,
-      // The concept of a personal lineup is removed for display, using team lineups instead
-      lineup: [],
-      reserves: [],
-    }
-  }, [currentUser, loggedInUserId, currentView, appData.leagues]);
-  
+  const userForViews = currentUser;
 
-
-  const showBottomNav = currentView !== 'welcome' && currentView !== 'register' && currentView !== 'modality-selection' && currentView !== 'league-entry';
+  const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'league-entry'].includes(currentView);
 
   const renderView = () => {
     if (!userForViews && showBottomNav) {
       // This is a fallback. If we're on a view that needs a user but don't have one,
       // something is wrong. Let's redirect to welcome to be safe.
       // This helps prevent crashes.
-      setCurrentView('welcome');
-      return <WelcomeView onEnter={() => navigateTo('register')} />;
+      navigateTo('welcome');
+      return <WelcomeView onNavigate={navigateTo} />;
     }
 
     switch (currentView) {
       case 'welcome':
-        return <WelcomeView onEnter={() => navigateTo('register')} />;
+        return <WelcomeView onNavigate={navigateTo} />;
       case 'register':
-        return <RegisterView onRegisterSuccess={handleRegistrationSuccess} onLoginSuccess={(uid) => handleLoginSuccess(uid, appData)} />;
+        return <RegisterView onRegisterSuccess={handleRegistrationSuccess} onNavigateToLogin={() => navigateTo('login')} />;
+      case 'login':
+        return <LoginView onLoginSuccess={(uid) => handleLoginSuccess(uid, appData)} onNavigateToRegister={() => navigateTo('register')} />;
       case 'league-entry':
         return <LeagueEntryView onCreateLeague={handleCreateLeague} />;
       case 'leagues':
@@ -870,7 +860,7 @@ export default function Home() {
       case 'modality-selection':
         if (!loggedInUserId || !currentLeague) {
            setCurrentView('welcome');
-           return <WelcomeView onEnter={() => navigateTo('register')} />;
+           return <WelcomeView onNavigate={navigateTo} />;
         }
         const isLeagueAdmin = currentLeague.adminId === loggedInUserId;
         return <ModalitySelectionView 
