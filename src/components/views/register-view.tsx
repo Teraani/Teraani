@@ -10,12 +10,13 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
+import { User as FirebaseUser } from 'firebase/auth';
 
 interface RegisterViewProps {
-  onRegisterSuccess: () => void;
+  onRegisterSuccess: (user: FirebaseUser, name: string) => void;
   onLoginSuccess: (userId: string) => void;
 }
 
@@ -52,12 +53,12 @@ export default function RegisterView({ onRegisterSuccess, onLoginSuccess }: Regi
 
   async function onRegisterSubmit(values: z.infer<typeof registerSchema>) {
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       toast({
         title: "Conta criada com sucesso!",
         description: "Agora você pode acessar a plataforma.",
       });
-      onRegisterSuccess();
+      onRegisterSuccess(userCredential.user, values.name);
     } catch (error: any) {
        console.error("Erro ao criar conta:", error);
        toast({
@@ -85,6 +86,30 @@ export default function RegisterView({ onRegisterSuccess, onLoginSuccess }: Regi
       });
     }
   }
+  
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+        'auth_domain': 'amistososai-fc.web.app'
+    });
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        toast({
+            title: "Login com Google bem-sucedido!",
+        });
+        // This will either log in the existing user or create a new one in our app data
+        onLoginSuccess(user.uid); 
+    } catch (error: any) {
+        console.error("Erro no login com Google:", error);
+        toast({
+            title: "Erro no Login com Google",
+            description: "Não foi possível fazer login com o Google. Tente novamente.",
+            variant: "destructive",
+        });
+    }
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground text-center">

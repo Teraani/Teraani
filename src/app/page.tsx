@@ -30,6 +30,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
 import type { ShirtColor, Formation } from '@/components/views/lineup-view';
+import { auth } from '@/lib/firebase-config';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
 export type View = 'welcome' | 'register' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
@@ -97,9 +99,38 @@ export default function Home() {
   const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('welcome');
-  const [appData, setAppData] = useState(initialData);
+  
+  const [appData, setAppDataState] = useState(initialData);
   const { toast } = useToast();
   
+  const setAppData = (data: any) => {
+    setAppDataState(data);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('amistosos_fc_data', JSON.stringify(data));
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedData = localStorage.getItem('amistosos_fc_data');
+      if (savedData) {
+        setAppDataState(JSON.parse(savedData));
+      }
+      
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // User is signed in, handle navigation.
+          handleLoginSuccess(user.uid);
+        } else {
+          // User is signed out.
+          navigateTo('welcome');
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, []);
+
+
   // New state for multi-league
   const [currentLeagueId, setCurrentLeagueId] = useState<string>('defaultLeague');
   const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
@@ -124,7 +155,7 @@ export default function Home() {
 
 
   // Simulate a logged-in user. By default, it's the admin.
-  const [loggedInUserId, setLoggedInUserId] = useState<string | null>('user27'); // Default to Admin for initial load
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null); 
   const currentUser = loggedInUserId && currentLeague ? currentLeague.users[loggedInUserId] : null;
 
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
@@ -164,13 +195,13 @@ export default function Home() {
   const updateCurrentLeague = (updater: (league: League) => League) => {
     if (!currentLeague) return;
     const newLeague = updater(currentLeague);
-    setAppData(prevData => ({
-      ...prevData,
+    setAppData({
+      ...appData,
       leagues: {
-        ...prevData.leagues,
+        ...appData.leagues,
         [currentLeagueId]: newLeague,
       }
-    }));
+    });
   };
   
   const handleLeagueChange = (newLeagueId: string) => {
@@ -298,13 +329,12 @@ export default function Home() {
   };
 
 
-  const handleRegistrationSuccess = () => {
-    const tempUserId = `newUser_${Date.now()}`;
-    const tempUser: User = {
-      id: tempUserId,
-      name: "Novo Jogador",
-      email: "novo@jogador.com",
-      teamName: "Time",
+  const handleRegistrationSuccess = (user: FirebaseUser, name: string) => {
+    const newUser: User = {
+      id: user.uid,
+      name: name,
+      email: user.email!,
+      teamName: `${name.split(' ')[0]} FC`,
       partialScore: 0,
       totalScore: 0,
       valuation: 100,
@@ -314,23 +344,26 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // Temporarily add the user to the app data so they can create a league
-    const tempLeagueId = `temp_${tempUserId}`;
+    // Temporarily add the user to a temporary league so they can create a real one
+    const tempLeagueId = `temp_${user.uid}`;
     const tempLeague: League = {
       ...defaultLeagueData,
       id: tempLeagueId,
       name: 'Temporary League',
-      users: { [tempUserId]: tempUser },
-      modality: null, // Ensure this forces modality selection if needed later
+      adminId: user.uid, // The new user is the admin of this temp league
+      users: { [user.uid]: newUser },
+      modality: null,
     };
 
-    setAppData(prevData => {
-      const newAppData = { ...prevData };
-      newAppData.leagues[tempLeagueId] = tempLeague;
-      return newAppData;
+    setAppData({
+      ...appData,
+      leagues: {
+          ...appData.leagues,
+          [tempLeagueId]: tempLeague,
+      }
     });
 
-    setLoggedInUserId(tempUserId);
+    setLoggedInUserId(user.uid);
     setCurrentLeagueId(tempLeagueId);
     navigateTo('league-entry');
   };
@@ -399,16 +432,14 @@ export default function Home() {
       goalieRanking: {},
     };
 
-    setAppData(prev => {
-      const newLeagues = { ...prev.leagues };
-      // Remove any temporary league associated with the user
-      const tempLeagueKey = Object.keys(newLeagues).find(k => k.startsWith('temp_'));
-      if (tempLeagueKey) {
-          delete newLeagues[tempLeagueKey];
-      }
-      newLeagues[newLeagueId] = newLeague;
-      return { ...prev, leagues: newLeagues };
-    });
+    const newAppData = { ...appData };
+    // Remove any temporary league associated with the user
+    const tempLeagueKey = Object.keys(newAppData.leagues).find(k => k.startsWith('temp_'));
+    if (tempLeagueKey) {
+        delete newAppData.leagues[tempLeagueKey];
+    }
+    newAppData.leagues[newLeagueId] = newLeague;
+    setAppData(newAppData);
     
     setCurrentLeagueId(newLeagueId);
     
