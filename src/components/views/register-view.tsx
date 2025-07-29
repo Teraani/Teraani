@@ -38,9 +38,6 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-      'authDomain': 'amistososai-fc.web.app'
-    });
     try {
         await signInWithPopup(auth, provider);
         toast({
