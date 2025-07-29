@@ -113,14 +113,11 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-        // Load data from localStorage first
         const savedData = localStorage.getItem('amistosos_fc_data');
-        let loadedAppData = initialData;
         if (savedData) {
             try {
                 const parsedData = JSON.parse(savedData);
                 if (parsedData && parsedData.leagues) {
-                    loadedAppData = parsedData;
                     setAppDataState(parsedData);
                 }
             } catch (e) {
@@ -131,8 +128,15 @@ export default function Home() {
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                 handleLoginSuccess(user.uid, loadedAppData, true);
+                setLoggedInUserId(user.uid);
+                // If user is logged in but somehow on an auth screen, move them to the dashboard.
+                 const authScreens: View[] = ['welcome', 'login', 'register'];
+                 if (authScreens.includes(currentView)) {
+                    handleLoginSuccess(user.uid, appData, true);
+                }
             } else {
+                setLoggedInUserId(null);
+                 // If user logs out, send them to the welcome screen.
                 const authScreens: View[] = ['welcome', 'login', 'register'];
                  if (!authScreens.includes(currentView)) {
                     navigateTo('welcome');
@@ -485,7 +489,10 @@ export default function Home() {
       setIsPersonalPaymentsView(options?.isPersonalPayments || false);
     }
     if (view === 'register' || view === 'login') {
-      setLoggedInUserId(null); // Clear logged-in user when going to auth pages
+       if (loggedInUserId) {
+        handleLoginSuccess(loggedInUserId, appData);
+        return;
+       }
     }
     setPreviousView(currentView);
     setCurrentView(view);
