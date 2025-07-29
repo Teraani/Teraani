@@ -39,6 +39,7 @@ interface DashboardViewProps {
   currentLeagueId: string;
   onLeagueChange: (leagueId: string) => void;
   isPaymentsEnabled: boolean;
+  onLogout: () => void;
 }
 
 function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void }) {
@@ -227,7 +228,7 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, onAvatarChange, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled }: DashboardViewProps) {
+export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, onAvatarChange, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout }: DashboardViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const sortedUsers = useMemo(() => {
     return Object.values(allUsers)
@@ -308,7 +309,7 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
                 <span>Suporte</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onNavigate('welcome')}>
+            <DropdownMenuItem onClick={onLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Sair</span>
             </DropdownMenuItem>

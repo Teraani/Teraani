@@ -31,7 +31,7 @@ import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
 import type { ShirtColor, Formation } from '@/components/views/lineup-view';
 import { auth } from '@/lib/firebase-config';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 
 export type View = 'welcome' | 'register' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
 export type Position = Player['pos'] | null;
@@ -466,6 +466,17 @@ export default function Home() {
     navigateTo('dashboard');
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      // The onAuthStateChanged listener will handle navigation to 'welcome'
+      toast({ title: "Você saiu!", description: "Sessão encerrada com sucesso." });
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({ title: "Erro ao sair", description: "Não foi possível encerrar a sessão.", variant: "destructive" });
+    }
+  };
+
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
       setIsPersonalPaymentsView(options?.isPersonalPayments || false);
@@ -852,7 +863,7 @@ export default function Home() {
                   isLeagueAdmin={isLeagueAdmin}
                 />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled}/>;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
       case 'lineup':
         return <LineupView 
                  players={currentLeague!.players} 
@@ -880,7 +891,7 @@ export default function Home() {
                  setFormation={setFormation}
                />;
       case 'player-details':
-        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} />;
+        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
       case 'market':
         return <MarketView 
                  players={currentLeague!.players} 
@@ -960,7 +971,7 @@ export default function Home() {
                   formation={formation}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
     }
   };
 
