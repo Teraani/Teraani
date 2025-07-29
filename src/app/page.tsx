@@ -159,7 +159,7 @@ export default function Home() {
       return () => unsubscribe();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentView]);
+  }, []); // Changed to run only once on mount
 
 
   // New state for multi-league
@@ -378,28 +378,16 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // Temporarily add the user to a temporary league so they can create a real one
-    const tempLeagueId = `temp_${user.uid}`;
-    const tempLeague: League = {
-      ...defaultLeagueData,
-      id: tempLeagueId,
-      name: 'Temporary League',
-      adminId: user.uid, // The new user is the admin of this temp league
-      users: { [user.uid]: newUser },
-      modality: null,
-    };
-
-    setAppData({
-      ...appData,
-      leagues: {
-          ...appData.leagues,
-          [tempLeagueId]: tempLeague,
-      }
-    });
-
+    // New user, just set the logged in user ID and navigate to league entry
+    // where they will create their first league.
     setLoggedInUserId(user.uid);
-    setCurrentLeagueId(tempLeagueId);
+    // Add the new user to a temporary user object so handleCreateLeague can find it.
+    // This object won't be part of any league yet.
+    const tempUserData = { ...appData, temporaryUser: newUser };
+    setAppData(tempUserData);
+    
     navigateTo('league-entry');
+    toast({ title: "Cadastro Concluído!", description: "Agora crie sua primeira liga." });
   };
 
 
@@ -409,20 +397,21 @@ export default function Home() {
         return;
     }
     
-    // Find the logged-in user's data from ANY league to use as the creator
-    let creator: User | null = null;
-    for (const league of Object.values(appData.leagues)) {
-        if (league.users[loggedInUserId]) {
-            creator = league.users[loggedInUserId];
-            break;
-        }
+    // Find the logged-in user's data from the temporary holder or from ANY league
+    let creator: User | null = (appData as any).temporaryUser ?? null;
+    if (!creator) {
+      for (const league of Object.values(appData.leagues)) {
+          if (league.users[loggedInUserId]) {
+              creator = league.users[loggedInUserId];
+              break;
+          }
+      }
     }
 
     if (!creator) {
       toast({ title: "Erro", description: "Não foi possível encontrar os dados do usuário para criar a liga.", variant: "destructive" });
       return;
     }
-
 
     const newLeagueId = `league_${Date.now()}`;
     
@@ -467,11 +456,11 @@ export default function Home() {
     };
 
     const newAppData = { ...appData };
-    // Remove any temporary league associated with the user
-    const tempLeagueKey = Object.keys(newAppData.leagues).find(k => k.startsWith('temp_'));
-    if (tempLeagueKey) {
-        delete newAppData.leagues[tempLeagueKey];
+    // Remove temporary user if it exists
+    if ((newAppData as any).temporaryUser) {
+        delete (newAppData as any).temporaryUser;
     }
+    
     newAppData.leagues[newLeagueId] = newLeague;
     setAppData(newAppData);
     
@@ -496,6 +485,7 @@ export default function Home() {
       await signOut(auth);
       // The onAuthStateChanged listener will handle navigation to 'welcome'
       setLoggedInUserId(null);
+      setCurrentLeagueId('defaultLeague'); // Reset to a safe default
       navigateTo('welcome');
       toast({ title: "Você saiu!", description: "Sessão encerrada com sucesso." });
     } catch (error) {
