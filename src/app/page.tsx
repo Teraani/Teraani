@@ -272,70 +272,72 @@ export default function Home() {
   }, [currentUser, currentLeague]);
   
   const handleLoginSuccess = (userId: string, data = appData) => {
-    let userExists = false;
-    let userObject: User | null = null;
+    let userExistsInAnyLeague = false;
     let userLeagues: string[] = [];
+    let userObject: User | null = null;
+    let currentAppData = data; // Use the most up-to-date data passed in
 
-    // Use the passed-in data which is guaranteed to be up-to-date
-    let currentAppData = data;
-
-    // Find user and their leagues across all leagues in the app
+    // Find all leagues the user belongs to
     for (const leagueId in currentAppData.leagues) {
         if (currentAppData.leagues[leagueId].users[userId]) {
-            userExists = true;
-            userObject = currentAppData.leagues[leagueId].users[userId];
+            userExistsInAnyLeague = true;
             userLeagues.push(leagueId);
+            if (!userObject) { // Store the first user object we find
+                userObject = currentAppData.leagues[leagueId].users[userId];
+            }
         }
     }
-    
-    // If user was invited to a new league, add them and switch
-    if (invitedToLeagueId && !userLeagues.includes(invitedToLeagueId)) {
-      const leagueToJoin = currentAppData.leagues[invitedToLeagueId];
-      if (leagueToJoin && userObject) {
-        const updatedLeague = {
-          ...leagueToJoin,
-          users: { ...leagueToJoin.users, [userId]: userObject }
-        };
-        const newAppData = {
-          ...currentAppData,
-          leagues: { ...currentAppData.leagues, [invitedToLeagueId]: updatedLeague }
-        };
-        setAppData(newAppData); // This saves to localStorage
-        setCurrentLeagueId(invitedToLeagueId);
-        setInvitedToLeagueId(null); // Clear invite after use
-        userLeagues.push(invitedToLeagueId);
-        currentAppData = newAppData; // update for the next checks
-      }
+
+    // Handle invitation logic
+    if (invitedToLeagueId && userObject && !userLeagues.includes(invitedToLeagueId)) {
+        const leagueToJoin = currentAppData.leagues[invitedToLeagueId];
+        if (leagueToJoin) {
+            const updatedLeague = {
+                ...leagueToJoin,
+                users: { ...leagueToJoin.users, [userId]: userObject }
+            };
+            const newAppData = {
+                ...currentAppData,
+                leagues: { ...currentAppData.leagues, [invitedToLeagueId]: updatedLeague }
+            };
+            setAppData(newAppData);
+            userLeagues.push(invitedToLeagueId);
+            currentAppData = newAppData; // Important: update currentAppData for subsequent logic
+        }
     }
-    
+
     setLoggedInUserId(userId);
 
     if (userLeagues.length > 0) {
-      // Logic to find the best league to switch to.
-      // Prioritize invited league, otherwise the first one found.
-      const leagueToSwitchToId = invitedToLeagueId && userLeagues.includes(invitedToLeagueId) 
-        ? invitedToLeagueId 
-        : userLeagues[0];
+        // Prioritize the invited league, then the last created one, then the first one found.
+        const lastCreatedLeagueId = Object.keys(currentAppData.leagues)
+            .filter(id => id.startsWith('league_') && userLeagues.includes(id))
+            .sort((a, b) => parseInt(b.split('_')[1]) - parseInt(a.split('_')[1]))[0];
 
-      const leagueToSwitchTo = currentAppData.leagues[leagueToSwitchToId];
-      setCurrentLeagueId(leagueToSwitchToId);
-      
-      if (!leagueToSwitchTo.modality) {
-        navigateTo('modality-selection');
-      } else {
-        navigateTo('dashboard');
-      }
-      if (userObject) {
-        toast({
-          title: `Bem-vindo de volta, ${userObject.name}!`,
-          description: "Login realizado com sucesso.",
-        });
-      }
+        const leagueToSwitchToId = invitedToLeagueId && userLeagues.includes(invitedToLeagueId)
+            ? invitedToLeagueId
+            : lastCreatedLeagueId || userLeagues[0];
+
+        const leagueToSwitchTo = currentAppData.leagues[leagueToSwitchToId];
+        setCurrentLeagueId(leagueToSwitchToId);
+        
+        if (!leagueToSwitchTo.modality) {
+            navigateTo('modality-selection');
+        } else {
+            navigateTo('dashboard');
+        }
+        if (userObject) {
+            toast({
+                title: `Bem-vindo de volta, ${userObject.name}!`,
+                description: "Login realizado com sucesso.",
+            });
+        }
+        if (invitedToLeagueId) setInvitedToLeagueId(null);
     } else {
-      // If user exists but has no leagues and no invite, go to league entry.
-      navigateTo('league-entry');
+        // This is a new user with no leagues
+        navigateTo('league-entry');
     }
-  };
+};
 
 
   const handleRegistrationSuccess = (user: FirebaseUser, name: string) => {
