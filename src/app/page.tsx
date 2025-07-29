@@ -788,7 +788,7 @@ export default function Home() {
       case 'welcome':
         return <WelcomeView onEnter={() => navigateTo('register')} />;
       case 'register':
-        return <RegisterView onRegisterSuccess={handleRegistrationSuccess} />;
+        return <RegisterView onRegisterSuccess={handleRegistrationSuccess} onLoginSuccess={handleLoginSuccess} />;
       case 'league-entry':
         return <LeagueEntryView onCreateLeague={handleCreateLeague} />;
       case 'leagues':
