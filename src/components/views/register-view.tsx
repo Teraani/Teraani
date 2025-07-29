@@ -193,5 +193,3 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
     </div>
   );
 }
-
-    
