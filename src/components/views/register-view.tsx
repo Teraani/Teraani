@@ -37,6 +37,9 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      'auth_type': 'reauthenticate'
+    });
     try {
       await signInWithPopup(auth, provider);
       toast({
