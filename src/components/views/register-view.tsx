@@ -10,7 +10,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { GoogleAuthProvider, signInWithRedirect, createUserWithEmailAndPassword, getRedirectResult } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 
@@ -36,34 +36,26 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
     },
   });
 
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          toast({
-            title: "Login bem-sucedido!",
-            description: "Você foi autenticado com sucesso.",
-          });
-          onRegisterSuccess();
-        }
-      })
-      .catch((error) => {
-        console.error("Erro no resultado do redirecionamento:", error);
-        toast({
-          title: "Erro no Login",
-          description: error.message || "Não foi possível completar o login.",
-          variant: "destructive",
-        });
-      });
-  }, [onRegisterSuccess, toast]);
-
-
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({
-      'auth_domain': 'amistososai-fc.firebaseapp.com'
+      'authDomain': 'amistososai-fc.web.app'
     });
-    await signInWithRedirect(auth, provider);
+    try {
+        await signInWithPopup(auth, provider);
+        toast({
+            title: "Login bem-sucedido!",
+            description: "Você foi autenticado com sucesso.",
+        });
+        onRegisterSuccess();
+    } catch (error: any) {
+        console.error("Erro no login com Google:", error);
+        toast({
+            title: "Erro no Login",
+            description: error.message || "Não foi possível completar o login.",
+            variant: "destructive",
+        });
+    }
   }
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
