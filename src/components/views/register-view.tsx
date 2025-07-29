@@ -86,7 +86,24 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    try {
+        await signInWithRedirect(auth, provider);
+    } catch (error: any) {
+        if (error.code === 'auth/unauthorized-domain') {
+            toast({
+                title: "Login com Google Indisponível no Preview",
+                description: "Esta função estará disponível quando o aplicativo for publicado. Por favor, use e-mail e senha para continuar.",
+                variant: "destructive"
+            });
+        } else {
+             toast({
+                title: "Erro de Autenticação",
+                description: "Não foi possível iniciar o login com o Google. Tente novamente mais tarde.",
+                variant: "destructive"
+            });
+        }
+        console.error("Erro no login com Google:", error);
+    }
   };
 
 
@@ -176,3 +193,5 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
     </div>
   );
 }
+
+    
