@@ -131,26 +131,16 @@ export default function Home() {
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             const authScreens: View[] = ['welcome', 'login', 'register'];
-            // We read currentView from a ref to get the latest value inside the listener
-            const isAuthScreen = authScreens.includes(currentView);
-            
+            // We get the current view from the state, which is reliable.
             if (user) {
-                // To prevent redirect loops, we only auto-login if the user is not
-                // already on an authentication screen.
-                if (!isAuthScreen) {
-                    // Re-read data from localStorage inside the listener to ensure we have the latest version.
-                    const freshSavedData = localStorage.getItem('amistosos_fc_data');
-                    let freshLoadedData = initialData;
-                    if (freshSavedData) {
-                        try {
-                            freshLoadedData = JSON.parse(freshSavedData);
-                        } catch(e) { /* ignore */ }
-                    }
-                    handleLoginSuccess(user.uid, freshLoadedData);
+                // If the user is logged in, but somehow on an auth screen (e.g. back button),
+                // we safely navigate them to the dashboard.
+                if (authScreens.includes(currentView)) {
+                   handleLoginSuccess(user.uid, loadedData); // Use the data loaded at startup
                 }
             } else {
                 // If there's no user, ensure we are on an authentication screen.
-                if (!isAuthScreen) {
+                if (!authScreens.includes(currentView)) {
                     navigateTo('welcome');
                 }
             }
@@ -159,7 +149,7 @@ export default function Home() {
         return () => unsubscribe();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []); // Run only once on mount
+}, [currentView]); // Rerun when currentView changes to handle navigation correctly
 
 
   // New state for multi-league
@@ -298,7 +288,20 @@ export default function Home() {
     let userExistsInAnyLeague = false;
     let userLeagues: string[] = [];
     let userObject: User | null = null;
-    let currentAppData = data; // Use the most up-to-date data passed in
+    
+    // Always get the freshest data from localStorage upon login.
+    const freshSavedData = localStorage.getItem('amistosos_fc_data');
+    let currentAppData = initialData;
+    if (freshSavedData) {
+        try {
+            currentAppData = JSON.parse(freshSavedData);
+        } catch (e) {
+            console.error("Failed to parse fresh data on login, using initial data.", e);
+        }
+    } else {
+        currentAppData = data; // Fallback to passed data or initialData
+    }
+
 
     // Find all leagues the user belongs to
     for (const leagueId in currentAppData.leagues) {
