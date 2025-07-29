@@ -113,21 +113,29 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedData = localStorage.getItem('amistosos_fc_data');
+      let loadedData = initialData;
       if (savedData) {
-        setAppDataState(JSON.parse(savedData));
+        try {
+            loadedData = JSON.parse(savedData);
+        } catch (e) {
+            console.error("Failed to parse localStorage data", e);
+        }
       }
-      
+      // Set the app data first from localStorage or initialData
+      setAppDataState(loadedData);
+
+      // Then, set up the auth listener
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
-          // User is signed in, handle navigation.
-          handleLoginSuccess(user.uid);
+          // Pass the freshly loaded data to the login handler
+          handleLoginSuccess(user.uid, loadedData);
         } else {
-          // User is signed out.
           navigateTo('welcome');
         }
       });
       return () => unsubscribe();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -263,12 +271,13 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  const handleLoginSuccess = (userId: string) => {
+  const handleLoginSuccess = (userId: string, data = appData) => {
     let userExists = false;
     let userObject: User | null = null;
     let userLeagues: string[] = [];
 
-    let currentAppData = appData;
+    // Use the passed-in data which is guaranteed to be up-to-date
+    let currentAppData = data;
 
     // Find user and their leagues across all leagues in the app
     for (const leagueId in currentAppData.leagues) {
@@ -291,7 +300,7 @@ export default function Home() {
           ...currentAppData,
           leagues: { ...currentAppData.leagues, [invitedToLeagueId]: updatedLeague }
         };
-        setAppData(newAppData);
+        setAppData(newAppData); // This saves to localStorage
         setCurrentLeagueId(invitedToLeagueId);
         setInvitedToLeagueId(null); // Clear invite after use
         userLeagues.push(invitedToLeagueId);
@@ -819,7 +828,7 @@ export default function Home() {
       case 'welcome':
         return <WelcomeView onEnter={() => navigateTo('register')} />;
       case 'register':
-        return <RegisterView onRegisterSuccess={handleRegistrationSuccess} onLoginSuccess={handleLoginSuccess} />;
+        return <RegisterView onRegisterSuccess={handleRegistrationSuccess} onLoginSuccess={(uid) => handleLoginSuccess(uid, appData)} />;
       case 'league-entry':
         return <LeagueEntryView onCreateLeague={handleCreateLeague} />;
       case 'leagues':
@@ -843,7 +852,7 @@ export default function Home() {
                   isLeagueAdmin={isLeagueAdmin}
                 />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled}/>;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled}/>;
       case 'lineup':
         return <LineupView 
                  players={currentLeague!.players} 
@@ -871,7 +880,7 @@ export default function Home() {
                  setFormation={setFormation}
                />;
       case 'player-details':
-        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} />;
+        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} />;
       case 'market':
         return <MarketView 
                  players={currentLeague!.players} 
@@ -951,7 +960,7 @@ export default function Home() {
                   formation={formation}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={handleLoginSuccess} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} />;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} onUserSelect={(uid) => handleLoginSuccess(uid, appData)} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} />;
     }
   };
 
