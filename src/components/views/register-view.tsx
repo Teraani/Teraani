@@ -60,6 +60,9 @@ export default function RegisterView({ onRegisterSuccess }: RegisterViewProps) {
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      'auth_domain': 'amistososai-fc.firebaseapp.com'
+    });
     await signInWithRedirect(auth, provider);
   }
 
