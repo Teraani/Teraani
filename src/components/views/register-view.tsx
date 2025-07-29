@@ -10,9 +10,10 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { User as FirebaseUser } from 'firebase/auth';
+import { useEffect } from 'react';
 
 interface RegisterViewProps {
   onRegisterSuccess: (user: FirebaseUser, name: string) => void;
@@ -47,6 +48,31 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
     },
   });
 
+  useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          const user = result.user;
+          const name = user.displayName || user.email!.split('@')[0];
+          onRegisterSuccess(user, name);
+          toast({
+            title: "Login com Google bem-sucedido!",
+            description: `Bem-vindo, ${name}!`,
+          });
+        }
+      } catch (error: any) {
+        console.error("Erro ao obter resultado do redirecionamento:", error);
+        toast({
+          title: "Erro no Login com Google",
+          description: "Não foi possível autenticar com o Google após o redirecionamento. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    };
+    checkRedirectResult();
+  }, [onRegisterSuccess, toast]);
+
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -67,23 +93,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      const name = user.displayName || user.email!.split('@')[0];
-      onRegisterSuccess(user, name);
-      toast({
-        title: "Login com Google bem-sucedido!",
-        description: `Bem-vindo, ${name}!`,
-      });
-    } catch (error: any) {
-       console.error("Erro no login com Google:", error);
-       toast({
-        title: "Erro no Login com Google",
-        description: "Não foi possível autenticar com o Google. Tente novamente.",
-        variant: "destructive",
-      });
-    }
+    await signInWithRedirect(auth, provider);
   };
 
   return (
@@ -171,3 +181,5 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
     </div>
   );
 }
+
+    
