@@ -103,6 +103,7 @@ export default function Home() {
   
   const [appData, setAppDataState] = useState(initialData);
   const { toast } = useToast();
+  const [isInitializing, setIsInitializing] = useState(true);
   
   const setAppData = (data: any) => {
     setAppDataState(data);
@@ -114,34 +115,28 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
         const savedData = localStorage.getItem('amistosos_fc_data');
+        let parsedData = initialData;
         if (savedData) {
             try {
-                const parsedData = JSON.parse(savedData);
-                if (parsedData && parsedData.leagues) {
-                    setAppDataState(parsedData);
+                const stored = JSON.parse(savedData);
+                if (stored && stored.leagues) {
+                    parsedData = stored;
                 }
             } catch (e) {
                 console.error("Failed to parse localStorage data, resetting.", e);
                 localStorage.removeItem('amistosos_fc_data');
             }
         }
+        setAppDataState(parsedData);
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                setLoggedInUserId(user.uid);
-                // If user is logged in but somehow on an auth screen, move them to the dashboard.
-                 const authScreens: View[] = ['welcome', 'login', 'register'];
-                 if (authScreens.includes(currentView)) {
-                    handleLoginSuccess(user.uid, appData, true);
-                }
+                handleLoginSuccess(user.uid, parsedData, true);
             } else {
                 setLoggedInUserId(null);
-                 // If user logs out, send them to the welcome screen.
-                const authScreens: View[] = ['welcome', 'login', 'register'];
-                 if (!authScreens.includes(currentView)) {
-                    navigateTo('welcome');
-                }
+                navigateTo('welcome');
             }
+            setIsInitializing(false);
         });
 
         return () => unsubscribe();
@@ -282,23 +277,19 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
- const handleLoginSuccess = (userId: string, currentAppData: any, isAutoLogin = false) => {
-    let userExistsInAnyLeague = false;
+  const handleLoginSuccess = (userId: string, currentAppData: any, isAutoLogin = false) => {
     let userLeagues: string[] = [];
     let userObject: User | null = null;
     
-    // Find all leagues the user belongs to from the provided app data
     for (const leagueId in currentAppData.leagues) {
         if (currentAppData.leagues[leagueId].users[userId]) {
-            userExistsInAnyLeague = true;
             userLeagues.push(leagueId);
-            if (!userObject) { // Store the first user object we find
+            if (!userObject) {
                 userObject = currentAppData.leagues[leagueId].users[userId];
             }
         }
     }
 
-    // Handle invitation logic
     if (invitedToLeagueId && userObject && !userLeagues.includes(invitedToLeagueId)) {
         const leagueToJoin = currentAppData.leagues[invitedToLeagueId];
         if (leagueToJoin) {
@@ -312,24 +303,22 @@ export default function Home() {
             };
             setAppData(newAppData);
             userLeagues.push(invitedToLeagueId);
-            currentAppData = newAppData; // Important: update currentAppData for subsequent logic
+            currentAppData = newAppData;
         }
     }
 
     setLoggedInUserId(userId);
 
     if (userLeagues.length > 0) {
-        // Prioritize the invited league, then the last created one, then the first one found.
         const lastCreatedLeagueId = Object.keys(currentAppData.leagues)
             .filter(id => id.startsWith('league_') && userLeagues.includes(id))
             .sort((a, b) => parseInt(b.split('_')[1]) - parseInt(a.split('_')[1]))[0];
 
-        // Also check jasonTestLeague specifically
         const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
 
         const leagueToSwitchToId = invitedToLeagueId && userLeagues.includes(invitedToLeagueId)
             ? invitedToLeagueId
-            : lastCreatedLeagueId || jasonLeague || userLeagues[0];
+            : (jasonLeague && currentAppData.leagues[jasonLeague].users[userId]) ? jasonLeague : (lastCreatedLeagueId || userLeagues[0]);
 
         const leagueToSwitchTo = currentAppData.leagues[leagueToSwitchToId];
         setCurrentLeagueId(leagueToSwitchToId);
@@ -347,7 +336,6 @@ export default function Home() {
         }
         if (invitedToLeagueId) setInvitedToLeagueId(null);
     } else {
-        // This is a new user with no leagues
         navigateTo('league-entry');
     }
 };
@@ -368,16 +356,12 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // New user, just set the logged in user ID and navigate to league entry
-    // where they will create their first league.
-    setLoggedInUserId(user.uid);
-    // Add the new user to a temporary user object so handleCreateLeague can find it.
-    // This object won't be part of any league yet.
     const tempUserData = { ...appData, temporaryUser: newUser };
     setAppData(tempUserData);
+    setLoggedInUserId(user.uid);
     
     navigateTo('league-entry');
-    toast({ title: "Cadastro Concluído!", description: "Agora crie sua primeira liga." });
+    toast({ title: "Cadastro Concluído!", description: "Agora crie ou entre em uma liga." });
   };
 
 
@@ -387,7 +371,6 @@ export default function Home() {
         return;
     }
     
-    // Find the logged-in user's data from the temporary holder or from ANY league
     let creator: User | null = (appData as any).temporaryUser ?? null;
     if (!creator) {
       for (const league of Object.values(appData.leagues)) {
@@ -432,11 +415,11 @@ export default function Home() {
       users: {
         [creator.id]: {
           ...creator,
-          role: 'admin' // Ensure the creator is the admin of this league
+          role: 'admin'
         },
         ...testUsers
       },
-      players: defaultLeagueData.players, // Start with default players
+      players: defaultLeagueData.players,
       games: {},
       editorOfTheRound: null,
       scoutEditor: null,
@@ -446,7 +429,6 @@ export default function Home() {
     };
 
     const newAppData = { ...appData };
-    // Remove temporary user if it exists
     if ((newAppData as any).temporaryUser) {
         delete (newAppData as any).temporaryUser;
     }
@@ -456,7 +438,6 @@ export default function Home() {
     
     setCurrentLeagueId(newLeagueId);
     
-    // Set the test teams for the new league
     setTeam1Lineup(team2002_ids);
     setTeam2Lineup(team1994_ids);
 
@@ -473,9 +454,8 @@ export default function Home() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // The onAuthStateChanged listener will handle navigation to 'welcome'
       setLoggedInUserId(null);
-      setCurrentLeagueId('defaultLeague'); // Reset to a safe default
+      setCurrentLeagueId('defaultLeague');
       navigateTo('welcome');
       toast({ title: "Você saiu!", description: "Sessão encerrada com sucesso." });
     } catch (error) {
@@ -487,12 +467,6 @@ export default function Home() {
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
       setIsPersonalPaymentsView(options?.isPersonalPayments || false);
-    }
-    if (view === 'register' || view === 'login') {
-       if (loggedInUserId) {
-        handleLoginSuccess(loggedInUserId, appData);
-        return;
-       }
     }
     setPreviousView(currentView);
     setCurrentView(view);
@@ -808,6 +782,10 @@ export default function Home() {
     });
   };
 
+  if (isInitializing) {
+    return <div>Carregando...</div>;
+  }
+  
   if (!currentLeague && !['welcome', 'register', 'login', 'league-entry'].includes(currentView)) {
     return <div>Carregando liga...</div>;
   }
@@ -820,9 +798,6 @@ export default function Home() {
 
   const renderView = () => {
     if (!userForViews && showBottomNav) {
-      // This is a fallback. If we're on a view that needs a user but don't have one,
-      // something is wrong. Let's redirect to welcome to be safe.
-      // This helps prevent crashes.
       navigateTo('welcome');
       return <WelcomeView onNavigate={navigateTo} />;
     }
