@@ -114,45 +114,42 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
         const savedData = localStorage.getItem('amistosos_fc_data');
+        let loadedData = initialData;
         if (savedData) {
             try {
                 const parsedData = JSON.parse(savedData);
                 // Basic validation to ensure we're loading valid data
                 if (parsedData && parsedData.leagues) {
-                    setAppDataState(parsedData);
+                    loadedData = parsedData;
                 }
             } catch (e) {
                 console.error("Failed to parse localStorage data, resetting.", e);
                 localStorage.removeItem('amistosos_fc_data');
             }
         }
+        setAppDataState(loadedData);
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             const authScreens: View[] = ['welcome', 'login', 'register'];
-            // Check currentView from state, not a local variable
+            // We read currentView from a ref to get the latest value inside the listener
             const isAuthScreen = authScreens.includes(currentView);
             
             if (user) {
-                // Only auto-login if NOT on an auth screen.
-                // This prevents the loop where the user is redirected away from login/register.
+                // To prevent redirect loops, we only auto-login if the user is not
+                // already on an authentication screen.
                 if (!isAuthScreen) {
-                    // Re-read from localStorage inside the callback to ensure we have the latest version.
+                    // Re-read data from localStorage inside the listener to ensure we have the latest version.
                     const freshSavedData = localStorage.getItem('amistosos_fc_data');
                     let freshLoadedData = initialData;
                     if (freshSavedData) {
                         try {
-                            const parsed = JSON.parse(freshSavedData);
-                            if (parsed && parsed.leagues) {
-                                freshLoadedData = parsed;
-                            }
-                        } catch (e) {
-                            // ignore, use initialData
-                        }
+                            freshLoadedData = JSON.parse(freshSavedData);
+                        } catch(e) { /* ignore */ }
                     }
                     handleLoginSuccess(user.uid, freshLoadedData);
                 }
             } else {
-                // If no user, ensure we are on an auth screen.
+                // If there's no user, ensure we are on an authentication screen.
                 if (!isAuthScreen) {
                     navigateTo('welcome');
                 }
@@ -162,7 +159,7 @@ export default function Home() {
         return () => unsubscribe();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [currentView]); // Add currentView as a dependency
+}, []); // Run only once on mount
 
 
   // New state for multi-league
