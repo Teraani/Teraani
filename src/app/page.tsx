@@ -129,24 +129,29 @@ export default function Home() {
       setAppDataState(loadedData);
 
       const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const authScreens: View[] = ['welcome', 'login', 'register'];
+        const isAuthScreen = authScreens.includes(currentView);
+
         if (user) {
-          // Re-read from localStorage inside the callback to ensure we have the latest version.
-          const freshSavedData = localStorage.getItem('amistosos_fc_data');
-          let freshLoadedData = initialData;
-          if (freshSavedData) {
-              try {
-                  const parsed = JSON.parse(freshSavedData);
-                  if (parsed && parsed.leagues) {
-                      freshLoadedData = parsed;
-                  }
-              } catch (e) {
-                  // ignore
-              }
+          if (!isAuthScreen) {
+            // Re-read from localStorage inside the callback to ensure we have the latest version.
+            const freshSavedData = localStorage.getItem('amistosos_fc_data');
+            let freshLoadedData = initialData;
+            if (freshSavedData) {
+                try {
+                    const parsed = JSON.parse(freshSavedData);
+                    if (parsed && parsed.leagues) {
+                        freshLoadedData = parsed;
+                    }
+                } catch (e) {
+                    // ignore
+                }
+            }
+            handleLoginSuccess(user.uid, freshLoadedData);
           }
-          handleLoginSuccess(user.uid, freshLoadedData);
         } else {
           // Stay on 'welcome', 'login', or 'register' if not logged in.
-          if (currentView !== 'login' && currentView !== 'register') {
+          if (!isAuthScreen) {
             navigateTo('welcome');
           }
         }
@@ -154,7 +159,7 @@ export default function Home() {
       return () => unsubscribe();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentView]);
 
 
   // New state for multi-league
