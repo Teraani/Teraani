@@ -105,6 +105,10 @@ export default function Home() {
   const [isInitializing, setIsInitializing] = useState(true);
   
   const setAppData = (data: any) => {
+    if (typeof data === 'undefined') {
+        console.error("Attempted to set undefined app data. This action was prevented.");
+        return; 
+    }
     setAppDataState(data);
     if (typeof window !== 'undefined') {
         localStorage.setItem('amistosos_fc_data', JSON.stringify(data));
@@ -117,12 +121,18 @@ export default function Home() {
 
   useEffect(() => {
     setIsInitializing(true);
-    const savedData = localStorage.getItem('amistosos_fc_data');
-    if (savedData) {
-      setAppDataState(JSON.parse(savedData));
-    } else {
-      setAppDataState(initialData);
+    try {
+        const savedData = localStorage.getItem('amistosos_fc_data');
+        if (savedData && savedData !== 'undefined') {
+          setAppDataState(JSON.parse(savedData));
+        } else {
+          setAppDataState(initialData);
+        }
+    } catch (error) {
+        console.error("Failed to parse localStorage data, resetting to initial data.", error);
+        setAppDataState(initialData);
     }
+
 
     const params = new URLSearchParams(window.location.search);
     const inviteId = params.get('invite');
@@ -896,3 +906,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
