@@ -116,81 +116,66 @@ export default function Home() {
     const params = new URLSearchParams(window.location.search);
     const inviteId = params.get('invite');
     if (inviteId) {
-        setInvitedToLeagueId(inviteId);
+      setInvitedToLeagueId(inviteId);
     }
+  }, []);
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setLoggedInUserId(user.uid);
+        try {
+          // Check for user's leagues
+          const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
+          const querySnapshot = await getDocs(q);
+          const userLeagues: Record<string, League> = {};
+          querySnapshot.forEach((doc) => {
+            userLeagues[doc.id] = doc.data() as League;
+          });
+          setLeagues(userLeagues);
+
+          const userIsAlreadyInALeague = !querySnapshot.empty;
+          const localInviteId = new URLSearchParams(window.location.search).get('invite');
+
+          if (localInviteId && userLeagues[localInviteId]) {
+            setCurrentLeagueId(localInviteId);
+            navigateTo('dashboard');
+          } else if (localInviteId) {
+            await handleJoinLeague(localInviteId, user);
+          } else if (!userIsAlreadyInALeague) {
+            await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
+          } else {
+            const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
+            setCurrentLeagueId(lastLeagueId);
+            const currentLeagueData = userLeagues[lastLeagueId];
+            if (currentLeagueData && !currentLeagueData.modality) {
+              navigateTo('modality-selection');
+            } else {
+              navigateTo('dashboard');
+            }
+          }
+        } catch (error) {
+          console.error("Error handling user data:", error);
+          toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar as informações da sua liga.", variant: "destructive" });
+          await handleLogout();
+        } finally {
+          setIsInitializing(false);
+        }
       } else {
         setLoggedInUserId(null);
         setCurrentLeagueId(null);
         setLeagues({});
-        if (invitedToLeagueId) {
-            navigateTo('register');
+        const localInviteId = new URLSearchParams(window.location.search).get('invite');
+        if (localInviteId) {
+          navigateTo('register');
         } else {
-            navigateTo('welcome');
+          navigateTo('welcome');
         }
         setIsInitializing(false);
       }
     });
     return () => unsubscribe();
-  }, [invitedToLeagueId]);
-
-
-  useEffect(() => {
-    if (loggedInUserId === null) {
-      return;
-    }
-    
-    const handleUserData = async () => {
-        const user = auth.currentUser;
-        if (!user) {
-            setIsInitializing(false);
-            return;
-        }
-
-        try {
-            const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
-            const querySnapshot = await getDocs(q);
-            const userLeagues: Record<string, League> = {};
-            querySnapshot.forEach((doc) => {
-                userLeagues[doc.id] = doc.data() as League;
-            });
-
-            setLeagues(userLeagues);
-            const userIsAlreadyInALeague = !querySnapshot.empty;
-
-            if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
-                setCurrentLeagueId(invitedToLeagueId);
-                navigateTo('dashboard');
-            } else if (invitedToLeagueId) {
-                await handleJoinLeague(invitedToLeagueId, user);
-            } else if (!userIsAlreadyInALeague) {
-                await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
-            } else {
-                const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
-                setCurrentLeagueId(lastLeagueId);
-                const currentLeagueData = userLeagues[lastLeagueId];
-
-                if (currentLeagueData && !currentLeagueData.modality) {
-                    navigateTo('modality-selection');
-                } else {
-                    navigateTo('dashboard');
-                }
-            }
-        } catch (error) {
-            console.error("Error handling user data:", error);
-            toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar as informações da sua liga.", variant: "destructive" });
-            handleLogout(); // Log out user on critical data failure
-        } finally {
-            setIsInitializing(false);
-        }
-    };
-
-    handleUserData();
-
-  }, [loggedInUserId, invitedToLeagueId]);
+  }, []);
 
 
   useEffect(() => {
@@ -933,4 +918,3 @@ export default function Home() {
     </div>
   );
 }
-
