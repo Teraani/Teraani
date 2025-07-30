@@ -113,41 +113,41 @@ export default function Home() {
   }
 
  useEffect(() => {
-    // 1. Load data from localStorage first.
+    // 1. Carregar dados do localStorage primeiro.
     const savedData = localStorage.getItem('amistosos_fc_data');
     let dataToLoad = initialData;
     if (savedData) {
         try {
             const parsed = JSON.parse(savedData);
-            // Basic validation to ensure we're not loading corrupted data.
             if (parsed && typeof parsed.leagues === 'object') {
                 dataToLoad = parsed;
             }
         } catch (e) {
-            console.error("Failed to parse localStorage data, using initial data.", e);
+            console.error("Falha ao analisar dados do localStorage, usando dados iniciais.", e);
         }
     }
     setAppDataState(dataToLoad);
 
-    // 2. Set up the auth listener. This will run after the initial data is set.
+    // 2. Configurar o ouvinte de autenticação.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const currentData = JSON.parse(localStorage.getItem('amistosos_fc_data') || JSON.stringify(initialData));
+
         if (user) {
-            // User is logged in. Decide where to navigate.
             setLoggedInUserId(user.uid);
             
-            // This logic now runs with the correct `dataToLoad` already in state.
+            // Verifica se o usuário tem alguma liga.
             const userLeagues: string[] = [];
-            for (const leagueId in dataToLoad.leagues) {
-                if (dataToLoad.leagues[leagueId].users[user.uid]) {
+            for (const leagueId in currentData.leagues) {
+                if (currentData.leagues[leagueId].users[user.uid]) {
                     userLeagues.push(leagueId);
                 }
             }
 
             if (userLeagues.length > 0) {
-                // User has leagues, go to the last used one or the first one.
+                // Usuário tem ligas, vai para a última usada ou a primeira.
                 const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
-                const leagueToSwitchToId = (jasonLeague && dataToLoad.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
-                const leagueToSwitchTo = dataToLoad.leagues[leagueToSwitchToId];
+                const leagueToSwitchToId = (jasonLeague && currentData.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
+                const leagueToSwitchTo = currentData.leagues[leagueToSwitchToId];
                 
                 setCurrentLeagueId(leagueToSwitchToId);
                 
@@ -157,20 +157,20 @@ export default function Home() {
                     navigateTo('dashboard');
                 }
             } else {
-                // User is logged in but has no leagues. Go to league entry.
+                // Usuário está logado, mas não tem ligas. Vai para a entrada da liga.
                 navigateTo('league-entry');
             }
         } else {
-            // No user is logged in.
+            // Nenhum usuário está logado.
             setLoggedInUserId(null);
             navigateTo('welcome');
         }
         
-        // 3. Finish initialization.
+        // 3. Finaliza a inicialização.
         setIsInitializing(false);
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe(); // Limpa a inscrição ao desmontar
     // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
@@ -308,7 +308,6 @@ export default function Home() {
   }, [currentUser, currentLeague]);
   
   const handleLoginSuccess = (userId: string) => {
-    // This function will be simpler now, the main logic is in onAuthStateChanged
     const localData = localStorage.getItem('amistosos_fc_data');
     const currentData = localData ? JSON.parse(localData) : initialData;
     
@@ -337,7 +336,7 @@ export default function Home() {
                 ...currentData,
                 leagues: { ...currentData.leagues, [invitedToLeagueId]: updatedLeague }
             };
-            setAppData(newData); // Save the new league join to state and localStorage
+            setAppData(newData);
             userLeagues.push(invitedToLeagueId);
         }
     }
@@ -382,7 +381,6 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    // Temporarily store the new user data to be picked up by the league creation/joining logic.
     setAppData(currentData => {
       const newData = { ...currentData, temporaryUser: newUser };
       return newData;
@@ -483,7 +481,6 @@ export default function Home() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // The onAuthStateChanged listener will handle navigation to 'welcome'
     } catch (error) {
       console.error("Logout error:", error);
       toast({ title: "Erro ao sair", description: "Não foi possível encerrar a sessão.", variant: "destructive" });
@@ -809,7 +806,7 @@ export default function Home() {
   };
 
   if (isInitializing) {
-    return <div className="flex items-center justify-center h-screen bg-background">Carregando...</div>;
+    return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
   }
   
   if (!currentLeague && !['welcome', 'register', 'login', 'league-entry'].includes(currentView)) {
@@ -870,7 +867,7 @@ export default function Home() {
                  setTeam2Lineup={setTeam2Lineup}
                  team2Reserves={team2Reserves}
                  setTeam2Reserves={setTeam2Reserves}
-                 onSaveLineups={handleSaveLineups}
+                 onSaveLineups={onSaveLineups}
                  lineupsSaved={lineupsSaved}
                  modality={selectedModality}
                  team1ShirtColor={team1ShirtColor}
