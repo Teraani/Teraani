@@ -290,6 +290,8 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
       .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [allUsers, searchTerm]);
+  
+  const currentLeague = leagues[currentLeagueId];
 
   return (
     <div>
@@ -347,11 +349,24 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <h1 className="text-xl font-bold">{leagues[currentLeagueId].name}</h1>
+        <h1 className="text-xl font-bold">Início</h1>
 
         <div className="w-10 h-10" />
       </header>
       <div className="p-4 space-y-8">
+        <Card className="cursor-pointer bg-card hover:bg-muted/50" onClick={() => onNavigate('league-participants')}>
+            <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                    <p className="text-sm text-muted-foreground">Liga Atual</p>
+                    <h3 className="text-lg font-bold">{currentLeague.name}</h3>
+                </div>
+                <div className="flex items-center text-muted-foreground">
+                    <Users className="mr-2 h-5 w-5" />
+                    <span className="font-bold">{Object.keys(currentLeague.users).length}</span>
+                    <ChevronRight className="h-5 w-5 ml-2" />
+                </div>
+            </CardContent>
+        </Card>
         <PlayerSummary user={user} players={players} onNavigate={onNavigate} onAvatarChange={onAvatarChange} onUpdateUser={onUpdateUser} isPaymentsEnabled={isPaymentsEnabled}/>
         <QuickAccess onNavigate={onNavigate} />
         <ConnectSection />

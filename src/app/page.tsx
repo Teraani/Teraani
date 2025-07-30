@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User, Ranking, GoalieRanking, Game, League, PlayerPerformance } from '@/lib/data';
-import { initialData } from '@/lib/data';
+import { initialData } from '@/lib/initial-data-backup';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
@@ -30,10 +30,12 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
 import type { ShirtColor, Formation } from '@/components/views/lineup-view';
-import { auth } from '@/lib/firebase-config';
+import { auth, db } from '@/lib/firebase-config';
 import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile } from 'firebase/auth';
+import { doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import LeagueParticipantsView from '@/components/views/league-participants-view';
 
-export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading';
+export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants';
 export type Position = Player['pos'] | null;
 export type Modality = 'campo' | 'society' | 'futsal';
 
@@ -132,6 +134,7 @@ export default function Home() {
         setAppData(initialData);
         setCurrentLeagueId(initialData.leagues.defaultLeague.id);
     }
+    setIsInitializing(false);
   }, []);
 
   useEffect(() => {
@@ -664,6 +667,11 @@ export default function Home() {
                   currentLeagueId={currentLeagueId!}
                   onLeagueChange={handleLeagueChange}
                   currentUser={currentUser!}
+                />;
+      case 'league-participants':
+        return <LeagueParticipantsView
+                  onBack={goBack}
+                  league={currentLeague}
                 />;
       case 'modality-selection':
         if (!loggedInUser || !currentLeague) {
