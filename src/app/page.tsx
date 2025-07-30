@@ -24,7 +24,6 @@ import type { LiveEvent } from '@/components/views/live-view';
 import PaymentsView from '@/components/views/payments-view';
 import { cn } from '@/lib/utils';
 import ModalitySelectionView from '@/components/views/modality-selection-view';
-import LeagueEntryView from '@/components/views/league-entry-view';
 import BestElevenView from '@/components/views/best-eleven-view';
 import type { Vote } from '@/components/views/best-eleven-view';
 import { format } from 'date-fns';
@@ -34,7 +33,7 @@ import type { ShirtColor, Formation } from '@/components/views/lineup-view';
 import { auth } from '@/lib/firebase-config';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 
-export type View = 'welcome' | 'register' | 'login' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading';
+export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading';
 export type Position = Player['pos'] | null;
 export type Modality = 'campo' | 'society' | 'futsal';
 
@@ -97,9 +96,9 @@ const team1994_ids = [
 
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<View>('login');
+  const [currentView, setCurrentView] = useState<View>('loading');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [previousView, setPreviousView] = useState<View>('login');
+  const [previousView, setPreviousView] = useState<View>('loading');
   
   const [appData, setAppDataState] = useState(initialData);
   const { toast } = useToast();
@@ -124,7 +123,6 @@ export default function Home() {
     setAppDataState(localData);
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setIsInitializing(true);
         try {
             if (user) {
                 setLoggedInUserId(user.uid);
@@ -149,7 +147,13 @@ export default function Home() {
                         navigateTo('dashboard');
                     }
                 } else {
-                    navigateTo('league-entry');
+                     // New user who just registered, needs to create/join a league
+                    if ((localData as any).temporaryUser && (localData as any).temporaryUser.id === user.uid) {
+                        handleCreateLeague(`Liga de ${(localData as any).temporaryUser.name}`);
+                    } else {
+                        // This case is unlikely but as a fallback, go to welcome
+                         navigateTo('welcome');
+                    }
                 }
             } else {
                 setLoggedInUserId(null);
@@ -353,7 +357,11 @@ export default function Home() {
         }
         if (invitedToLeagueId) setInvitedToLeagueId(null);
     } else {
-        navigateTo('league-entry');
+        // This case would be for a user who exists but has no leagues.
+        // After registration, the flow should create a league, so this is an edge case.
+        if (userObject) {
+             handleCreateLeague(`Liga de ${userObject.name}`);
+        }
     }
   };
 
@@ -372,15 +380,16 @@ export default function Home() {
       role: 'player',
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
-
+    
+    // Store user temporarily. The onAuthStateChanged listener will pick it up.
     setAppData(currentData => {
       const newData = { ...currentData, temporaryUser: newUser };
       return newData;
     });
+
     setLoggedInUserId(user.uid);
-    
-    navigateTo('league-entry');
-    toast({ title: "Cadastro Concluído!", description: "Agora crie ou entre em uma liga." });
+    // Don't navigate here. Let onAuthStateChanged handle the navigation.
+    toast({ title: "Cadastro Concluído!", description: "Vamos criar sua primeira liga." });
   };
 
 
@@ -801,7 +810,7 @@ export default function Home() {
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
   }
   
-  if (!currentLeague && !['welcome', 'register', 'login', 'league-entry', 'loading'].includes(currentView)) {
+  if (!currentLeague && !['welcome', 'register', 'login', 'loading'].includes(currentView)) {
     return <div className="flex items-center justify-center h-screen bg-background">Carregando liga...</div>;
   }
 
@@ -809,7 +818,7 @@ export default function Home() {
 
   const userForViews = currentUser;
 
-  const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'league-entry', 'loading'].includes(currentView);
+  const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'loading'].includes(currentView);
 
   const renderView = () => {
     switch (currentView) {
@@ -821,8 +830,6 @@ export default function Home() {
         return <RegisterView onRegisterSuccess={handleRegistrationSuccess} onNavigateToLogin={() => navigateTo('login')} />;
       case 'login':
         return <LoginView onLoginSuccess={handleLoginSuccess} onNavigateToRegister={() => navigateTo('register')} />;
-      case 'league-entry':
-        return <LeagueEntryView onCreateLeague={handleCreateLeague} />;
       case 'leagues':
         return <LeaguesView 
                   onBack={goBack} 
