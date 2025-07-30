@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -127,7 +128,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input placeholder="Nome" {...field} className="bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/70 border-primary-foreground/20" />
+                      <Input placeholder="Nome" {...field} className="bg-white text-gray-900 placeholder:text-gray-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,7 +140,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input type="email" placeholder="E-mail" {...field} className="bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/70 border-primary-foreground/20" />
+                      <Input type="email" placeholder="E-mail" {...field} className="bg-white text-gray-900 placeholder:text-gray-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -151,7 +152,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input type="password" placeholder="Senha" {...field} className="bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/70 border-primary-foreground/20" />
+                      <Input type="password" placeholder="Senha" {...field} className="bg-white text-gray-900 placeholder:text-gray-500" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
