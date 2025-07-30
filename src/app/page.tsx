@@ -124,71 +124,71 @@ export default function Home() {
   const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null); 
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setIsInitializing(true); // Start loading when auth state changes
-        if (user) {
-            setLoggedInUserId(user.uid);
-            // Data loading and logic will be handled in another effect
-            // that depends on loggedInUserId
-        } else {
-            // No user is logged in
-            setLoggedInUserId(null);
-            setCurrentLeagueId(null);
-            setLeagues({});
-            navigateTo('welcome');
-            setIsInitializing(false);
-        }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setLoggedInUserId(user.uid);
+      } else {
+        setLoggedInUserId(null);
+        setCurrentLeagueId(null);
+        setLeagues({});
+        navigateTo('welcome');
+        setIsInitializing(false); // Stop loading if user is not logged in.
+      }
     });
     // Cleanup the subscription on component unmount
     return () => unsubscribe();
-  }, []); // This effect runs once on mount
+  }, []);
 
 
   useEffect(() => {
-    if (loggedInUserId === undefined) return; // Wait for auth state to be determined
-    if (!loggedInUserId) { // If user is explicitly null (logged out)
-        setIsInitializing(false);
-        if (invitedToLeagueId) {
-             navigateTo('register');
-        } else {
-             navigateTo('welcome');
-        }
-        return;
+    if (loggedInUserId === null) {
+      setIsInitializing(false);
+      if (invitedToLeagueId) {
+        navigateTo('register');
+      } else {
+        navigateTo('welcome');
+      }
+      return;
     }
+    
+    if (!loggedInUserId) return; // Wait until loggedInUserId is set to a string (logged in)
 
     const handleUserData = async () => {
-        const user = auth.currentUser;
-        if (!user) return; // Should not happen if loggedInUserId is set
+      const user = auth.currentUser;
+      if (!user) {
+        setIsInitializing(false);
+        return;
+      }
 
-        const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
-        const querySnapshot = await getDocs(q);
-        const userLeagues: Record<string, League> = {};
-        querySnapshot.forEach((doc) => {
-            userLeagues[doc.id] = doc.data() as League;
-        });
-        
-        setLeagues(userLeagues);
-        const userIsAlreadyInALeague = !querySnapshot.empty;
+      const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
+      const querySnapshot = await getDocs(q);
+      const userLeagues: Record<string, League> = {};
+      querySnapshot.forEach((doc) => {
+        userLeagues[doc.id] = doc.data() as League;
+      });
 
-        if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
-            setCurrentLeagueId(invitedToLeagueId);
-            navigateTo('dashboard');
-        } else if (invitedToLeagueId) {
-            await handleJoinLeague(invitedToLeagueId, user);
-        } else if (!userIsAlreadyInALeague) {
-            await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
+      setLeagues(userLeagues);
+      const userIsAlreadyInALeague = !querySnapshot.empty;
+
+      if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
+        setCurrentLeagueId(invitedToLeagueId);
+        navigateTo('dashboard');
+      } else if (invitedToLeagueId) {
+        await handleJoinLeague(invitedToLeagueId, user);
+      } else if (!userIsAlreadyInALeague) {
+        await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
+      } else {
+        const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
+        setCurrentLeagueId(lastLeagueId);
+        const currentLeagueData = userLeagues[lastLeagueId];
+
+        if (currentLeagueData && !currentLeagueData.modality) {
+          navigateTo('modality-selection');
         } else {
-            const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
-            setCurrentLeagueId(lastLeagueId);
-            const currentLeagueData = userLeagues[lastLeagueId];
-
-            if (currentLeagueData && !currentLeagueData.modality) {
-                navigateTo('modality-selection');
-            } else {
-                navigateTo('dashboard');
-            }
+          navigateTo('dashboard');
         }
-        setIsInitializing(false); // Finish loading here
+      }
+      setIsInitializing(false);
     };
 
     handleUserData();
