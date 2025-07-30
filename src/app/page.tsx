@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User, Ranking, GoalieRanking, Game, League, PlayerPerformance } from '@/lib/data';
-import { defaultLeagueData } from '@/lib/data';
+import { initialData } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
@@ -30,10 +30,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
 import type { ShirtColor, Formation } from '@/components/views/lineup-view';
-import { auth, db } from '@/lib/firebase-config';
+import { auth } from '@/lib/firebase-config';
 import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, collection, addDoc, updateDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
-
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading';
 export type Position = Player['pos'] | null;
@@ -96,7 +94,6 @@ const team1994_ids = [
     'p-taffarel'
 ];
 
-
 export default function Home() {
   const [currentView, setCurrentView] = useState<View>('loading');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -106,99 +103,69 @@ export default function Home() {
   const { toast } = useToast();
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // New state for multi-league
+  // State for multi-league
   const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
-  const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
-
   const [loggedInUser, setLoggedInUser] = useState<FirebaseUser | null>(null);
 
+  // Revert to localStorage
+  const [appData, setAppData] = useState(initialData);
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const inviteId = params.get('invite');
-    if (inviteId) {
-      setInvitedToLeagueId(inviteId);
+    try {
+        const savedData = localStorage.getItem('amistosos-fc-data');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            setAppData(parsedData);
+            if (parsedData.leagues && Object.keys(parsedData.leagues).length > 0) {
+                const lastLeagueId = localStorage.getItem('last_league_id');
+                if (lastLeagueId && parsedData.leagues[lastLeagueId]) {
+                    setCurrentLeagueId(lastLeagueId);
+                } else {
+                    setCurrentLeagueId(Object.keys(parsedData.leagues)[0]);
+                }
+            }
+        } else {
+             // Set default league if nothing is saved
+            setCurrentLeagueId(initialData.leagues.defaultLeague.id);
+        }
+    } catch (error) {
+        console.error("Failed to load data from localStorage", error);
+        setAppData(initialData);
+        setCurrentLeagueId(initialData.leagues.defaultLeague.id);
     }
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('amistosos-fc-data', JSON.stringify(appData));
+    if(currentLeagueId) {
+        localStorage.setItem('last_league_id', currentLeagueId);
+    }
+  }, [appData, currentLeagueId]);
+
   // Effect for Authentication State Change
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
         setLoggedInUser(user);
-        
-        if (user) {
-            // User is logged in, handle their data
-            try {
-                const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
-                const querySnapshot = await getDocs(q);
-                const userLeagues: Record<string, League> = {};
-                querySnapshot.forEach((doc) => {
-                    userLeagues[doc.id] = doc.data() as League;
-                });
-                setLeagues(userLeagues);
-    
-                const userIsAlreadyInALeague = !querySnapshot.empty;
-                
-                if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
-                    // User is already in the invited league, just set it as current
-                    setCurrentLeagueId(invitedToLeagueId);
-                    navigateTo('dashboard');
-                } else if (invitedToLeagueId) {
-                    // User has an invite link and needs to join the league
-                    await handleJoinLeague(invitedToLeagueId, user);
-                } else if (!userIsAlreadyInALeague) {
-                    // This is a new user without any leagues or invites
-                    await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
-                } else {
-                    // This is a returning user, load their last or first league
-                    const lastLeagueId = localStorage.getItem('last_league_id');
-                    const leagueToLoad = (lastLeagueId && userLeagues[lastLeagueId]) ? lastLeagueId : querySnapshot.docs[0].id;
-                    setCurrentLeagueId(leagueToLoad);
-    
-                    const currentLeagueData = userLeagues[leagueToLoad];
-                    if (currentLeagueData && !currentLeagueData.modality) {
-                        navigateTo('modality-selection');
-                    } else {
-                        navigateTo('dashboard');
-                    }
-                }
-            } catch (error) {
-                console.error("Error handling user data:", error);
-                toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar suas informações.", variant: "destructive" });
-                await handleLogout();
-            }
+        setIsInitializing(false); // Stop loading after auth check
+        if(user) {
+            navigateTo('dashboard');
         } else {
-            // User is logged out
-            setCurrentLeagueId(null);
-            setLeagues({});
-            if (invitedToLeagueId) {
-                navigateTo('register');
-            } else {
-                navigateTo('welcome');
-            }
+            navigateTo('welcome');
         }
-
-        setIsInitializing(false); // Authentication check is complete, stop global loading.
     });
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const currentLeague: League | undefined = currentLeagueId ? appData.leagues[currentLeagueId] : undefined;
+  // This needs a default value when no user is logged in. Let's use a dummy user or the first one.
+  const currentUser = useMemo(() => {
+    if (!currentLeague) return initialData.leagues.defaultLeague.users.user1; // fallback
+    
+    // In a local setup, we don't have a logged-in user from Firebase that maps to a user in our data.
+    // We'll simulate being 'user27' (the admin) for now.
+    const localUserId = loggedInUser?.uid || 'user27';
+    return currentLeague.users[localUserId] || currentLeague.users.user27 || Object.values(currentLeague.users)[0];
+  }, [currentLeague, loggedInUser]);
 
-  useEffect(() => {
-    if (!currentLeagueId) return;
-
-    const unsub = onSnapshot(doc(db, "leagues", currentLeagueId), (doc) => {
-        if (doc.exists()) {
-            setLeagues(prev => ({...prev, [currentLeagueId]: doc.data() as League}));
-        }
-    });
-
-    return () => unsub();
-  }, [currentLeagueId])
-
-
-  const currentLeague: League | undefined = currentLeagueId ? leagues[currentLeagueId] : undefined;
-  const currentUser = loggedInUser?.uid && currentLeague ? currentLeague.users[loggedInUser.uid] : null;
 
   // These states are now league-dependent
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -237,40 +204,27 @@ export default function Home() {
       setIsPaymentsEnabled(currentLeague.paymentsEnabled);
     }
   }, [currentLeague]);
-
-  // Helper to update league data
-  const updateCurrentLeague = async (updater: (league: League) => League) => {
+  
+  // Helper to update app data
+  const updateCurrentLeague = (updater: (league: League) => League) => {
     if (!currentLeagueId) return;
-    const leagueDocRef = doc(db, 'leagues', currentLeagueId);
-    const currentLeagueSnapshot = await getDoc(leagueDocRef);
-    if (!currentLeagueSnapshot.exists()) return;
-
-    const oldLeague = currentLeagueSnapshot.data() as League;
-    const newLeague = updater(oldLeague);
-    
-    await setDoc(leagueDocRef, newLeague, { merge: true });
+    setAppData(prevData => {
+        const newLeague = updater(prevData.leagues[currentLeagueId]);
+        return {
+            ...prevData,
+            leagues: {
+                ...prevData.leagues,
+                [currentLeagueId]: newLeague
+            }
+        };
+    });
   };
   
   const handleLeagueChange = (newLeagueId: string) => {
-    const newLeague = leagues[newLeagueId];
+    const newLeague = appData.leagues[newLeagueId];
     if (!newLeague) return;
-
-    localStorage.setItem('last_league_id', newLeagueId);
     setCurrentLeagueId(newLeagueId);
-    
-    setLiveEvents([]);
-    setBestElevenVotes({});
-    setBestElevenSaved({});
-    setLineupsSaved(false);
-    
-    // Check if the new league has a modality, if not, navigate to selection
-    if (!newLeague.modality) {
-      navigateTo('modality-selection');
-    } else {
-        toast({
-            title: `Liga Alterada: ${newLeague.name}`,
-        });
-    }
+    toast({ title: `Liga Alterada: ${newLeague.name}` });
     navigateTo('dashboard');
   };
 
@@ -294,8 +248,6 @@ export default function Home() {
         await updateProfile(auth.currentUser, { displayName: newName });
       } catch (error) {
         console.error("Failed to update Firebase profile:", error);
-        toast({ title: "Erro", description: "Não foi possível atualizar o perfil no Firebase.", variant: "destructive" });
-        return; // Don't update local state if Firebase fails
       }
     }
     
@@ -332,88 +284,6 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  const handleJoinLeague = async (leagueId: string, user: FirebaseUser) => {
-    const leagueDocRef = doc(db, "leagues", leagueId);
-    const leagueDoc = await getDoc(leagueDocRef);
-
-    if (!leagueDoc.exists()) {
-        toast({ title: "Liga não encontrada", variant: "destructive" });
-        return;
-    }
-    const leagueToJoin = leagueDoc.data() as League;
-
-    const newUserForLeague: User = {
-      id: user.uid,
-      name: user.displayName || 'Novo Jogador',
-      email: user.email!,
-      teamName: `${(user.displayName || 'Novo').split(' ')[0]} FC`,
-      partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player',
-      paymentDueDate: new Date().toISOString().split('T')[0],
-    };
-
-    await updateDoc(leagueDocRef, {
-        [`users.${user.uid}`]: newUserForLeague
-    });
-    
-    setLeagues(prev => ({...prev, [leagueId]: {...leagueToJoin, users: {...leagueToJoin.users, [user.uid]: newUserForLeague}}}));
-    setCurrentLeagueId(leagueId);
-    setInvitedToLeagueId(null);
-    navigateTo('dashboard');
-    toast({ title: `Bem-vindo à ${leagueToJoin.name}!`, description: "Você entrou na liga com sucesso." });
-  };
-
-
-  const handleCreateLeague = async (leagueName: string, user: FirebaseUser) => {
-    const newLeagueRef = doc(collection(db, "leagues"));
-    const newLeagueId = newLeagueRef.id;
-    const userId = user.uid;
-
-    const userObject: User = {
-        id: userId,
-        name: user.displayName || 'Novo Jogador',
-        email: user.email!,
-        teamName: `${(user.displayName || 'Novo').split(' ')[0]} FC`,
-        partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'admin',
-        paymentDueDate: new Date().toISOString().split('T')[0],
-    };
-    
-    const testUsers: Record<string, User> = {};
-    for (let i=1; i<=3; i++) {
-        const testUserId = `new_test_user_${i}_${newLeagueId}`;
-        testUsers[testUserId] = {
-            id: testUserId, name: `Jogador de Teste ${i}`, email: `teste${i}@liga.com`, teamName: `Time Teste ${i}`,
-            partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player',
-            paymentDueDate: new Date().toISOString().split('T')[0],
-        };
-    }
-
-    const newLeague: League = {
-      id: newLeagueId,
-      name: leagueName,
-      adminId: userId,
-      modality: null,
-      paymentsEnabled: true,
-      users: {
-        [userId]: userObject,
-        ...testUsers
-      },
-      players: defaultLeagueData.players,
-      games: {},
-      editorOfTheRound: null, scoutEditor: null, paymentEditor: null,
-      scalersRanking: {}, goalieRanking: {},
-    };
-
-    await setDoc(newLeagueRef, newLeague);
-
-    setLeagues(prev => ({...prev, [newLeagueId]: newLeague}));
-    setCurrentLeagueId(newLeagueId);
-    setTeam1Lineup(team2002_ids);
-    setTeam2Lineup(team1994_ids);
-
-    navigateTo('modality-selection');
-    toast({ title: "Liga Criada!", description: `Bem-vindo à ${leagueName}!` });
-  };
-
 
   const handleModalitySelect = (modality: Modality) => {
     updateCurrentLeague(league => ({ ...league, modality }));
@@ -790,7 +660,7 @@ export default function Home() {
       case 'leagues':
         return <LeaguesView 
                   onBack={goBack} 
-                  leagues={leagues} 
+                  leagues={appData.leagues} 
                   currentLeagueId={currentLeagueId!}
                   onLeagueChange={handleLeagueChange}
                   currentUser={currentUser!}
@@ -800,14 +670,14 @@ export default function Home() {
            setCurrentView('welcome');
            return <WelcomeView onNavigate={navigateTo} />;
         }
-        const isLeagueAdmin = currentLeague.adminId === loggedInUser.uid;
+        const isLeagueAdmin = currentLeague.adminId === currentUser.id;
         return <ModalitySelectionView 
                   onModalitySelect={handleModalitySelect} 
                   selectedModality={selectedModality}
                   isLeagueAdmin={isLeagueAdmin}
                 />;
       case 'dashboard':
-        return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
       case 'lineup':
         return <LineupView 
                  players={currentLeague!.players} 
@@ -835,7 +705,7 @@ export default function Home() {
                  setFormation={setFormation}
                />;
       case 'player-details':
-        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
       case 'market':
         return <MarketView 
                  players={currentLeague!.players} 
@@ -917,7 +787,7 @@ export default function Home() {
                   formation={formation}
                 />;
       default:
-        return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
     }
   };
 
