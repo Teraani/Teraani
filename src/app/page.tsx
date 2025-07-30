@@ -113,9 +113,8 @@ export default function Home() {
   }
 
   useEffect(() => {
-    // 1. Load data from localStorage first, then set up auth listener
-    let dataToLoad = initialData;
     const savedData = localStorage.getItem('amistosos_fc_data');
+    let dataToLoad = initialData;
     if (savedData) {
         try {
             const parsed = JSON.parse(savedData);
@@ -126,11 +125,9 @@ export default function Home() {
             console.error("Failed to parse localStorage data, using initial data.", e);
         }
     }
-    // Set initial data, but the auth listener will update the state again
     setAppDataState(dataToLoad);
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-        // Use the function form of setState to get the most recent data
         setAppDataState(currentData => {
             if (user) {
                 setLoggedInUserId(user.uid);
@@ -477,7 +474,7 @@ export default function Home() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // The onAuthStateChanged listener will handle navigation
+      // The onAuthStateChanged listener will handle navigation to 'welcome'
     } catch (error) {
       console.error("Logout error:", error);
       toast({ title: "Erro ao sair", description: "Não foi possível encerrar a sessão.", variant: "destructive" });
