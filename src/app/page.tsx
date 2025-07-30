@@ -869,7 +869,7 @@ export default function Home() {
                  setTeam2Lineup={setTeam2Lineup}
                  team2Reserves={team2Reserves}
                  setTeam2Reserves={setTeam2Reserves}
-                 onSaveLineups={handleSaveLineups}
+                 onSaveLineups={onSaveLineups}
                  lineupsSaved={lineupsSaved}
                  modality={selectedModality}
                  team1ShirtColor={team1ShirtColor}
