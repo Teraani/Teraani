@@ -144,41 +144,48 @@ export default function Home() {
     }
     
     const handleUserData = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        setIsInitializing(false);
-        return;
-      }
-
-      const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
-      const querySnapshot = await getDocs(q);
-      const userLeagues: Record<string, League> = {};
-      querySnapshot.forEach((doc) => {
-        userLeagues[doc.id] = doc.data() as League;
-      });
-
-      setLeagues(userLeagues);
-      const userIsAlreadyInALeague = !querySnapshot.empty;
-
-      if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
-        setCurrentLeagueId(invitedToLeagueId);
-        navigateTo('dashboard');
-      } else if (invitedToLeagueId) {
-        await handleJoinLeague(invitedToLeagueId, user);
-      } else if (!userIsAlreadyInALeague) {
-        await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
-      } else {
-        const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
-        setCurrentLeagueId(lastLeagueId);
-        const currentLeagueData = userLeagues[lastLeagueId];
-
-        if (currentLeagueData && !currentLeagueData.modality) {
-          navigateTo('modality-selection');
-        } else {
-          navigateTo('dashboard');
+        const user = auth.currentUser;
+        if (!user) {
+            setIsInitializing(false);
+            return;
         }
-      }
-      setIsInitializing(false);
+
+        try {
+            const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
+            const querySnapshot = await getDocs(q);
+            const userLeagues: Record<string, League> = {};
+            querySnapshot.forEach((doc) => {
+                userLeagues[doc.id] = doc.data() as League;
+            });
+
+            setLeagues(userLeagues);
+            const userIsAlreadyInALeague = !querySnapshot.empty;
+
+            if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
+                setCurrentLeagueId(invitedToLeagueId);
+                navigateTo('dashboard');
+            } else if (invitedToLeagueId) {
+                await handleJoinLeague(invitedToLeagueId, user);
+            } else if (!userIsAlreadyInALeague) {
+                await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
+            } else {
+                const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
+                setCurrentLeagueId(lastLeagueId);
+                const currentLeagueData = userLeagues[lastLeagueId];
+
+                if (currentLeagueData && !currentLeagueData.modality) {
+                    navigateTo('modality-selection');
+                } else {
+                    navigateTo('dashboard');
+                }
+            }
+        } catch (error) {
+            console.error("Error handling user data:", error);
+            toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar as informações da sua liga.", variant: "destructive" });
+            handleLogout(); // Log out user on critical data failure
+        } finally {
+            setIsInitializing(false);
+        }
     };
 
     handleUserData();
@@ -926,3 +933,4 @@ export default function Home() {
     </div>
   );
 }
+
