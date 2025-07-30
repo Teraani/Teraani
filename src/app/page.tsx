@@ -120,57 +120,80 @@ export default function Home() {
     }
   }, []);
 
+  // Simulate a logged-in user. By default, it's the admin.
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null); 
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
         setIsInitializing(true); // Start loading when auth state changes
         if (user) {
             setLoggedInUserId(user.uid);
-            const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
-            const querySnapshot = await getDocs(q);
-            const userLeagues: Record<string, League> = {};
-            querySnapshot.forEach((doc) => {
-                userLeagues[doc.id] = doc.data() as League;
-            });
-            
-            setLeagues(userLeagues);
-            const userIsAlreadyInALeague = !querySnapshot.empty;
-
-            if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
-                 // User is already in the invited league, just set it as current
-                setCurrentLeagueId(invitedToLeagueId);
-                navigateTo('dashboard');
-            } else if (invitedToLeagueId) {
-                // User is not in the invited league yet, join them
-                await handleJoinLeague(invitedToLeagueId, user);
-            } else if (!userIsAlreadyInALeague) {
-                // User is new and not invited to any league, create one for them
-                await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
-            } else {
-                // User is returning, load their last used league
-                const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
-                setCurrentLeagueId(lastLeagueId);
-                const currentLeagueData = userLeagues[lastLeagueId];
-
-                if (currentLeagueData && !currentLeagueData.modality) {
-                     navigateTo('modality-selection');
-                } else {
-                     navigateTo('dashboard');
-                }
-            }
+            // Data loading and logic will be handled in another effect
+            // that depends on loggedInUserId
         } else {
             // No user is logged in
             setLoggedInUserId(null);
             setCurrentLeagueId(null);
             setLeagues({});
             navigateTo('welcome');
+            setIsInitializing(false);
         }
-        // IMPORTANT: Finish loading AFTER all async operations for the auth state are done.
-        setIsInitializing(false); 
     });
-
     // Cleanup the subscription on component unmount
     return () => unsubscribe();
-  }, [invitedToLeagueId]); // Re-run if an invite ID is found
+  }, []); // This effect runs once on mount
+
+
+  useEffect(() => {
+    if (loggedInUserId === undefined) return; // Wait for auth state to be determined
+    if (!loggedInUserId) { // If user is explicitly null (logged out)
+        setIsInitializing(false);
+        if (invitedToLeagueId) {
+             navigateTo('register');
+        } else {
+             navigateTo('welcome');
+        }
+        return;
+    }
+
+    const handleUserData = async () => {
+        const user = auth.currentUser;
+        if (!user) return; // Should not happen if loggedInUserId is set
+
+        const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
+        const querySnapshot = await getDocs(q);
+        const userLeagues: Record<string, League> = {};
+        querySnapshot.forEach((doc) => {
+            userLeagues[doc.id] = doc.data() as League;
+        });
+        
+        setLeagues(userLeagues);
+        const userIsAlreadyInALeague = !querySnapshot.empty;
+
+        if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
+            setCurrentLeagueId(invitedToLeagueId);
+            navigateTo('dashboard');
+        } else if (invitedToLeagueId) {
+            await handleJoinLeague(invitedToLeagueId, user);
+        } else if (!userIsAlreadyInALeague) {
+            await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
+        } else {
+            const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
+            setCurrentLeagueId(lastLeagueId);
+            const currentLeagueData = userLeagues[lastLeagueId];
+
+            if (currentLeagueData && !currentLeagueData.modality) {
+                navigateTo('modality-selection');
+            } else {
+                navigateTo('dashboard');
+            }
+        }
+        setIsInitializing(false); // Finish loading here
+    };
+
+    handleUserData();
+
+  }, [loggedInUserId, invitedToLeagueId]);
 
 
   useEffect(() => {
@@ -206,8 +229,6 @@ export default function Home() {
   const [lastRoundPlayerIds, setLastRoundPlayerIds] = useState<string[]>([]);
 
 
-  // Simulate a logged-in user. By default, it's the admin.
-  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null); 
   const currentUser = loggedInUserId && currentLeague ? currentLeague.users[loggedInUserId] : null;
 
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
