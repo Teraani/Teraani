@@ -113,13 +113,12 @@ export default function Home() {
   }
 
   useEffect(() => {
-    // 1. Load data from localStorage first
+    // 1. Load data from localStorage first, then set up auth listener
     let dataToLoad = initialData;
     const savedData = localStorage.getItem('amistosos_fc_data');
     if (savedData) {
         try {
             const parsed = JSON.parse(savedData);
-            // Basic validation to ensure we're not loading corrupted data
             if (parsed && typeof parsed.leagues === 'object') {
                 dataToLoad = parsed;
             }
@@ -127,17 +126,16 @@ export default function Home() {
             console.error("Failed to parse localStorage data, using initial data.", e);
         }
     }
+    // Set initial data, but the auth listener will update the state again
     setAppDataState(dataToLoad);
 
-    // 2. Then, set up the auth listener
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-        // Use a function to get the latest state of appData
+        // Use the function form of setState to get the most recent data
         setAppDataState(currentData => {
             if (user) {
                 setLoggedInUserId(user.uid);
                 
-                // Check if the user exists in any league in the just-loaded data
-                let userLeagues: string[] = [];
+                const userLeagues: string[] = [];
                 for (const leagueId in currentData.leagues) {
                     if (currentData.leagues[leagueId].users[user.uid]) {
                         userLeagues.push(leagueId);
@@ -164,8 +162,8 @@ export default function Home() {
                 navigateTo('welcome');
             }
             
-            setIsInitializing(false); // End initialization after logic is run
-            return currentData; // Return the potentially updated data
+            setIsInitializing(false);
+            return currentData;
         });
     });
 
