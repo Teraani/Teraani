@@ -7,7 +7,7 @@ import type { Player, User, League } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail, Landmark } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail, Landmark, Edit } from 'lucide-react';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -16,16 +16,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu"
 import { useToast } from '@/hooks/use-toast';
 import { differenceInDays, parseISO, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Input } from '../ui/input';
 import { ThemeToggle } from '../theme-toggle';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import { Label } from '../ui/label';
 
 interface DashboardViewProps {
   user: User;
@@ -34,6 +32,7 @@ interface DashboardViewProps {
   onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void;
   onPlayerSelect: (playerId: string) => void;
   onAvatarChange: (userId: string, image: string) => void;
+  onUpdateUser: (userId: string, newName: string) => void;
   leagues: Record<string, League>;
   currentLeagueId: string;
   onLeagueChange: (leagueId: string) => void;
@@ -226,8 +225,53 @@ function ConnectSection() {
     )
 }
 
+function EditProfileDialog({ user, onUpdateUser }: { user: User; onUpdateUser: (userId: string, newName: string) => void; }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState(user.name);
 
-export default function DashboardView({ user, allUsers, players, onNavigate, onPlayerSelect, onAvatarChange, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout }: DashboardViewProps) {
+  const handleSave = () => {
+    if (name.trim() && name.trim() !== user.name) {
+      onUpdateUser(user.id, name.trim());
+    }
+    setIsOpen(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsOpen(true); }}>
+        <Edit className="mr-2 h-4 w-4" />
+        <span>Editar Perfil</span>
+      </DropdownMenuItem>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar Perfil</DialogTitle>
+          <DialogDescription>
+            Faça alterações no seu perfil aqui. Clique em salvar quando terminar.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Nome
+            </Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleSave}>Salvar alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+export default function DashboardView({ user, allUsers, players, onNavigate, onPlayerSelect, onAvatarChange, onUpdateUser, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout }: DashboardViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const sortedUsers = useMemo(() => {
     return Object.values(allUsers)
@@ -259,6 +303,7 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <EditProfileDialog user={user} onUpdateUser={onUpdateUser} />
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <ThemeToggle />
             </DropdownMenuItem>

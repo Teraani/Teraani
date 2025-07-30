@@ -31,7 +31,7 @@ import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
 import type { ShirtColor, Formation } from '@/components/views/lineup-view';
 import { auth } from '@/lib/firebase-config';
-import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
+import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile } from 'firebase/auth';
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading';
 export type Position = Player['pos'] | null;
@@ -278,6 +278,30 @@ export default function Home() {
         }
       }
     }));
+  };
+
+  const handleUpdateUser = async (userId: string, newName: string) => {
+    if (auth.currentUser && auth.currentUser.uid === userId) {
+      try {
+        await updateProfile(auth.currentUser, { displayName: newName });
+      } catch (error) {
+        console.error("Failed to update Firebase profile:", error);
+        toast({ title: "Erro", description: "Não foi possível atualizar o perfil no Firebase.", variant: "destructive" });
+        return; // Don't update local state if Firebase fails
+      }
+    }
+    
+    updateCurrentLeague(league => ({
+      ...league,
+      users: {
+        ...league.users,
+        [userId]: {
+          ...league.users[userId],
+          name: newName,
+        }
+      }
+    }));
+    toast({ title: "Perfil Atualizado!", description: "Seu nome foi alterado com sucesso." });
   };
 
   const canEditLineup = useMemo(() => {
@@ -769,7 +793,7 @@ export default function Home() {
                   isLeagueAdmin={isLeagueAdmin}
                 />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
       case 'lineup':
         return <LineupView 
                  players={currentLeague!.players} 
@@ -797,7 +821,7 @@ export default function Home() {
                  setFormation={setFormation}
                />;
       case 'player-details':
-        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
       case 'market':
         return <MarketView 
                  players={currentLeague!.players} 
@@ -879,7 +903,7 @@ export default function Home() {
                   formation={formation}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
     }
   };
 
