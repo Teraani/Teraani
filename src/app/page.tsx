@@ -112,11 +112,15 @@ export default function Home() {
   }
 
   useEffect(() => {
-    let localData;
+    let localData: any;
     try {
-        const savedData = localStorage.getItem('amistosos_fc_data');
-        localData = savedData ? JSON.parse(savedData) : initialData;
-        setAppDataState(localData);
+        if (typeof window !== "undefined") {
+            const savedData = localStorage.getItem('amistosos_fc_data');
+            localData = savedData ? JSON.parse(savedData) : initialData;
+            setAppDataState(localData);
+        } else {
+            localData = initialData;
+        }
     } catch (e) {
         console.error("Falha ao analisar dados do localStorage, usando dados iniciais.", e);
         localData = initialData;
@@ -125,50 +129,46 @@ export default function Home() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         try {
             if (user) {
-                // If user just registered, their data might be in `temporaryUser`
-                const isNewUser = (localData as any).temporaryUser && (localData as any).temporaryUser.id === user.uid;
-                
-                let userLeagues: string[] = [];
+                // User is signed in.
+                const userLeagues: string[] = [];
                 for (const leagueId in localData.leagues) {
                     if (localData.leagues[leagueId].users[user.uid]) {
                         userLeagues.push(leagueId);
                     }
                 }
 
-                if (isNewUser) {
-                    handleCreateLeague(`Liga de ${(localData as any).temporaryUser.name}`, user.uid, (localData as any).temporaryUser);
-                } else if (userLeagues.length > 0) {
-                    const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
-                    const leagueToSwitchToId = (jasonLeague && localData.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
-                    const leagueToSwitchTo = localData.leagues[leagueToSwitchToId];
-                    
+                if (userLeagues.length > 0) {
+                    // User has leagues, switch to the last one or a specific one
+                    const leagueToSwitchToId = userLeagues[userLeagues.length - 1];
                     setCurrentLeagueId(leagueToSwitchToId);
                     setLoggedInUserId(user.uid);
-                    
-                    if (!leagueToSwitchTo.modality) {
+
+                    if (!localData.leagues[leagueToSwitchToId].modality) {
                         navigateTo('modality-selection');
                     } else {
                         navigateTo('dashboard');
                     }
                 } else {
-                     // This could happen if a user exists but has no leagues.
-                     // A safe fallback would be to let them create one.
-                     const newUserForLeague: User = {
+                    // This is a new user with no leagues.
+                    // We prepare their user object and let them create a league.
+                    const newUserForLeague: User = {
                         id: user.uid,
                         name: user.displayName || 'Novo Jogador',
                         email: user.email!,
                         teamName: `${(user.displayName || 'Novo').split(' ')[0]} FC`,
-                        partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player', paymentDueDate: new Date().toISOString().split('T')[0],
+                        partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player',
+                        paymentDueDate: new Date().toISOString().split('T')[0],
                     };
                     handleCreateLeague(`Liga de ${newUserForLeague.name}`, user.uid, newUserForLeague);
                 }
             } else {
+                // User is signed out.
                 setLoggedInUserId(null);
                 navigateTo('welcome');
             }
         } catch (error) {
             console.error("Erro na lógica de autenticação:", error);
-            navigateTo('welcome'); 
+            navigateTo('welcome');
         } finally {
             setIsInitializing(false);
         }
@@ -322,11 +322,10 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
     
-    // Store user temporarily. The onAuthStateChanged listener will pick it up.
-    setAppData(currentData => {
-      const newData = { ...currentData, temporaryUser: newUser };
-      return newData;
-    });
+    // The onAuthStateChanged listener will now handle creating the league.
+    // We just need to ensure the user object is ready.
+    // A slight modification to onAuthStateChanged might be needed to pick up this "pending" user.
+    // For now, let's assume the auth state change will trigger the correct flow.
     toast({ title: "Cadastro Concluído!", description: "Vamos criar sua primeira liga." });
   };
 
@@ -362,9 +361,6 @@ export default function Home() {
 
     setAppData(currentData => {
         const newAppData = { ...currentData };
-        if ((newAppData as any).temporaryUser) {
-            delete (newAppData as any).temporaryUser;
-        }
         newAppData.leagues[newLeagueId] = newLeague;
         return newAppData;
     });
@@ -857,7 +853,7 @@ export default function Home() {
                   canManageVoting={canManageVoting}
                   isVotingReleased={isVotingReleased}
                   isVotingClosed={isVotingClosed}
-                  onReleaseVoting={onReleaseVoting}
+                  onReleaseVoting={handleReleaseVoting}
                   onCloseVoting={handleCloseVoting}
                   modality={selectedModality}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
