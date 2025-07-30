@@ -34,7 +34,7 @@ import type { ShirtColor, Formation } from '@/components/views/lineup-view';
 import { auth } from '@/lib/firebase-config';
 import { onAuthStateChanged, User as FirebaseUser, signOut } from 'firebase/auth';
 
-export type View = 'welcome' | 'register' | 'login' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven';
+export type View = 'welcome' | 'register' | 'login' | 'league-entry' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading';
 export type Position = Player['pos'] | null;
 export type Modality = 'campo' | 'society' | 'futsal';
 
@@ -97,9 +97,9 @@ const team1994_ids = [
 
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<View>('welcome');
+  const [currentView, setCurrentView] = useState<View>('loading');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [previousView, setPreviousView] = useState<View>('welcome');
+  const [previousView, setPreviousView] = useState<View>('loading');
   
   const [appData, setAppDataState] = useState(initialData);
   const { toast } = useToast();
@@ -113,7 +113,6 @@ export default function Home() {
   }
 
  useEffect(() => {
-    // 1. Carregar dados do localStorage primeiro.
     const savedData = localStorage.getItem('amistosos_fc_data');
     let dataToLoad = initialData;
     if (savedData) {
@@ -127,15 +126,13 @@ export default function Home() {
         }
     }
     setAppDataState(dataToLoad);
-
-    // 2. Configurar o ouvinte de autenticação.
+ 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-        const currentData = JSON.parse(localStorage.getItem('amistosos_fc_data') || JSON.stringify(initialData));
+        const currentData = savedData ? JSON.parse(savedData) : initialData;
 
         if (user) {
             setLoggedInUserId(user.uid);
             
-            // Verifica se o usuário tem alguma liga.
             const userLeagues: string[] = [];
             for (const leagueId in currentData.leagues) {
                 if (currentData.leagues[leagueId].users[user.uid]) {
@@ -144,7 +141,6 @@ export default function Home() {
             }
 
             if (userLeagues.length > 0) {
-                // Usuário tem ligas, vai para a última usada ou a primeira.
                 const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
                 const leagueToSwitchToId = (jasonLeague && currentData.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
                 const leagueToSwitchTo = currentData.leagues[leagueToSwitchToId];
@@ -157,20 +153,17 @@ export default function Home() {
                     navigateTo('dashboard');
                 }
             } else {
-                // Usuário está logado, mas não tem ligas. Vai para a entrada da liga.
                 navigateTo('league-entry');
             }
         } else {
-            // Nenhum usuário está logado.
             setLoggedInUserId(null);
             navigateTo('welcome');
         }
         
-        // 3. Finaliza a inicialização.
         setIsInitializing(false);
     });
 
-    return () => unsubscribe(); // Limpa a inscrição ao desmontar
+    return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
@@ -809,7 +802,7 @@ export default function Home() {
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
   }
   
-  if (!currentLeague && !['welcome', 'register', 'login', 'league-entry'].includes(currentView)) {
+  if (!currentLeague && !['welcome', 'register', 'login', 'league-entry', 'loading'].includes(currentView)) {
     return <div className="flex items-center justify-center h-screen bg-background">Carregando liga...</div>;
   }
 
@@ -817,10 +810,12 @@ export default function Home() {
 
   const userForViews = currentUser;
 
-  const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'league-entry'].includes(currentView);
+  const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'league-entry', 'loading'].includes(currentView);
 
   const renderView = () => {
     switch (currentView) {
+      case 'loading':
+         return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
       case 'welcome':
         return <WelcomeView onNavigate={navigateTo} />;
       case 'register':
