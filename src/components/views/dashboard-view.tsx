@@ -22,7 +22,7 @@ import { differenceInDays, parseISO, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Input } from '../ui/input';
 import { ThemeToggle } from '../theme-toggle';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '../ui/dialog';
 import { Label } from '../ui/label';
 
 interface DashboardViewProps {
@@ -98,7 +98,57 @@ function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: Vi
 }
 
 
-function PlayerSummary({ user, players, onNavigate, onAvatarChange, isPaymentsEnabled }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void, onAvatarChange: (userId: string, image: string) => void, isPaymentsEnabled: boolean }) {
+function EditProfileDialog({ user, onUpdateUser, children }: { user: User; onUpdateUser: (userId: string, newName: string) => void; children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState(user.name);
+
+  const handleSave = () => {
+    if (name.trim() && name.trim() !== user.name) {
+      onUpdateUser(user.id, name.trim());
+    }
+    setIsOpen(false);
+  };
+  
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setName(user.name);
+    }
+    setIsOpen(open);
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar Perfil</DialogTitle>
+          <DialogDescription>
+            Faça alterações no seu perfil aqui. Clique em salvar quando terminar.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">
+              Nome
+            </Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button onClick={handleSave}>Salvar alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+function PlayerSummary({ user, players, onNavigate, onAvatarChange, onUpdateUser, isPaymentsEnabled }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void, onAvatarChange: (userId: string, image: string) => void, onUpdateUser: (userId: string, newName: string) => void, isPaymentsEnabled: boolean }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,7 +212,14 @@ function PlayerSummary({ user, players, onNavigate, onAvatarChange, isPaymentsEn
                             accept="image/*"
                         />
                     </div>
-                    <h3 className="text-2xl font-bold">{user.name}</h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-2xl font-bold">{user.name}</h3>
+                         <EditProfileDialog user={user} onUpdateUser={onUpdateUser}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <Edit className="h-4 w-4"/>
+                            </Button>
+                        </EditProfileDialog>
+                    </div>
                 </div>
                 <div className="grid grid-cols-3 text-center mt-4">
                     <div>
@@ -225,51 +282,6 @@ function ConnectSection() {
     )
 }
 
-function EditProfileDialog({ user, onUpdateUser }: { user: User; onUpdateUser: (userId: string, newName: string) => void; }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [name, setName] = useState(user.name);
-
-  const handleSave = () => {
-    if (name.trim() && name.trim() !== user.name) {
-      onUpdateUser(user.id, name.trim());
-    }
-    setIsOpen(false);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsOpen(true); }}>
-        <Edit className="mr-2 h-4 w-4" />
-        <span>Editar Perfil</span>
-      </DropdownMenuItem>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar Perfil</DialogTitle>
-          <DialogDescription>
-            Faça alterações no seu perfil aqui. Clique em salvar quando terminar.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Nome
-            </Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="col-span-3"
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button onClick={handleSave}>Salvar alterações</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 
 export default function DashboardView({ user, allUsers, players, onNavigate, onPlayerSelect, onAvatarChange, onUpdateUser, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout }: DashboardViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -303,7 +315,12 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <EditProfileDialog user={user} onUpdateUser={onUpdateUser} />
+             <EditProfileDialog user={user} onUpdateUser={onUpdateUser}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>Editar Perfil</span>
+                </DropdownMenuItem>
+            </EditProfileDialog>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <ThemeToggle />
             </DropdownMenuItem>
@@ -335,7 +352,7 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
         <div className="w-10 h-10" />
       </header>
       <div className="p-4 space-y-8">
-        <PlayerSummary user={user} players={players} onNavigate={onNavigate} onAvatarChange={onAvatarChange} isPaymentsEnabled={isPaymentsEnabled}/>
+        <PlayerSummary user={user} players={players} onNavigate={onNavigate} onAvatarChange={onAvatarChange} onUpdateUser={onUpdateUser} isPaymentsEnabled={isPaymentsEnabled}/>
         <QuickAccess onNavigate={onNavigate} />
         <ConnectSection />
       </div>
