@@ -15,7 +15,6 @@ interface LeaguesViewProps {
   leagues: Record<string, League>;
   currentLeagueId: string;
   onLeagueChange: (leagueId: string) => void;
-  onNavigate: (view: View) => void;
   currentUser: User;
 }
 
@@ -24,7 +23,6 @@ export default function LeaguesView({
   leagues,
   currentLeagueId,
   onLeagueChange,
-  onNavigate,
   currentUser
 }: LeaguesViewProps) {
   const { toast } = useToast();
@@ -73,7 +71,7 @@ export default function LeaguesView({
                 <CardDescription>Selecione uma liga para ver os detalhes ou crie uma nova.</CardDescription>
             </CardHeader>
             <CardContent>
-                <ScrollArea className="h-[calc(100vh-350px)]">
+                <ScrollArea className="h-[calc(100vh-250px)]">
                     <div className="space-y-3">
                         {userLeagues.map((league) => (
                             <div
@@ -99,14 +97,6 @@ export default function LeaguesView({
                 </ScrollArea>
             </CardContent>
         </Card>
-        
-        <div className="space-y-2">
-            <Button className="w-full" onClick={() => onNavigate('league-entry')}>
-                <PlusCircle className="mr-2 h-4 w-4"/>
-                Criar ou Entrar em uma Liga
-            </Button>
-        </div>
-
       </main>
     </div>
   );

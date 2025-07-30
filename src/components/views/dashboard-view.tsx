@@ -30,7 +30,6 @@ import { ThemeToggle } from '../theme-toggle';
 interface DashboardViewProps {
   user: User;
   allUsers: Record<string, User>;
-  onUserSelect: (userId: string) => void;
   players: Record<string, Player>;
   onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void;
   onPlayerSelect: (playerId: string) => void;
@@ -228,7 +227,7 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, allUsers, onUserSelect, players, onNavigate, onPlayerSelect, onAvatarChange, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout }: DashboardViewProps) {
+export default function DashboardView({ user, allUsers, players, onNavigate, onPlayerSelect, onAvatarChange, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout }: DashboardViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const sortedUsers = useMemo(() => {
     return Object.values(allUsers)
@@ -268,34 +267,6 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
                 <Landmark className="mr-2 h-4 w-4" />
                 <span>Trocar/Gerenciar Ligas</span>
             </DropdownMenuItem>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <Users className="mr-2 h-4 w-4" />
-                <span>Trocar de Usuário</span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent className="p-2 max-h-[300px] overflow-y-auto">
-                  <div className="relative mb-2">
-                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                          placeholder="Buscar usuário..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-8 h-8"
-                          // Prevent dropdown from closing when clicking input
-                          onClick={(e) => e.stopPropagation()} 
-                      />
-                  </div>
-                  {sortedUsers.map(u => (
-                    <DropdownMenuItem key={u.id} onClick={() => onUserSelect(u.id)}>
-                      {u.name}
-                      {u.role === 'admin' && <Crown className="ml-2 h-4 w-4 text-amber-400" />}
-                      {user.id === u.id && <Check className="ml-auto h-4 w-4" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
             {user.role === 'admin' && (
               <DropdownMenuItem onClick={() => onNavigate('admin')}>
                 <ShieldCheck className="mr-2 h-4 w-4" />
@@ -326,5 +297,3 @@ export default function DashboardView({ user, allUsers, onUserSelect, players, o
     </div>
   );
 }
-
-    

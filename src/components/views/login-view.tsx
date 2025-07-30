@@ -16,7 +16,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 interface LoginViewProps {
-  onLoginSuccess: (userId: string) => void;
   onNavigateToRegister: () => void;
 }
 
@@ -25,7 +24,7 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres." }),
 });
 
-export default function LoginView({ onLoginSuccess, onNavigateToRegister }: LoginViewProps) {
+export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
@@ -40,9 +39,8 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister }: Logi
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      // A notificação de sucesso será feita na próxima tela
-      onLoginSuccess(userCredential.user.uid);
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // onAuthStateChanged in page.tsx will handle the navigation
     } catch (error: any) {
       console.error("Erro no login:", error);
        toast({
@@ -50,9 +48,8 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister }: Logi
         description: "E-mail ou senha inválidos. Verifique seus dados e tente novamente.",
         variant: "destructive",
       });
-    } finally {
-        setIsLoading(false);
-    }
+      setIsLoading(false);
+    } 
   }
 
   return (

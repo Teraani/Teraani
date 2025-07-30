@@ -11,13 +11,13 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, updateProfile } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { User as FirebaseUser } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 
 interface RegisterViewProps {
-  onRegisterSuccess: (user: FirebaseUser, name: string) => void;
+  onRegister: (user: FirebaseUser, name: string) => void;
   onNavigateToLogin: () => void;
 }
 
@@ -36,7 +36,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: RegisterViewProps) {
+export default function RegisterView({ onRegister, onNavigateToLogin }: RegisterViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -57,7 +57,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
         const result = await getRedirectResult(auth);
         if (result) {
           const user = result.user;
-          onRegisterSuccess(user, user.displayName || 'Novo Jogador');
+          onRegister(user, user.displayName || 'Novo Jogador');
         }
       } catch (error: any) {
         console.error("Erro ao obter resultado do redirecionamento:", error);
@@ -71,13 +71,15 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
       }
     };
     handleRedirectResult();
-  }, [onRegisterSuccess, toast]);
+  }, [onRegister, toast]);
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      onRegisterSuccess(userCredential.user, values.name);
+      await updateProfile(userCredential.user, { displayName: values.name });
+      onRegister(userCredential.user, values.name);
+      // onAuthStateChanged in page.tsx will handle the navigation
     } catch (error: any) {
        console.error("Erro ao criar conta:", error);
        toast({
@@ -85,8 +87,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
         description: error.code === 'auth/email-already-in-use' ? 'Este e-mail já está em uso. Tente fazer login.' : (error.message || "Não foi possível criar sua conta."),
         variant: "destructive",
       });
-    } finally {
-        setIsLoading(false);
+       setIsLoading(false);
     }
   }
 
