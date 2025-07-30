@@ -97,9 +97,9 @@ const team1994_ids = [
 
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<View>('loading');
+  const [currentView, setCurrentView] = useState<View>('login');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [previousView, setPreviousView] = useState<View>('loading');
+  const [previousView, setPreviousView] = useState<View>('login');
   
   const [appData, setAppDataState] = useState(initialData);
   const { toast } = useToast();
@@ -113,23 +113,20 @@ export default function Home() {
   }
 
  useEffect(() => {
-    // 1. Carregar os dados locais primeiro
     let localData;
     try {
         const savedData = localStorage.getItem('amistosos_fc_data');
         localData = savedData ? JSON.parse(savedData) : initialData;
-        setAppDataState(localData);
     } catch (e) {
         console.error("Falha ao analisar dados do localStorage, usando dados iniciais.", e);
         localData = initialData;
-        setAppDataState(localData);
     }
+    setAppDataState(localData);
 
-    // 2. Configurar o ouvinte de autenticação
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setIsInitializing(true);
         try {
             if (user) {
-                // Usuário está logado. Verifique se ele pertence a alguma liga.
                 setLoggedInUserId(user.uid);
                 
                 const userLeagues: string[] = [];
@@ -140,7 +137,6 @@ export default function Home() {
                 }
 
                 if (userLeagues.length > 0) {
-                    // Usuário tem ligas, vá para o dashboard da última liga.
                     const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
                     const leagueToSwitchToId = (jasonLeague && localData.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
                     const leagueToSwitchTo = localData.leagues[leagueToSwitchToId];
@@ -153,25 +149,21 @@ export default function Home() {
                         navigateTo('dashboard');
                     }
                 } else {
-                    // Usuário logado mas sem ligas, vá para a criação/entrada de liga.
                     navigateTo('league-entry');
                 }
             } else {
-                // Nenhum usuário logado, vá para a tela de boas-vindas.
                 setLoggedInUserId(null);
                 navigateTo('welcome');
             }
         } catch (error) {
             console.error("Erro na lógica de autenticação:", error);
-            navigateTo('welcome'); // Rota segura em caso de erro
+            navigateTo('welcome'); 
         } finally {
-            // 3. Finalize a inicialização, permitindo a renderização.
             setIsInitializing(false);
         }
     });
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
 
