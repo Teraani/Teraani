@@ -113,41 +113,42 @@ export default function Home() {
   }
 
   useEffect(() => {
-    // --- App Initialization ---
-    // 1. Load data from localStorage
+    // 1. Load data from localStorage first.
     const savedData = localStorage.getItem('amistosos_fc_data');
-    let parsedData = initialData;
+    let dataToLoad = initialData;
     if (savedData) {
         try {
             const stored = JSON.parse(savedData);
             if (stored && stored.leagues) {
-                parsedData = stored;
+                dataToLoad = stored;
             }
         } catch (e) {
             console.error("Failed to parse localStorage data, resetting.", e);
             localStorage.removeItem('amistosos_fc_data');
         }
     }
-    setAppDataState(parsedData);
+    setAppDataState(dataToLoad);
 
-    // 2. Set up Firebase auth listener
+    // 2. Then, set up Firebase auth listener. It will use the loaded data.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
             // User is logged in
             setLoggedInUserId(user.uid);
             
-            // Logic to find which league to show
+            // Logic to find which league to show, using the most up-to-date data
+            const latestData = JSON.parse(localStorage.getItem('amistosos_fc_data') || JSON.stringify(initialData));
+
             let userLeagues: string[] = [];
-            for (const leagueId in parsedData.leagues) {
-                if (parsedData.leagues[leagueId].users[user.uid]) {
+            for (const leagueId in latestData.leagues) {
+                if (latestData.leagues[leagueId].users[user.uid]) {
                     userLeagues.push(leagueId);
                 }
             }
 
             if (userLeagues.length > 0) {
                  const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
-                 const leagueToSwitchToId = (jasonLeague && parsedData.leagues[jasonLeague].users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
-                 const leagueToSwitchTo = parsedData.leagues[leagueToSwitchToId];
+                 const leagueToSwitchToId = (jasonLeague && latestData.leagues[jasonLeague].users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
+                 const leagueToSwitchTo = latestData.leagues[leagueToSwitchToId];
                  
                  setCurrentLeagueId(leagueToSwitchToId);
                  if (!leagueToSwitchTo.modality) {
