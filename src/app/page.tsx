@@ -96,7 +96,7 @@ const team1994_ids = [
 
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<View>('welcome');
+  const [currentView, setCurrentView] = useState<View>('loading');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('loading');
   
@@ -116,20 +116,51 @@ export default function Home() {
   const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
 
   useEffect(() => {
-    // This effect will run once to force a logout and clear state
-    const forceLogout = async () => {
-        if (auth.currentUser) {
-            await signOut(auth);
+    setIsInitializing(true);
+    const savedData = localStorage.getItem('amistosos_fc_data');
+    if (savedData) {
+      setAppDataState(JSON.parse(savedData));
+    } else {
+      setAppDataState(initialData);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const inviteId = params.get('invite');
+    if (inviteId) {
+        setInvitedToLeagueId(inviteId);
+    }
+    
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        if (user) {
+            setLoggedInUserId(user.uid);
+            const userIsAlreadyInALeague = Object.values(appData.leagues).some(l => l.users[user.uid]);
+
+            if (invitedToLeagueId && appData.leagues[invitedToLeagueId]) {
+                 handleJoinLeague(invitedToLeagueId, user);
+            } else if (!userIsAlreadyInALeague) {
+                // This is a new user without an invite, create a default league for them.
+                handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
+            } else {
+                // Existing user, find their league or default
+                const lastLeagueId = localStorage.getItem('last_league_id') || Object.values(appData.leagues).find(l => l.users[user.uid])?.id || 'defaultLeague';
+                setCurrentLeagueId(lastLeagueId);
+                const currentLeagueData = appData.leagues[lastLeagueId];
+
+                if (currentLeagueData && !currentLeagueData.modality) {
+                     navigateTo('modality-selection');
+                } else {
+                     navigateTo('dashboard');
+                }
+            }
+        } else {
+            setLoggedInUserId(null);
+            navigateTo('welcome');
         }
-        if (typeof window !== "undefined") {
-            localStorage.removeItem('amistosos_fc_data');
-        }
-        setAppDataState(initialData);
-        setCurrentView('welcome');
-        setIsInitializing(false);
-    };
-    forceLogout();
-}, []);
+       setIsInitializing(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
 
   const currentLeague: League | undefined = appData.leagues[currentLeagueId];
