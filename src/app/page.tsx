@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User, Ranking, GoalieRanking, Game, League, PlayerPerformance } from '@/lib/data';
-import { initialData, defaultLeagueData, jasonTestLeague } from '@/lib/data';
+import { initialData, defaultLeagueData } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
@@ -96,7 +96,7 @@ const team1994_ids = [
 
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<View>('login');
+  const [currentView, setCurrentView] = useState<View>('loading');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('loading');
   
@@ -111,12 +111,23 @@ export default function Home() {
     }
   }
 
+  // New state for multi-league
+  const [currentLeagueId, setCurrentLeagueId] = useState<string>('defaultLeague');
+  const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
+
   useEffect(() => {
     let localData: any;
     try {
         if (typeof window !== "undefined") {
             const savedData = localStorage.getItem('amistosos_fc_data');
             localData = savedData ? JSON.parse(savedData) : initialData;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteCode = urlParams.get('invite');
+            if (inviteCode && localData.leagues[inviteCode]) {
+                setInvitedToLeagueId(inviteCode);
+            }
+            
             setAppDataState(localData);
         } else {
             localData = initialData;
@@ -137,7 +148,10 @@ export default function Home() {
                     }
                 }
 
-                if (userLeagues.length > 0) {
+                if (invitedToLeagueId && !userLeagues.includes(invitedToLeagueId)) {
+                    // User was invited and is not yet in the league.
+                    handleJoinLeague(invitedToLeagueId, user);
+                } else if (userLeagues.length > 0) {
                     // User has leagues, switch to the last one or a specific one
                     const leagueToSwitchToId = userLeagues[userLeagues.length - 1];
                     setCurrentLeagueId(leagueToSwitchToId);
@@ -149,22 +163,13 @@ export default function Home() {
                         navigateTo('dashboard');
                     }
                 } else {
-                    // This is a new user with no leagues.
-                    // We prepare their user object and let them create a league.
-                    const newUserForLeague: User = {
-                        id: user.uid,
-                        name: user.displayName || 'Novo Jogador',
-                        email: user.email!,
-                        teamName: `${(user.displayName || 'Novo').split(' ')[0]} FC`,
-                        partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player',
-                        paymentDueDate: new Date().toISOString().split('T')[0],
-                    };
-                    handleCreateLeague(`Liga de ${newUserForLeague.name}`, user.uid, newUserForLeague);
+                    // This is a new user with no leagues. Let them create one.
+                    handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
                 }
             } else {
                 // User is signed out.
                 setLoggedInUserId(null);
-                navigateTo('welcome');
+                navigateTo(invitedToLeagueId ? 'register' : 'welcome');
             }
         } catch (error) {
             console.error("Erro na lógica de autenticação:", error);
@@ -175,12 +180,9 @@ export default function Home() {
     });
 
     return () => unsubscribe();
-}, []);
+}, [invitedToLeagueId]);
 
 
-  // New state for multi-league
-  const [currentLeagueId, setCurrentLeagueId] = useState<string>('defaultLeague');
-  const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
   const currentLeague: League | undefined = appData.leagues[currentLeagueId];
 
   // These states are now league-dependent
@@ -219,18 +221,6 @@ export default function Home() {
   const [formation, setFormation] = useState<Formation>('4-4-2');
 
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
-  
-  // Check for invitation link on initial load
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const inviteCode = urlParams.get('invite');
-      if (inviteCode && appData.leagues[inviteCode]) {
-        setInvitedToLeagueId(inviteCode);
-        navigateTo('register');
-      }
-    }
-  }, [appData.leagues]);
 
   useEffect(() => {
     if (currentLeague) {
@@ -257,9 +247,9 @@ export default function Home() {
 
     setCurrentLeagueId(newLeagueId);
     
-    // Reset user and dependent states
-    const firstUserId = Object.keys(newLeague.users)[0] || null;
-    setLoggedInUserId(firstUserId);
+    const firstUserIdOfNewLeague = newLeague.users[auth.currentUser?.uid || ''] ? auth.currentUser!.uid : Object.keys(newLeague.users)[0];
+
+    setLoggedInUserId(firstUserIdOfNewLeague);
     setLiveEvents([]);
     setBestElevenVotes({});
     setBestElevenSaved({});
@@ -310,28 +300,48 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  // This function is now only for storing user data temporarily
-  const handleRegistration = (user: FirebaseUser, name: string) => {
-    const newUser: User = {
+  const handleJoinLeague = (leagueId: string, user: FirebaseUser) => {
+    const leagueToJoin = appData.leagues[leagueId];
+    if (!leagueToJoin) {
+      toast({ title: "Liga não encontrada", variant: "destructive" });
+      return;
+    }
+
+    const newUserForLeague: User = {
       id: user.uid,
-      name: name,
+      name: user.displayName || 'Novo Jogador',
       email: user.email!,
-      teamName: `${name.split(' ')[0]} FC`,
-      partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
-      role: 'player',
+      teamName: `${(user.displayName || 'Novo').split(' ')[0]} FC`,
+      partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'player',
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
-    
-    // The onAuthStateChanged listener will now handle creating the league.
-    // We just need to ensure the user object is ready.
-    // A slight modification to onAuthStateChanged might be needed to pick up this "pending" user.
-    // For now, let's assume the auth state change will trigger the correct flow.
-    toast({ title: "Cadastro Concluído!", description: "Vamos criar sua primeira liga." });
+
+    setAppData(prevData => {
+        const newLeagues = { ...prevData.leagues };
+        newLeagues[leagueId].users[user.uid] = newUserForLeague;
+        return { ...prevData, leagues: newLeagues };
+    });
+
+    setCurrentLeagueId(leagueId);
+    setLoggedInUserId(user.uid);
+    setInvitedToLeagueId(null);
+    navigateTo('dashboard');
+    toast({ title: `Bem-vindo à ${leagueToJoin.name}!`, description: "Você entrou na liga com sucesso." });
   };
 
 
-  const handleCreateLeague = (leagueName: string, userId: string, userObject: User) => {
+  const handleCreateLeague = (leagueName: string, user: FirebaseUser) => {
     const newLeagueId = `league_${Date.now()}`;
+    const userId = user.uid;
+
+    const userObject: User = {
+        id: userId,
+        name: user.displayName || 'Novo Jogador',
+        email: user.email!,
+        teamName: `${(user.displayName || 'Novo').split(' ')[0]} FC`,
+        partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [], role: 'admin',
+        paymentDueDate: new Date().toISOString().split('T')[0],
+    };
     
     const testUsers: Record<string, User> = {};
     for (let i=1; i<=3; i++) {
@@ -350,7 +360,7 @@ export default function Home() {
       modality: null,
       paymentsEnabled: true,
       users: {
-        [userId]: { ...userObject, role: 'admin' },
+        [userId]: userObject,
         ...testUsers
       },
       players: defaultLeagueData.players,
@@ -736,7 +746,7 @@ export default function Home() {
       case 'welcome':
         return <WelcomeView onNavigate={navigateTo} />;
       case 'register':
-        return <RegisterView onRegister={handleRegistration} onNavigateToLogin={() => navigateTo('login')} />;
+        return <RegisterView onNavigateToLogin={() => navigateTo('login')} />;
       case 'login':
         return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
       case 'leagues':

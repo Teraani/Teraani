@@ -300,6 +300,5 @@ const jasonTestLeague: League = {
 export const initialData: AppData = {
     leagues: {
         'defaultLeague': defaultLeagueData,
-        'jasonTestLeague': jasonTestLeague,
     }
 }

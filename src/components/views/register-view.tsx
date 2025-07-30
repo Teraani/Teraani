@@ -17,7 +17,6 @@ import { User as FirebaseUser } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
 
 interface RegisterViewProps {
-  onRegister: (user: FirebaseUser, name: string) => void;
   onNavigateToLogin: () => void;
 }
 
@@ -36,7 +35,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-export default function RegisterView({ onRegister, onNavigateToLogin }: RegisterViewProps) {
+export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -55,10 +54,7 @@ export default function RegisterView({ onRegister, onNavigateToLogin }: Register
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result) {
-          const user = result.user;
-          onRegister(user, user.displayName || 'Novo Jogador');
-        }
+        // If result exists, onAuthStateChanged in page.tsx will handle it.
       } catch (error: any) {
         console.error("Erro ao obter resultado do redirecionamento:", error);
         toast({
@@ -71,15 +67,14 @@ export default function RegisterView({ onRegister, onNavigateToLogin }: Register
       }
     };
     handleRedirectResult();
-  }, [onRegister, toast]);
+  }, [toast]);
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       await updateProfile(userCredential.user, { displayName: values.name });
-      onRegister(userCredential.user, values.name);
-      // onAuthStateChanged in page.tsx will handle the navigation
+      // onAuthStateChanged in page.tsx will handle the navigation and user creation
     } catch (error: any) {
        console.error("Erro ao criar conta:", error);
        toast({
