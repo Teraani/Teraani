@@ -122,17 +122,51 @@ export default function Home() {
 
   // Effect for Authentication State Change
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
         setLoggedInUser(user);
-        setIsInitializing(false); // Authentication check is complete, stop global loading.
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // Effect for Handling User Data and Navigation after Authentication
-  useEffect(() => {
-    const handleUserData = async () => {
-        if (!loggedInUser) {
+        
+        if (user) {
+            // User is logged in, handle their data
+            try {
+                const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
+                const querySnapshot = await getDocs(q);
+                const userLeagues: Record<string, League> = {};
+                querySnapshot.forEach((doc) => {
+                    userLeagues[doc.id] = doc.data() as League;
+                });
+                setLeagues(userLeagues);
+    
+                const userIsAlreadyInALeague = !querySnapshot.empty;
+                
+                if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
+                    // User is already in the invited league, just set it as current
+                    setCurrentLeagueId(invitedToLeagueId);
+                    navigateTo('dashboard');
+                } else if (invitedToLeagueId) {
+                    // User has an invite link and needs to join the league
+                    await handleJoinLeague(invitedToLeagueId, user);
+                } else if (!userIsAlreadyInALeague) {
+                    // This is a new user without any leagues or invites
+                    await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
+                } else {
+                    // This is a returning user, load their last or first league
+                    const lastLeagueId = localStorage.getItem('last_league_id');
+                    const leagueToLoad = (lastLeagueId && userLeagues[lastLeagueId]) ? lastLeagueId : querySnapshot.docs[0].id;
+                    setCurrentLeagueId(leagueToLoad);
+    
+                    const currentLeagueData = userLeagues[leagueToLoad];
+                    if (currentLeagueData && !currentLeagueData.modality) {
+                        navigateTo('modality-selection');
+                    } else {
+                        navigateTo('dashboard');
+                    }
+                }
+            } catch (error) {
+                console.error("Error handling user data:", error);
+                toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar suas informações.", variant: "destructive" });
+                await handleLogout();
+            }
+        } else {
             // User is logged out
             setCurrentLeagueId(null);
             setLeagues({});
@@ -141,56 +175,13 @@ export default function Home() {
             } else {
                 navigateTo('welcome');
             }
-            return;
         }
 
-        // User is logged in, handle their data
-        try {
-            const q = query(collection(db, "leagues"), where(`users.${loggedInUser.uid}`, "!=", null));
-            const querySnapshot = await getDocs(q);
-            const userLeagues: Record<string, League> = {};
-            querySnapshot.forEach((doc) => {
-                userLeagues[doc.id] = doc.data() as League;
-            });
-            setLeagues(userLeagues);
-
-            const userIsAlreadyInALeague = !querySnapshot.empty;
-            
-            if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
-                // User is already in the invited league, just set it as current
-                setCurrentLeagueId(invitedToLeagueId);
-                navigateTo('dashboard');
-            } else if (invitedToLeagueId) {
-                // User has an invite link and needs to join the league
-                await handleJoinLeague(invitedToLeagueId, loggedInUser);
-            } else if (!userIsAlreadyInALeague) {
-                // This is a new user without any leagues or invites
-                await handleCreateLeague(`Liga de ${loggedInUser.displayName || 'Novo Jogador'}`, loggedInUser);
-            } else {
-                // This is a returning user, load their last or first league
-                const lastLeagueId = localStorage.getItem('last_league_id');
-                const leagueToLoad = (lastLeagueId && userLeagues[lastLeagueId]) ? lastLeagueId : querySnapshot.docs[0].id;
-                setCurrentLeagueId(leagueToLoad);
-
-                const currentLeagueData = userLeagues[leagueToLoad];
-                if (currentLeagueData && !currentLeagueData.modality) {
-                    navigateTo('modality-selection');
-                } else {
-                    navigateTo('dashboard');
-                }
-            }
-        } catch (error) {
-            console.error("Error handling user data:", error);
-            toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar suas informações.", variant: "destructive" });
-            await handleLogout();
-        }
-    };
-
-    if (!isInitializing) {
-        handleUserData();
-    }
+        setIsInitializing(false); // Authentication check is complete, stop global loading.
+    });
+    return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loggedInUser, isInitializing]);
+  }, []);
 
 
   useEffect(() => {
