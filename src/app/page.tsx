@@ -110,7 +110,7 @@ export default function Home() {
   const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
   const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
 
-  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null); 
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -131,7 +131,7 @@ export default function Home() {
         } else {
             navigateTo('welcome');
         }
-        setIsInitializing(false); 
+        setIsInitializing(false);
       }
     });
     return () => unsubscribe();
