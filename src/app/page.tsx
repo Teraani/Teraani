@@ -96,7 +96,7 @@ const team1994_ids = [
 
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<View>('loading');
+  const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('loading');
   
@@ -116,71 +116,20 @@ export default function Home() {
   const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
 
   useEffect(() => {
-    let localData: any;
-    try {
+    // This effect will run once to force a logout and clear state
+    const forceLogout = async () => {
+        if (auth.currentUser) {
+            await signOut(auth);
+        }
         if (typeof window !== "undefined") {
-            const savedData = localStorage.getItem('amistosos_fc_data');
-            localData = savedData ? JSON.parse(savedData) : initialData;
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const inviteCode = urlParams.get('invite');
-            if (inviteCode && localData.leagues[inviteCode]) {
-                setInvitedToLeagueId(inviteCode);
-            }
-            
-            setAppDataState(localData);
-        } else {
-            localData = initialData;
+            localStorage.removeItem('amistosos_fc_data');
         }
-    } catch (e) {
-        console.error("Falha ao analisar dados do localStorage, usando dados iniciais.", e);
-        localData = initialData;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        try {
-            if (user) {
-                // User is signed in.
-                const userLeagues: string[] = [];
-                for (const leagueId in localData.leagues) {
-                    if (localData.leagues[leagueId].users[user.uid]) {
-                        userLeagues.push(leagueId);
-                    }
-                }
-
-                if (invitedToLeagueId && !userLeagues.includes(invitedToLeagueId)) {
-                    // User was invited and is not yet in the league.
-                    handleJoinLeague(invitedToLeagueId, user);
-                } else if (userLeagues.length > 0) {
-                    // User has leagues, switch to the last one or a specific one
-                    const leagueToSwitchToId = userLeagues[userLeagues.length - 1];
-                    setCurrentLeagueId(leagueToSwitchToId);
-                    setLoggedInUserId(user.uid);
-
-                    if (!localData.leagues[leagueToSwitchToId].modality) {
-                        navigateTo('modality-selection');
-                    } else {
-                        navigateTo('dashboard');
-                    }
-                } else {
-                    // This is a new user with no leagues. Let them create one.
-                    handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
-                }
-            } else {
-                // User is signed out.
-                setLoggedInUserId(null);
-                navigateTo(invitedToLeagueId ? 'register' : 'welcome');
-            }
-        } catch (error) {
-            console.error("Erro na lógica de autenticação:", error);
-            navigateTo('welcome');
-        } finally {
-            setIsInitializing(false);
-        }
-    });
-
-    return () => unsubscribe();
-}, [invitedToLeagueId]);
+        setAppDataState(initialData);
+        setCurrentView('welcome');
+        setIsInitializing(false);
+    };
+    forceLogout();
+}, []);
 
 
   const currentLeague: League | undefined = appData.leagues[currentLeagueId];
