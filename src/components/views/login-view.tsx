@@ -48,8 +48,9 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
         description: "E-mail ou senha inválidos. Verifique seus dados e tente novamente.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
-    } 
+    }
   }
 
   return (

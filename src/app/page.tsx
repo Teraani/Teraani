@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User, Ranking, GoalieRanking, Game, League, PlayerPerformance } from '@/lib/data';
-import { initialData, defaultLeagueData } from '@/lib/data';
+import { defaultLeagueData } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
@@ -110,20 +110,15 @@ export default function Home() {
   const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
   const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
 
+  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null); 
+
   useEffect(() => {
-    // This effect now ONLY handles setting the initial state and checking for invites.
-    // The auth logic is moved to a separate effect to avoid race conditions.
     const params = new URLSearchParams(window.location.search);
     const inviteId = params.get('invite');
     if (inviteId) {
         setInvitedToLeagueId(inviteId);
     }
-  }, []);
 
-  // Simulate a logged-in user. By default, it's the admin.
-  const [loggedInUserId, setLoggedInUserId] = useState<string | null>(null); 
-
-  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setLoggedInUserId(user.uid);
@@ -131,28 +126,23 @@ export default function Home() {
         setLoggedInUserId(null);
         setCurrentLeagueId(null);
         setLeagues({});
-        navigateTo('welcome');
-        setIsInitializing(false); // Stop loading if user is not logged in.
+        if (invitedToLeagueId) {
+            navigateTo('register');
+        } else {
+            navigateTo('welcome');
+        }
+        setIsInitializing(false); 
       }
     });
-    // Cleanup the subscription on component unmount
     return () => unsubscribe();
-  }, []);
+  }, [invitedToLeagueId]);
 
 
   useEffect(() => {
     if (loggedInUserId === null) {
-      setIsInitializing(false);
-      if (invitedToLeagueId) {
-        navigateTo('register');
-      } else {
-        navigateTo('welcome');
-      }
       return;
     }
     
-    if (!loggedInUserId) return; // Wait until loggedInUserId is set to a string (logged in)
-
     const handleUserData = async () => {
       const user = auth.currentUser;
       if (!user) {
