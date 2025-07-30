@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import type { User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check, DollarSign, Eye, Share2 } from 'lucide-react';
+import { ArrowLeft, Crown, Settings, Search, FilePenLine, Check, DollarSign, Eye, Share2, Save } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -36,6 +36,8 @@ interface AdminViewProps {
   leagueId: string;
   isPaymentsEnabled: boolean;
   onTogglePayments: (enabled: boolean) => void;
+  leagueName: string;
+  onUpdateLeagueName: (newName: string) => void;
 }
 
 export default function AdminView({ 
@@ -52,10 +54,13 @@ export default function AdminView({
     onToggleVoteRevelation,
     leagueId,
     isPaymentsEnabled,
-    onTogglePayments
+    onTogglePayments,
+    leagueName,
+    onUpdateLeagueName
 }: AdminViewProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+  const [newLeagueName, setNewLeagueName] = useState(leagueName);
 
   const handleSetEditorClick = (user: User) => {
     if (editorOfTheRound === user.id) {
@@ -146,6 +151,10 @@ export default function AdminView({
   const filteredUsers = useMemo(() => {
     return users.filter(user => user.id !== currentUser.id && user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [users, searchTerm, currentUser.id]);
+  
+  const handleSaveLeagueName = () => {
+    onUpdateLeagueName(newLeagueName);
+  };
 
   return (
     <div>
@@ -158,6 +167,27 @@ export default function AdminView({
       </header>
 
       <main className="p-4 space-y-6">
+        <Card>
+            <CardHeader>
+                <CardTitle>Configurações da Liga</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    <Label htmlFor="leagueName">Nome da Liga</Label>
+                    <div className="flex gap-2">
+                         <Input 
+                            id="leagueName"
+                            value={newLeagueName}
+                            onChange={(e) => setNewLeagueName(e.target.value)}
+                         />
+                         <Button onClick={handleSaveLeagueName} disabled={newLeagueName === leagueName || newLeagueName.trim() === ''}>
+                            <Save className="h-4 w-4" />
+                         </Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
         <Card>
             <CardHeader>
                 <CardTitle>Convidar Jogadores</CardTitle>

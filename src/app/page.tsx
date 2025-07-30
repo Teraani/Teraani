@@ -96,7 +96,7 @@ const team1994_ids = [
 
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<View>('loading');
+  const [currentView, setCurrentView] = useState<View>('login');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('loading');
   
@@ -708,6 +708,13 @@ export default function Home() {
     });
   };
 
+  const handleUpdateLeagueName = (newName: string) => {
+    updateCurrentLeague(league => ({ ...league, name: newName }));
+    toast({
+      title: "Nome da Liga Atualizado!",
+    });
+  };
+
   if (isInitializing) {
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
   }
@@ -817,6 +824,8 @@ export default function Home() {
                   leagueId={currentLeague!.id}
                   isPaymentsEnabled={isPaymentsEnabled}
                   onTogglePayments={handleTogglePayments}
+                  leagueName={currentLeague!.name}
+                  onUpdateLeagueName={handleUpdateLeagueName}
                 />;
        case 'live':
         return <LiveView 
