@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '../ui/input';
 import { useForm } from "react-hook-form";
@@ -13,7 +14,7 @@ import { auth } from '@/lib/firebase-config';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { User as FirebaseUser } from 'firebase/auth';
-import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface RegisterViewProps {
   onRegisterSuccess: (user: FirebaseUser, name: string) => void;
@@ -37,6 +38,8 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: RegisterViewProps) {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -48,6 +51,7 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
   });
 
   useEffect(() => {
+    setIsGoogleLoading(true);
     const handleRedirectResult = async () => {
       try {
         const result = await getRedirectResult(auth);
@@ -62,18 +66,17 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
           description: "Não foi possível completar o login com o Google.",
           variant: "destructive",
         });
+      } finally {
+        setIsGoogleLoading(false);
       }
     };
     handleRedirectResult();
   }, [onRegisterSuccess, toast]);
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
+    setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Agora você pode acessar a plataforma.",
-      });
       onRegisterSuccess(userCredential.user, values.name);
     } catch (error: any) {
        console.error("Erro ao criar conta:", error);
@@ -82,14 +85,18 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
         description: error.code === 'auth/email-already-in-use' ? 'Este e-mail já está em uso. Tente fazer login.' : (error.message || "Não foi possível criar sua conta."),
         variant: "destructive",
       });
+    } finally {
+        setIsLoading(false);
     }
   }
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
+    setIsGoogleLoading(true);
     try {
         await signInWithRedirect(auth, provider);
     } catch (error: any) {
+        setIsGoogleLoading(false);
         if (error.code === 'auth/unauthorized-domain') {
             toast({
                 title: "Login com Google Indisponível no Preview",
@@ -158,8 +165,9 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg">
-                Criar conta
+              <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                {isLoading ? 'Criando...' : 'Criar conta'}
               </Button>
             </form>
           </Form>
@@ -175,8 +183,12 @@ export default function RegisterView({ onRegisterSuccess, onNavigateToLogin }: R
             </div>
           </div>
 
-          <Button onClick={handleGoogleSignIn} variant="outline" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-base font-bold rounded-xl shadow-lg">
-             <GoogleIcon className="w-5 h-5 mr-3" />
+          <Button onClick={handleGoogleSignIn} variant="outline" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-base font-bold rounded-xl shadow-lg" disabled={isGoogleLoading}>
+             {isGoogleLoading ? (
+                <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+             ) : (
+                <GoogleIcon className="w-5 h-5 mr-3" />
+             )}
              Continuar com o Google
           </Button>
 

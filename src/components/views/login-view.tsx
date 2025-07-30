@@ -2,6 +2,7 @@
 
 "use client";
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '../ui/input';
 import { useForm } from "react-hook-form";
@@ -12,6 +13,7 @@ import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface LoginViewProps {
   onLoginSuccess: (userId: string) => void;
@@ -25,6 +27,7 @@ const loginSchema = z.object({
 
 export default function LoginView({ onLoginSuccess, onNavigateToRegister }: LoginViewProps) {
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -35,9 +38,10 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister }: Logi
   });
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
+    setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
-      // Don't toast here, let handleLoginSuccess do it.
+      // A notificação de sucesso será feita na próxima tela
       onLoginSuccess(userCredential.user.uid);
     } catch (error: any) {
       console.error("Erro no login:", error);
@@ -46,6 +50,8 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister }: Logi
         description: "E-mail ou senha inválidos. Verifique seus dados e tente novamente.",
         variant: "destructive",
       });
+    } finally {
+        setIsLoading(false);
     }
   }
 
@@ -87,8 +93,9 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister }: Logi
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg">
-                Entrar
+              <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                {isLoading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
           </Form>
@@ -106,5 +113,3 @@ export default function LoginView({ onLoginSuccess, onNavigateToRegister }: Logi
     </div>
   );
 }
-
-    
