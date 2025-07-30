@@ -113,54 +113,61 @@ export default function Home() {
   }
 
  useEffect(() => {
-    const savedData = localStorage.getItem('amistosos_fc_data');
-    let dataToLoad = initialData;
-    if (savedData) {
-        try {
-            const parsed = JSON.parse(savedData);
-            if (parsed && typeof parsed.leagues === 'object') {
-                dataToLoad = parsed;
-            }
-        } catch (e) {
-            console.error("Falha ao analisar dados do localStorage, usando dados iniciais.", e);
-        }
+    // 1. Carregar os dados locais primeiro
+    let localData;
+    try {
+        const savedData = localStorage.getItem('amistosos_fc_data');
+        localData = savedData ? JSON.parse(savedData) : initialData;
+        setAppDataState(localData);
+    } catch (e) {
+        console.error("Falha ao analisar dados do localStorage, usando dados iniciais.", e);
+        localData = initialData;
+        setAppDataState(localData);
     }
-    setAppDataState(dataToLoad);
- 
+
+    // 2. Configurar o ouvinte de autenticação
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-        const currentData = savedData ? JSON.parse(savedData) : initialData;
-
-        if (user) {
-            setLoggedInUserId(user.uid);
-            
-            const userLeagues: string[] = [];
-            for (const leagueId in currentData.leagues) {
-                if (currentData.leagues[leagueId].users[user.uid]) {
-                    userLeagues.push(leagueId);
+        try {
+            if (user) {
+                // Usuário está logado. Verifique se ele pertence a alguma liga.
+                setLoggedInUserId(user.uid);
+                
+                const userLeagues: string[] = [];
+                for (const leagueId in localData.leagues) {
+                    if (localData.leagues[leagueId].users[user.uid]) {
+                        userLeagues.push(leagueId);
+                    }
                 }
-            }
 
-            if (userLeagues.length > 0) {
-                const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
-                const leagueToSwitchToId = (jasonLeague && currentData.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
-                const leagueToSwitchTo = currentData.leagues[leagueToSwitchToId];
-                
-                setCurrentLeagueId(leagueToSwitchToId);
-                
-                if (!leagueToSwitchTo.modality) {
-                    navigateTo('modality-selection');
+                if (userLeagues.length > 0) {
+                    // Usuário tem ligas, vá para o dashboard da última liga.
+                    const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
+                    const leagueToSwitchToId = (jasonLeague && localData.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
+                    const leagueToSwitchTo = localData.leagues[leagueToSwitchToId];
+                    
+                    setCurrentLeagueId(leagueToSwitchToId);
+                    
+                    if (!leagueToSwitchTo.modality) {
+                        navigateTo('modality-selection');
+                    } else {
+                        navigateTo('dashboard');
+                    }
                 } else {
-                    navigateTo('dashboard');
+                    // Usuário logado mas sem ligas, vá para a criação/entrada de liga.
+                    navigateTo('league-entry');
                 }
             } else {
-                navigateTo('league-entry');
+                // Nenhum usuário logado, vá para a tela de boas-vindas.
+                setLoggedInUserId(null);
+                navigateTo('welcome');
             }
-        } else {
-            setLoggedInUserId(null);
-            navigateTo('welcome');
+        } catch (error) {
+            console.error("Erro na lógica de autenticação:", error);
+            navigateTo('welcome'); // Rota segura em caso de erro
+        } finally {
+            // 3. Finalize a inicialização, permitindo a renderização.
+            setIsInitializing(false);
         }
-        
-        setIsInitializing(false);
     });
 
     return () => unsubscribe();
