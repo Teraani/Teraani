@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   "projectId": "amistososai-fc",
@@ -15,3 +16,4 @@ const firebaseConfig = {
 // Initialize Firebase
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);

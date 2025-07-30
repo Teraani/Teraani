@@ -30,8 +30,10 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
 import type { ShirtColor, Formation } from '@/components/views/lineup-view';
-import { auth } from '@/lib/firebase-config';
+import { auth, db } from '@/lib/firebase-config';
 import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile } from 'firebase/auth';
+import { doc, getDoc, setDoc, onSnapshot, collection, addDoc, updateDoc, query, where, getDocs, writeBatch } from 'firebase/firestore';
+
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading';
 export type Position = Player['pos'] | null;
@@ -100,39 +102,16 @@ export default function Home() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('loading');
   
-  const [appData, setAppDataState] = useState(initialData);
+  const [leagues, setLeagues] = useState<Record<string, League>>({});
   const { toast } = useToast();
   const [isInitializing, setIsInitializing] = useState(true);
-  
-  const setAppData = (data: any) => {
-    if (typeof data === 'undefined') {
-        console.error("Attempted to set undefined app data. This action was prevented.");
-        return; 
-    }
-    setAppDataState(data);
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('amistosos_fc_data', JSON.stringify(data));
-    }
-  }
 
   // New state for multi-league
-  const [currentLeagueId, setCurrentLeagueId] = useState<string>('defaultLeague');
+  const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
   const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsInitializing(true);
-    try {
-        const savedData = localStorage.getItem('amistosos_fc_data');
-        if (savedData && savedData !== 'undefined') {
-          setAppDataState(JSON.parse(savedData));
-        } else {
-          setAppDataState(initialData);
-        }
-    } catch (error) {
-        console.error("Failed to parse localStorage data, resetting to initial data.", error);
-        setAppDataState(initialData);
-    }
-
 
     const params = new URLSearchParams(window.location.search);
     const inviteId = params.get('invite');
@@ -140,21 +119,28 @@ export default function Home() {
         setInvitedToLeagueId(inviteId);
     }
     
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
             setLoggedInUserId(user.uid);
-            const userIsAlreadyInALeague = Object.values(appData.leagues).some(l => l.users[user.uid]);
+            // Fetch leagues the user is a part of
+            const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
+            const querySnapshot = await getDocs(q);
+            const userLeagues: Record<string, League> = {};
+            querySnapshot.forEach((doc) => {
+                userLeagues[doc.id] = doc.data() as League;
+            });
+            
+            setLeagues(userLeagues);
+            const userIsAlreadyInALeague = !querySnapshot.empty;
 
-            if (invitedToLeagueId && appData.leagues[invitedToLeagueId]) {
-                 handleJoinLeague(invitedToLeagueId, user);
+            if (invitedToLeagueId) {
+                 await handleJoinLeague(invitedToLeagueId, user);
             } else if (!userIsAlreadyInALeague) {
-                // This is a new user without an invite, create a default league for them.
-                handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
+                await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
             } else {
-                // Existing user, find their league or default
-                const lastLeagueId = localStorage.getItem('last_league_id') || Object.values(appData.leagues).find(l => l.users[user.uid])?.id || 'defaultLeague';
+                const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
                 setCurrentLeagueId(lastLeagueId);
-                const currentLeagueData = appData.leagues[lastLeagueId];
+                const currentLeagueData = userLeagues[lastLeagueId];
 
                 if (currentLeagueData && !currentLeagueData.modality) {
                      navigateTo('modality-selection');
@@ -164,6 +150,8 @@ export default function Home() {
             }
         } else {
             setLoggedInUserId(null);
+            setCurrentLeagueId(null);
+            setLeagues({});
             navigateTo('welcome');
         }
        setIsInitializing(false);
@@ -172,8 +160,20 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!currentLeagueId) return;
 
-  const currentLeague: League | undefined = appData.leagues[currentLeagueId];
+    const unsub = onSnapshot(doc(db, "leagues", currentLeagueId), (doc) => {
+        if (doc.exists()) {
+            setLeagues(prev => ({...prev, [currentLeagueId]: doc.data() as League}));
+        }
+    });
+
+    return () => unsub();
+  }, [currentLeagueId])
+
+
+  const currentLeague: League | undefined = currentLeagueId ? leagues[currentLeagueId] : undefined;
 
   // These states are now league-dependent
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -219,27 +219,25 @@ export default function Home() {
   }, [currentLeague]);
 
   // Helper to update league data
-  const updateCurrentLeague = (updater: (league: League) => League) => {
-    if (!currentLeague) return;
-    const newLeague = updater(currentLeague);
-    setAppData({
-      ...appData,
-      leagues: {
-        ...appData.leagues,
-        [currentLeagueId]: newLeague,
-      }
-    });
+  const updateCurrentLeague = async (updater: (league: League) => League) => {
+    if (!currentLeagueId) return;
+    const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+    const currentLeagueSnapshot = await getDoc(leagueDocRef);
+    if (!currentLeagueSnapshot.exists()) return;
+
+    const oldLeague = currentLeagueSnapshot.data() as League;
+    const newLeague = updater(oldLeague);
+    
+    await setDoc(leagueDocRef, newLeague);
   };
   
   const handleLeagueChange = (newLeagueId: string) => {
-    const newLeague = appData.leagues[newLeagueId];
+    const newLeague = leagues[newLeagueId];
     if (!newLeague) return;
 
+    localStorage.setItem('last_league_id', newLeagueId);
     setCurrentLeagueId(newLeagueId);
     
-    const firstUserIdOfNewLeague = newLeague.users[auth.currentUser?.uid || ''] ? auth.currentUser!.uid : Object.keys(newLeague.users)[0];
-
-    setLoggedInUserId(firstUserIdOfNewLeague);
     setLiveEvents([]);
     setBestElevenVotes({});
     setBestElevenSaved({});
@@ -314,12 +312,15 @@ export default function Home() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  const handleJoinLeague = (leagueId: string, user: FirebaseUser) => {
-    const leagueToJoin = appData.leagues[leagueId];
-    if (!leagueToJoin) {
-      toast({ title: "Liga não encontrada", variant: "destructive" });
-      return;
+  const handleJoinLeague = async (leagueId: string, user: FirebaseUser) => {
+    const leagueDocRef = doc(db, "leagues", leagueId);
+    const leagueDoc = await getDoc(leagueDocRef);
+
+    if (!leagueDoc.exists()) {
+        toast({ title: "Liga não encontrada", variant: "destructive" });
+        return;
     }
+    const leagueToJoin = leagueDoc.data() as League;
 
     const newUserForLeague: User = {
       id: user.uid,
@@ -330,22 +331,21 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
-    setAppData(prevData => {
-        const newLeagues = { ...prevData.leagues };
-        newLeagues[leagueId].users[user.uid] = newUserForLeague;
-        return { ...prevData, leagues: newLeagues };
+    await updateDoc(leagueDocRef, {
+        [`users.${user.uid}`]: newUserForLeague
     });
-
+    
+    setLeagues(prev => ({...prev, [leagueId]: {...leagueToJoin, users: {...leagueToJoin.users, [user.uid]: newUserForLeague}}}));
     setCurrentLeagueId(leagueId);
-    setLoggedInUserId(user.uid);
     setInvitedToLeagueId(null);
     navigateTo('dashboard');
     toast({ title: `Bem-vindo à ${leagueToJoin.name}!`, description: "Você entrou na liga com sucesso." });
   };
 
 
-  const handleCreateLeague = (leagueName: string, user: FirebaseUser) => {
-    const newLeagueId = `league_${Date.now()}`;
+  const handleCreateLeague = async (leagueName: string, user: FirebaseUser) => {
+    const newLeagueRef = doc(collection(db, "leagues"));
+    const newLeagueId = newLeagueRef.id;
     const userId = user.uid;
 
     const userObject: User = {
@@ -383,14 +383,10 @@ export default function Home() {
       scalersRanking: {}, goalieRanking: {},
     };
 
-    setAppData(currentData => {
-        const newAppData = { ...currentData };
-        newAppData.leagues[newLeagueId] = newLeague;
-        return newAppData;
-    });
-    
+    await setDoc(newLeagueRef, newLeague);
+
+    setLeagues(prev => ({...prev, [newLeagueId]: newLeague}));
     setCurrentLeagueId(newLeagueId);
-    setLoggedInUserId(userId);
     setTeam1Lineup(team2002_ids);
     setTeam2Lineup(team1994_ids);
 
@@ -766,8 +762,8 @@ export default function Home() {
       case 'leagues':
         return <LeaguesView 
                   onBack={goBack} 
-                  leagues={appData.leagues} 
-                  currentLeagueId={currentLeagueId}
+                  leagues={leagues} 
+                  currentLeagueId={currentLeagueId!}
                   onLeagueChange={handleLeagueChange}
                   currentUser={currentUser!}
                 />;
@@ -783,7 +779,7 @@ export default function Home() {
                   isLeagueAdmin={isLeagueAdmin}
                 />;
       case 'dashboard':
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
       case 'lineup':
         return <LineupView 
                  players={currentLeague!.players} 
@@ -811,7 +807,7 @@ export default function Home() {
                  setFormation={setFormation}
                />;
       case 'player-details':
-        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
       case 'market':
         return <MarketView 
                  players={currentLeague!.players} 
@@ -893,7 +889,7 @@ export default function Home() {
                   formation={formation}
                 />;
       default:
-        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
+        return <DashboardView user={userForViews!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={handleLogout}/>;
     }
   };
 
@@ -906,5 +902,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
