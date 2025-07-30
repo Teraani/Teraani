@@ -111,18 +111,20 @@ export default function Home() {
   const [invitedToLeagueId, setInvitedToLeagueId] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsInitializing(true);
-
+    // This effect now ONLY handles setting the initial state and checking for invites.
+    // The auth logic is moved to a separate effect to avoid race conditions.
     const params = new URLSearchParams(window.location.search);
     const inviteId = params.get('invite');
     if (inviteId) {
         setInvitedToLeagueId(inviteId);
     }
-    
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setIsInitializing(true); // Start loading when auth state changes
         if (user) {
             setLoggedInUserId(user.uid);
-            // Fetch leagues the user is a part of
             const q = query(collection(db, "leagues"), where(`users.${user.uid}`, "!=", null));
             const querySnapshot = await getDocs(q);
             const userLeagues: Record<string, League> = {};
@@ -133,11 +135,18 @@ export default function Home() {
             setLeagues(userLeagues);
             const userIsAlreadyInALeague = !querySnapshot.empty;
 
-            if (invitedToLeagueId) {
-                 await handleJoinLeague(invitedToLeagueId, user);
+            if (invitedToLeagueId && userLeagues[invitedToLeagueId]) {
+                 // User is already in the invited league, just set it as current
+                setCurrentLeagueId(invitedToLeagueId);
+                navigateTo('dashboard');
+            } else if (invitedToLeagueId) {
+                // User is not in the invited league yet, join them
+                await handleJoinLeague(invitedToLeagueId, user);
             } else if (!userIsAlreadyInALeague) {
+                // User is new and not invited to any league, create one for them
                 await handleCreateLeague(`Liga de ${user.displayName || 'Novo Jogador'}`, user);
             } else {
+                // User is returning, load their last used league
                 const lastLeagueId = localStorage.getItem('last_league_id') || querySnapshot.docs[0].id;
                 setCurrentLeagueId(lastLeagueId);
                 const currentLeagueData = userLeagues[lastLeagueId];
@@ -149,16 +158,20 @@ export default function Home() {
                 }
             }
         } else {
+            // No user is logged in
             setLoggedInUserId(null);
             setCurrentLeagueId(null);
             setLeagues({});
             navigateTo('welcome');
         }
-       setIsInitializing(false);
+        // IMPORTANT: Finish loading AFTER all async operations for the auth state are done.
+        setIsInitializing(false); 
     });
 
+    // Cleanup the subscription on component unmount
     return () => unsubscribe();
-  }, []);
+  }, [invitedToLeagueId]); // Re-run if an invite ID is found
+
 
   useEffect(() => {
     if (!currentLeagueId) return;
@@ -228,7 +241,7 @@ export default function Home() {
     const oldLeague = currentLeagueSnapshot.data() as League;
     const newLeague = updater(oldLeague);
     
-    await setDoc(leagueDocRef, newLeague);
+    await setDoc(leagueDocRef, newLeague, { merge: true });
   };
   
   const handleLeagueChange = (newLeagueId: string) => {
