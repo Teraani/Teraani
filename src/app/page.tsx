@@ -112,12 +112,14 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
+ useEffect(() => {
+    // 1. Load data from localStorage first.
     const savedData = localStorage.getItem('amistosos_fc_data');
     let dataToLoad = initialData;
     if (savedData) {
         try {
             const parsed = JSON.parse(savedData);
+            // Basic validation to ensure we're not loading corrupted data.
             if (parsed && typeof parsed.leagues === 'object') {
                 dataToLoad = parsed;
             }
@@ -127,44 +129,48 @@ export default function Home() {
     }
     setAppDataState(dataToLoad);
 
+    // 2. Set up the auth listener. This will run after the initial data is set.
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setAppDataState(currentData => {
-            if (user) {
-                setLoggedInUserId(user.uid);
-                
-                const userLeagues: string[] = [];
-                for (const leagueId in currentData.leagues) {
-                    if (currentData.leagues[leagueId].users[user.uid]) {
-                        userLeagues.push(leagueId);
-                    }
+        if (user) {
+            // User is logged in. Decide where to navigate.
+            setLoggedInUserId(user.uid);
+            
+            // This logic now runs with the correct `dataToLoad` already in state.
+            const userLeagues: string[] = [];
+            for (const leagueId in dataToLoad.leagues) {
+                if (dataToLoad.leagues[leagueId].users[user.uid]) {
+                    userLeagues.push(leagueId);
                 }
+            }
 
-                if (userLeagues.length > 0) {
-                    const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
-                    const leagueToSwitchToId = (jasonLeague && currentData.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
-                    const leagueToSwitchTo = currentData.leagues[leagueToSwitchToId];
-                    
-                    setCurrentLeagueId(leagueToSwitchToId);
-                    
-                    if (!leagueToSwitchTo.modality) {
-                        navigateTo('modality-selection');
-                    } else {
-                        navigateTo('dashboard');
-                    }
+            if (userLeagues.length > 0) {
+                // User has leagues, go to the last used one or the first one.
+                const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
+                const leagueToSwitchToId = (jasonLeague && dataToLoad.leagues[jasonLeague]?.users[user.uid]) ? jasonLeague : userLeagues[userLeagues.length - 1];
+                const leagueToSwitchTo = dataToLoad.leagues[leagueToSwitchToId];
+                
+                setCurrentLeagueId(leagueToSwitchToId);
+                
+                if (!leagueToSwitchTo.modality) {
+                    navigateTo('modality-selection');
                 } else {
-                    navigateTo('league-entry');
+                    navigateTo('dashboard');
                 }
             } else {
-                setLoggedInUserId(null);
-                navigateTo('welcome');
+                // User is logged in but has no leagues. Go to league entry.
+                navigateTo('league-entry');
             }
-            
-            setIsInitializing(false);
-            return currentData;
-        });
+        } else {
+            // No user is logged in.
+            setLoggedInUserId(null);
+            navigateTo('welcome');
+        }
+        
+        // 3. Finish initialization.
+        setIsInitializing(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Cleanup subscription on unmount
     // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
@@ -302,60 +308,62 @@ export default function Home() {
   }, [currentUser, currentLeague]);
   
   const handleLoginSuccess = (userId: string) => {
-    setAppDataState(currentData => {
-        setLoggedInUserId(userId);
-        let userLeagues: string[] = [];
-        let userObject: User | null = null;
+    // This function will be simpler now, the main logic is in onAuthStateChanged
+    const localData = localStorage.getItem('amistosos_fc_data');
+    const currentData = localData ? JSON.parse(localData) : initialData;
     
-        for (const leagueId in currentData.leagues) {
-            if (currentData.leagues[leagueId].users[userId]) {
-                userLeagues.push(leagueId);
-                if (!userObject) {
-                    userObject = currentData.leagues[leagueId].users[userId];
-                }
-            }
-        }
+    setLoggedInUserId(userId);
+    let userLeagues: string[] = [];
+    let userObject: User | null = null;
 
-        let newData = { ...currentData };
-        if (invitedToLeagueId && userObject && !userLeagues.includes(invitedToLeagueId)) {
-            const leagueToJoin = currentData.leagues[invitedToLeagueId];
-            if (leagueToJoin) {
-                const updatedLeague = {
-                    ...leagueToJoin,
-                    users: { ...leagueToJoin.users, [userId]: userObject }
-                };
-                newData = {
-                    ...currentData,
-                    leagues: { ...currentData.leagues, [invitedToLeagueId]: updatedLeague }
-                };
-                userLeagues.push(invitedToLeagueId);
+    for (const leagueId in currentData.leagues) {
+        if (currentData.leagues[leagueId].users[userId]) {
+            userLeagues.push(leagueId);
+            if (!userObject) {
+                userObject = currentData.leagues[leagueId].users[userId];
             }
         }
-    
-        if (userLeagues.length > 0) {
-            const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
-            const leagueToSwitchToId = (jasonLeague && newData.leagues[jasonLeague].users[userId]) ? jasonLeague : userLeagues[userLeagues.length - 1];
-            const leagueToSwitchTo = newData.leagues[leagueToSwitchToId];
-            
-            setCurrentLeagueId(leagueToSwitchToId);
-            
-            if (!leagueToSwitchTo.modality) {
-                navigateTo('modality-selection');
-            } else {
-                navigateTo('dashboard');
-            }
-            if (userObject) {
-                toast({
-                    title: `Bem-vindo de volta, ${userObject.name}!`,
-                    description: "Login realizado com sucesso.",
-                });
-            }
-            if (invitedToLeagueId) setInvitedToLeagueId(null);
+    }
+
+    let newData = { ...currentData };
+    if (invitedToLeagueId && userObject && !userLeagues.includes(invitedToLeagueId)) {
+        const leagueToJoin = currentData.leagues[invitedToLeagueId];
+        if (leagueToJoin) {
+            const updatedLeague = {
+                ...leagueToJoin,
+                users: { ...leagueToJoin.users, [userId]: userObject }
+            };
+            newData = {
+                ...currentData,
+                leagues: { ...currentData.leagues, [invitedToLeagueId]: updatedLeague }
+            };
+            setAppData(newData); // Save the new league join to state and localStorage
+            userLeagues.push(invitedToLeagueId);
+        }
+    }
+
+    if (userLeagues.length > 0) {
+        const jasonLeague = userLeagues.includes('jasonTestLeague') ? 'jasonTestLeague' : null;
+        const leagueToSwitchToId = (jasonLeague && newData.leagues[jasonLeague]?.users[userId]) ? jasonLeague : userLeagues[userLeagues.length - 1];
+        const leagueToSwitchTo = newData.leagues[leagueToSwitchToId];
+        
+        setCurrentLeagueId(leagueToSwitchToId);
+        
+        if (!leagueToSwitchTo.modality) {
+            navigateTo('modality-selection');
         } else {
-            navigateTo('league-entry');
+            navigateTo('dashboard');
         }
-        return newData;
-    });
+        if (userObject) {
+            toast({
+                title: `Bem-vindo de volta, ${userObject.name}!`,
+                description: "Login realizado com sucesso.",
+            });
+        }
+        if (invitedToLeagueId) setInvitedToLeagueId(null);
+    } else {
+        navigateTo('league-entry');
+    }
   };
 
 
@@ -374,6 +382,7 @@ export default function Home() {
       paymentDueDate: new Date().toISOString().split('T')[0],
     };
 
+    // Temporarily store the new user data to be picked up by the league creation/joining logic.
     setAppData(currentData => {
       const newData = { ...currentData, temporaryUser: newUser };
       return newData;
