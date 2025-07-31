@@ -146,17 +146,136 @@ export default function Home() {
 
   // Effect for Authentication State Change
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    // Check for invite link on initial load
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteId = urlParams.get('invite');
+    if (inviteId) {
+        localStorage.setItem('leagueInviteId', inviteId);
+        // Clean the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setIsInitializing(true);
         setLoggedInUser(user);
-        setIsInitializing(false); // Stop loading after auth check
         if(user) {
-            navigateTo('dashboard');
+            await handleUserData(user);
         } else {
             navigateTo('welcome');
+            setIsInitializing(false);
         }
     });
     return () => unsubscribe();
   }, []);
+
+  const handleUserData = async (user: FirebaseUser) => {
+    const inviteId = localStorage.getItem('leagueInviteId');
+    let userIsInAnyLeague = false;
+
+    for (const leagueId in appData.leagues) {
+        if (appData.leagues[leagueId].users[user.uid]) {
+            userIsInAnyLeague = true;
+            break;
+        }
+    }
+
+    if (inviteId) {
+        await handleJoinLeague(user, inviteId);
+        localStorage.removeItem('leagueInviteId');
+    } else if (!userIsInAnyLeague) {
+        await handleCreateLeague(user);
+    } else {
+        const lastLeagueId = localStorage.getItem('last_league_id');
+        if (lastLeagueId && appData.leagues[lastLeagueId] && appData.leagues[lastLeagueId].users[user.uid]) {
+            setCurrentLeagueId(lastLeagueId);
+        } else {
+            // Find the first league the user belongs to
+            const firstLeagueId = Object.keys(appData.leagues).find(id => appData.leagues[id].users[user.uid]);
+            setCurrentLeagueId(firstLeagueId || null);
+        }
+        navigateTo('dashboard');
+    }
+     setIsInitializing(false);
+  };
+  
+  const handleJoinLeague = async (user: FirebaseUser, leagueId: string) => {
+    const leagueToJoin = appData.leagues[leagueId];
+    if (leagueToJoin && !leagueToJoin.users[user.uid]) {
+        const newUser: User = {
+            id: user.uid,
+            name: user.displayName || 'Novo Jogador',
+            email: user.email || 'sem-email',
+            teamName: `${user.displayName?.split(' ')[0] || 'Novo'} FC`,
+            partialScore: 0,
+            totalScore: 0,
+            valuation: 100,
+            lineup: [],
+            reserves: [],
+            role: 'player',
+            avatar: user.photoURL || `https://placehold.co/128x128/E67E22/FFFFFF?text=${(user.displayName || 'N').charAt(0)}`,
+            paymentDueDate: format(new Date(), 'yyyy-MM-dd')
+        };
+        
+        updateCurrentLeague(currentLeague => ({
+            ...currentLeague,
+            users: {...currentLeague.users, [user.uid]: newUser}
+        }), leagueId);
+
+        setCurrentLeagueId(leagueId);
+        toast({ title: "Bem-vindo!", description: `Você entrou na liga "${leagueToJoin.name}".`});
+        navigateTo('dashboard');
+    } else {
+         setCurrentLeagueId(leagueId);
+         navigateTo('dashboard');
+    }
+  };
+
+  const handleCreateLeague = async (user: FirebaseUser) => {
+    const newLeagueId = `league_${user.uid}_${Date.now()}`;
+    const newUser: User = {
+        id: user.uid,
+        name: user.displayName || 'Novo Admin',
+        email: user.email!,
+        teamName: `${user.displayName?.split(' ')[0] || 'Meu'} FC`,
+        partialScore: 0,
+        totalScore: 0,
+        valuation: 100,
+        lineup: [],
+        reserves: [],
+        role: 'admin',
+        avatar: user.photoURL || `https://placehold.co/128x128/E67E22/FFFFFF?text=${(user.displayName || 'A').charAt(0)}`,
+        paymentDueDate: format(new Date(), 'yyyy-MM-dd')
+    };
+
+    const newLeague: League = {
+        id: newLeagueId,
+        name: `Liga de ${newUser.name}`,
+        adminId: user.uid,
+        modality: null,
+        paymentsEnabled: true,
+        games: {},
+        users: { [user.uid]: newUser },
+        players: initialData.leagues.defaultLeague.players, // Start with a default player set
+        editorOfTheRound: null,
+        scoutEditor: null,
+        paymentEditor: null,
+        scalersRanking: {},
+        goalieRanking: {}
+    };
+
+    setAppData(prevData => ({
+        ...prevData,
+        leagues: {
+            ...prevData.leagues,
+            [newLeagueId]: newLeague
+        }
+    }));
+    setCurrentLeagueId(newLeagueId);
+    toast({ title: "Sua nova liga foi criada!", description: "Agora escolha a modalidade de jogo." });
+    navigateTo('modality-selection');
+  };
+
+
 
   const currentLeague: League | undefined = currentLeagueId ? appData.leagues[currentLeagueId] : undefined;
   // This needs a default value when no user is logged in. Let's use a dummy user or the first one.
@@ -209,15 +328,17 @@ export default function Home() {
   }, [currentLeague]);
   
   // Helper to update app data
-  const updateCurrentLeague = (updater: (league: League) => League) => {
-    if (!currentLeagueId) return;
+  const updateCurrentLeague = (updater: (league: League) => League, leagueIdToUpdate?: string) => {
+    const targetLeagueId = leagueIdToUpdate || currentLeagueId;
+    if (!targetLeagueId) return;
+
     setAppData(prevData => {
-        const newLeague = updater(prevData.leagues[currentLeagueId]);
+        const newLeague = updater(prevData.leagues[targetLeagueId]);
         return {
             ...prevData,
             leagues: {
                 ...prevData.leagues,
-                [currentLeagueId]: newLeague
+                [targetLeagueId]: newLeague
             }
         };
     });
