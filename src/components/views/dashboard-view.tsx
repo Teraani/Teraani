@@ -38,6 +38,8 @@ interface DashboardViewProps {
   onLeagueChange: (leagueId: string) => void;
   isPaymentsEnabled: boolean;
   onLogout: () => void;
+  leagueName: string;
+  onUpdateLeagueName: (newName: string) => void;
 }
 
 function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void }) {
@@ -98,13 +100,17 @@ function PaymentStatus({ user, onNavigate }: { user: User, onNavigate: (view: Vi
 }
 
 
-function EditProfileDialog({ user, onUpdateUser, children }: { user: User; onUpdateUser: (userId: string, newName: string) => void; children: React.ReactNode }) {
+function EditProfileDialog({ user, leagueName, isLeagueAdmin, onUpdateUser, onUpdateLeagueName, children }: { user: User; leagueName: string; isLeagueAdmin: boolean; onUpdateUser: (userId: string, newName: string) => void; onUpdateLeagueName: (newName: string) => void; children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState(user.name);
+  const [newLeagueName, setNewLeagueName] = useState(leagueName);
 
   const handleSave = () => {
     if (name.trim() && name.trim() !== user.name) {
       onUpdateUser(user.id, name.trim());
+    }
+     if (isLeagueAdmin && newLeagueName.trim() && newLeagueName.trim() !== leagueName) {
+      onUpdateLeagueName(newLeagueName.trim());
     }
     setIsOpen(false);
   };
@@ -112,6 +118,7 @@ function EditProfileDialog({ user, onUpdateUser, children }: { user: User; onUpd
   const handleOpenChange = (open: boolean) => {
     if (open) {
       setName(user.name);
+      setNewLeagueName(leagueName);
     }
     setIsOpen(open);
   }
@@ -121,15 +128,15 @@ function EditProfileDialog({ user, onUpdateUser, children }: { user: User; onUpd
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar Perfil</DialogTitle>
+          <DialogTitle>Editar Perfil e Liga</DialogTitle>
           <DialogDescription>
-            Faça alterações no seu perfil aqui. Clique em salvar quando terminar.
+            Faça alterações no seu perfil. Se for admin, pode alterar o nome da liga aqui também.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">
-              Nome
+              Seu Nome
             </Label>
             <Input
               id="name"
@@ -138,6 +145,19 @@ function EditProfileDialog({ user, onUpdateUser, children }: { user: User; onUpd
               className="col-span-3"
             />
           </div>
+           {isLeagueAdmin && (
+             <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="leagueName" className="text-right">
+                  Nome da Liga
+                </Label>
+                <Input
+                  id="leagueName"
+                  value={newLeagueName}
+                  onChange={(e) => setNewLeagueName(e.target.value)}
+                  className="col-span-3"
+                />
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button onClick={handleSave}>Salvar alterações</Button>
@@ -148,23 +168,8 @@ function EditProfileDialog({ user, onUpdateUser, children }: { user: User; onUpd
 }
 
 
-function PlayerSummary({ user, players, onNavigate, onAvatarChange, onUpdateUser, isPaymentsEnabled }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void, onAvatarChange: (userId: string, image: string) => void, onUpdateUser: (userId: string, newName: string) => void, isPaymentsEnabled: boolean }) {
+function PlayerSummary({ user, players, onNavigate }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void }) {
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files[0]) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                onAvatarChange(user.id, reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleAvatarClick = () => {
-        fileInputRef.current?.click();
-    };
 
     const { totalGames, totalPoints, performancePercentage } = useMemo(() => {
         const userAsPlayer = Object.values(players).find(p => p.name.toLowerCase().includes(user.name.split(' ')[0].toLowerCase()));
@@ -190,35 +195,15 @@ function PlayerSummary({ user, players, onNavigate, onAvatarChange, onUpdateUser
             <CardContent className="p-0">
                 <div className="flex items-center gap-4">
                      <div className="relative">
-                        <Avatar className="h-20 w-20 cursor-pointer" onClick={handleAvatarClick}>
+                        <Avatar className="h-20 w-20">
                             <AvatarImage src={user.avatar ?? undefined} alt="Foto do Jogador" />
                             <AvatarFallback className="text-3xl">
-                                <Upload className="h-8 w-8"/>
+                                {user.name.charAt(0)}
                             </AvatarFallback>
                         </Avatar>
-                        {user.avatar && (
-                          <div
-                            className="absolute bottom-0 right-0 bg-primary rounded-full p-1 cursor-pointer"
-                            onClick={handleAvatarClick}
-                          >
-                            <Upload className="h-4 w-4 text-primary-foreground" />
-                          </div>
-                        )}
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleImageChange}
-                            className="hidden"
-                            accept="image/*"
-                        />
                     </div>
                     <div className="flex items-center gap-2">
                         <h3 className="text-2xl font-bold">{user.name}</h3>
-                         <EditProfileDialog user={user} onUpdateUser={onUpdateUser}>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                                <Edit className="h-4 w-4"/>
-                            </Button>
-                        </EditProfileDialog>
                     </div>
                 </div>
                 <div className="grid grid-cols-3 text-center mt-4">
@@ -235,7 +220,6 @@ function PlayerSummary({ user, players, onNavigate, onAvatarChange, onUpdateUser
                         <p className="font-bold text-lg">{performancePercentage}</p>
                     </div>
                 </div>
-                {isPaymentsEnabled && <PaymentStatus user={user} onNavigate={onNavigate} />}
                 <Button className="w-full mt-4" onClick={() => onNavigate('lineup')}>
                     Ver Times da Rodada
                 </Button>
@@ -283,7 +267,7 @@ function ConnectSection() {
 }
 
 
-export default function DashboardView({ user, allUsers, players, onNavigate, onPlayerSelect, onAvatarChange, onUpdateUser, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout }: DashboardViewProps) {
+export default function DashboardView({ user, allUsers, players, onNavigate, onPlayerSelect, onAvatarChange, onUpdateUser, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout, leagueName, onUpdateLeagueName }: DashboardViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const sortedUsers = useMemo(() => {
     return Object.values(allUsers)
@@ -292,6 +276,7 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
   }, [allUsers, searchTerm]);
   
   const currentLeague = leagues[currentLeagueId];
+  const isLeagueAdmin = currentLeague.adminId === user.id;
 
   return (
     <div>
@@ -317,10 +302,16 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-             <EditProfileDialog user={user} onUpdateUser={onUpdateUser}>
+             <EditProfileDialog 
+                user={user} 
+                onUpdateUser={onUpdateUser}
+                leagueName={leagueName}
+                isLeagueAdmin={isLeagueAdmin}
+                onUpdateLeagueName={onUpdateLeagueName}
+             >
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                     <Edit className="mr-2 h-4 w-4" />
-                    <span>Editar Perfil</span>
+                    <span>Editar Perfil / Liga</span>
                 </DropdownMenuItem>
             </EditProfileDialog>
             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
@@ -335,6 +326,12 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
               <DropdownMenuItem onClick={() => onNavigate('admin')}>
                 <ShieldCheck className="mr-2 h-4 w-4" />
                 <span>Admin</span>
+              </DropdownMenuItem>
+            )}
+             {isPaymentsEnabled && (
+              <DropdownMenuItem onClick={() => onNavigate('payments', { isPersonalPayments: true })}>
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                <span>Pagamentos</span>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => window.location.href = 'mailto:suporte.amistosofc@gmail.com'}>
@@ -367,7 +364,7 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
                 </div>
             </CardContent>
         </Card>
-        <PlayerSummary user={user} players={players} onNavigate={onNavigate} onAvatarChange={onAvatarChange} onUpdateUser={onUpdateUser} isPaymentsEnabled={isPaymentsEnabled}/>
+        <PlayerSummary user={user} players={players} onNavigate={onNavigate} />
         <QuickAccess onNavigate={onNavigate} />
         <ConnectSection />
       </div>

@@ -60,7 +60,6 @@ export default function AdminView({
 }: AdminViewProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [newLeagueName, setNewLeagueName] = useState(leagueName);
 
   const handleSetEditorClick = (user: User) => {
     if (editorOfTheRound === user.id) {
@@ -152,10 +151,6 @@ export default function AdminView({
     return users.filter(user => user.id !== currentUser.id && user.name.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [users, searchTerm, currentUser.id]);
   
-  const handleSaveLeagueName = () => {
-    onUpdateLeagueName(newLeagueName);
-  };
-
   return (
     <div>
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
@@ -167,27 +162,6 @@ export default function AdminView({
       </header>
 
       <main className="p-4 space-y-6">
-        <Card>
-            <CardHeader>
-                <CardTitle>Configurações da Liga</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    <Label htmlFor="leagueName">Nome da Liga</Label>
-                    <div className="flex gap-2">
-                         <Input 
-                            id="leagueName"
-                            value={newLeagueName}
-                            onChange={(e) => setNewLeagueName(e.target.value)}
-                         />
-                         <Button onClick={handleSaveLeagueName} disabled={newLeagueName === leagueName || newLeagueName.trim() === ''}>
-                            <Save className="h-4 w-4" />
-                         </Button>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
-
         <Card>
             <CardHeader>
                 <CardTitle>Convidar Jogadores</CardTitle>
