@@ -7,7 +7,7 @@ import type { Player, User, League } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail, Landmark, Edit } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail, Landmark, Edit, Globe } from 'lucide-react';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -277,6 +277,8 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
   
   const currentLeague = leagues[currentLeagueId];
   const isLeagueAdmin = currentLeague.adminId === user.id;
+  const isSuperAdmin = user.email === 'jason.teraani@gmail.com';
+
 
   return (
     <div>
@@ -322,16 +324,22 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
                 <Landmark className="mr-2 h-4 w-4" />
                 <span>Trocar/Gerenciar Ligas</span>
             </DropdownMenuItem>
-            {user.role === 'admin' && (
+            {isLeagueAdmin && (
               <DropdownMenuItem onClick={() => onNavigate('admin')}>
                 <ShieldCheck className="mr-2 h-4 w-4" />
-                <span>Admin</span>
+                <span>Admin da Liga</span>
               </DropdownMenuItem>
             )}
              {isPaymentsEnabled && (
               <DropdownMenuItem onClick={() => onNavigate('payments', { isPersonalPayments: true })}>
                 <ShieldCheck className="mr-2 h-4 w-4" />
                 <span>Pagamentos</span>
+              </DropdownMenuItem>
+            )}
+            {isSuperAdmin && (
+               <DropdownMenuItem onClick={() => onNavigate('all-users')}>
+                <Globe className="mr-2 h-4 w-4" />
+                <span>Todos os Usuários do App</span>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => window.location.href = 'mailto:suporte.amistosofc@gmail.com'}>

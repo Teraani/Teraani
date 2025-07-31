@@ -34,8 +34,9 @@ import { auth, db } from '@/lib/firebase-config';
 import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import LeagueParticipantsView from '@/components/views/league-participants-view';
+import AllUsersView from '@/components/views/all-users-view';
 
-export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants';
+export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users';
 export type Position = Player['pos'] | null;
 export type Modality = 'campo' | 'society' | 'futsal';
 
@@ -116,6 +117,8 @@ export default function Home() {
         const savedData = localStorage.getItem('amistosos-fc-data');
         if (savedData) {
             setAppData(JSON.parse(savedData));
+        } else {
+            setAppData(initialData);
         }
     } catch (error) {
         console.error("Failed to load data from localStorage", error);
@@ -148,11 +151,16 @@ export default function Home() {
                 setLoggedInUser(user);
                 await handleUserData(user);
             } else {
-                handleLogout(false);
+                setLoggedInUser(null);
+                setCurrentLeagueId(null);
+                navigateTo('welcome');
             }
         } catch (error) {
             console.error("Initialization error:", error);
-            await handleLogout(true);
+            await signOut(auth);
+            setLoggedInUser(null);
+            setCurrentLeagueId(null);
+            navigateTo('welcome');
         } finally {
             setIsInitializing(false);
         }
@@ -871,6 +879,8 @@ export default function Home() {
     switch (currentView) {
       case 'loading':
          return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
+      case 'all-users':
+        return <AllUsersView leagues={appData.leagues} onBack={goBack} />;
       case 'leagues':
         return <LeaguesView 
                   onBack={goBack} 
@@ -915,7 +925,7 @@ export default function Home() {
                  setTeam2Lineup={setTeam2Lineup}
                  team2Reserves={team2Reserves}
                  setTeam2Reserves={setTeam2Reserves}
-                 onSaveLineups={handleSaveLineups}
+                 onSaveLineups={onSaveLineups}
                  lineupsSaved={lineupsSaved}
                  modality={selectedModality}
                  team1ShirtColor={team1ShirtColor}
@@ -1002,7 +1012,7 @@ export default function Home() {
                   isVotingReleased={isVotingReleased}
                   isVotingClosed={isVotingClosed}
                   onReleaseVoting={handleReleaseVoting}
-                  onCloseVoting={handleCloseVoting}
+                  onCloseVoting={onCloseVoting}
                   modality={selectedModality}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                   formation={formation}
