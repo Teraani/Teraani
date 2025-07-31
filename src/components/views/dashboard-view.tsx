@@ -337,10 +337,16 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
               </DropdownMenuItem>
             )}
             {isSuperAdmin && (
+              <>
                <DropdownMenuItem onClick={() => onNavigate('all-users')}>
                 <Globe className="mr-2 h-4 w-4" />
                 <span>Todos os Usuários do App</span>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onNavigate('all-leagues')}>
+                <Trophy className="mr-2 h-4 w-4" />
+                <span>Todas as Ligas do App</span>
+              </DropdownMenuItem>
+              </>
             )}
             <DropdownMenuItem onClick={() => window.location.href = 'mailto:suporte.amistosofc@gmail.com'}>
                 <Mail className="mr-2 h-4 w-4" />
