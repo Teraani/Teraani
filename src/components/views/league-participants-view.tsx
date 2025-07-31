@@ -3,7 +3,7 @@
 
 import type { League, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Crown, Search } from 'lucide-react';
+import { ArrowLeft, Crown, Search, Share2, UserPlus } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,9 +12,18 @@ import { useMemo, useState } from 'react';
 interface LeagueParticipantsViewProps {
   onBack: () => void;
   league: League;
+  isLeagueAdmin: boolean;
+  onInvite: () => void;
+  onAddGuest: () => void;
 }
 
-export default function LeagueParticipantsView({ onBack, league }: LeagueParticipantsViewProps) {
+export default function LeagueParticipantsView({ 
+  onBack, 
+  league, 
+  isLeagueAdmin, 
+  onInvite, 
+  onAddGuest 
+}: LeagueParticipantsViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
   const participants = useMemo(() => {
@@ -37,8 +46,8 @@ export default function LeagueParticipantsView({ onBack, league }: LeaguePartici
         <div className="w-9 h-9" />
       </header>
 
-      <main className="p-4">
-        <div className="relative mb-4">
+      <main className="p-4 space-y-4">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             placeholder="Buscar membro..."
@@ -47,7 +56,21 @@ export default function LeagueParticipantsView({ onBack, league }: LeaguePartici
             className="pl-10 bg-background border-border"
           />
         </div>
-        <ScrollArea className="h-[calc(100vh-160px)]">
+
+        {isLeagueAdmin && (
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={onInvite}>
+              <Share2 className="mr-2 h-4 w-4" />
+              Convidar Amigo
+            </Button>
+            <Button variant="secondary" onClick={onAddGuest}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Adicionar Convidado
+            </Button>
+          </div>
+        )}
+
+        <ScrollArea className="h-[calc(100vh-240px)]">
           <div className="space-y-3 pr-2">
             {participants.map((user) => (
               <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
