@@ -1,20 +1,156 @@
 
 "use client";
 
-import type { League, User } from '@/lib/data';
+import type { League, User, Player } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Crown, Search, Share2, UserPlus } from 'lucide-react';
+import { ArrowLeft, Crown, Search, Share2, UserPlus, Trash2, Upload, Edit } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogFooter
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+
+const GuestPlayerForm = ({
+  onSave,
+  onClose,
+}: {
+  onSave: (data: any) => void;
+  onClose: () => void;
+}) => {
+  const [name, setName] = useState('');
+  const [pos, setPos] = useState<Player['pos'] | ''>('');
+  const [team, setTeam] = useState('');
+  const [img, setImg] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImg(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !pos || !team) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+    const data = {
+      name,
+      pos: pos as Player['pos'],
+      team,
+      img: img || `https://placehold.co/128x128/8E44AD/FFFFFF?text=${name.charAt(0)}`,
+    };
+    onSave(data);
+    onClose();
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Adicionar Jogador Convidado</DialogTitle>
+        <DialogDescription>
+          Preencha os dados do jogador convidado para esta rodada.
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex flex-col items-center gap-4">
+           {img ? (
+            <Avatar className="w-24 h-24">
+                <AvatarImage src={img} alt="Pré-visualização" data-ai-hint="player avatar"/>
+                <AvatarFallback className="text-4xl">{name.charAt(0) || 'C'}</AvatarFallback>
+            </Avatar>
+           ) : (
+            <Avatar className="w-24 h-24">
+                <AvatarFallback className="text-4xl bg-muted"><UserPlus/></AvatarFallback>
+            </Avatar>
+           )}
+          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Anexar Imagem
+          </Button>
+          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+        </div>
+
+        <div>
+          <Label htmlFor="guestName">Nome</Label>
+          <Input id="guestName" value={name} onChange={e => setName(e.target.value)} required />
+        </div>
+        <div>
+          <Label htmlFor="guestTeam">Cor da Camisa/Time</Label>
+          <Select onValueChange={setTeam} value={team} required>
+              <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma cor" />
+              </SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="Verde">Verde</SelectItem>
+                  <SelectItem value="Amarelo">Amarelo</SelectItem>
+                  <SelectItem value="Preto">Preto</SelectItem>
+                  <SelectItem value="Vermelho">Vermelho</SelectItem>
+                  <SelectItem value="Branco">Branco</SelectItem>
+                  <SelectItem value="Azul">Azul</SelectItem>
+              </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="guestPos">Posição</Label>
+           <Select onValueChange={(v) => setPos(v as Player['pos'])} value={pos} required>
+              <SelectTrigger>
+                  <SelectValue placeholder="Selecione a posição" />
+              </SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="GOL">Goleiro (GOL)</SelectItem>
+                  <SelectItem value="LAT">Lateral (LAT)</SelectItem>
+                  <SelectItem value="ZAG">Zagueiro (ZAG)</SelectItem>
+                  <SelectItem value="MEI">Meio-campo (MEI)</SelectItem>
+                  <SelectItem value="VOL">Volante (VOL)</SelectItem>
+                  <SelectItem value="ATA">Atacante (ATA)</SelectItem>
+              </SelectContent>
+          </Select>
+        </div>
+        
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
+          <Button type="submit">Adicionar Convidado</Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
 
 interface LeagueParticipantsViewProps {
   onBack: () => void;
   league: League;
   isLeagueAdmin: boolean;
   onInvite: () => void;
-  onAddGuest: () => void;
+  onAddGuest: (guestData: any) => void;
+  onRemoveUser: (userId: string) => void;
 }
 
 export default function LeagueParticipantsView({ 
@@ -22,9 +158,12 @@ export default function LeagueParticipantsView({
   league, 
   isLeagueAdmin, 
   onInvite, 
-  onAddGuest 
+  onAddGuest,
+  onRemoveUser
 }: LeagueParticipantsViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
+  const [userToRemove, setUserToRemove] = useState<User | null>(null);
 
   const participants = useMemo(() => {
     return Object.values(league.users)
@@ -36,8 +175,38 @@ export default function LeagueParticipantsView({
       });
   }, [league.users, searchTerm]);
 
+  const handleConfirmRemove = () => {
+    if (userToRemove) {
+      onRemoveUser(userToRemove.id);
+      setUserToRemove(null);
+    }
+  }
+
   return (
     <div>
+       <AlertDialog open={!!userToRemove} onOpenChange={(open) => !open && setUserToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover Membro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover "{userToRemove?.name}" da liga? Todas as suas estatísticas e dados relacionados serão perdidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setUserToRemove(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmRemove} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isAddGuestOpen} onOpenChange={setIsAddGuestOpen}>
+        <GuestPlayerForm 
+          onSave={(data) => onAddGuest(data)}
+          onClose={() => setIsAddGuestOpen(false)}
+        />
+      </Dialog>
+
+
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
@@ -63,7 +232,7 @@ export default function LeagueParticipantsView({
               <Share2 className="mr-2 h-4 w-4" />
               Convidar Amigo
             </Button>
-            <Button variant="secondary" onClick={onAddGuest}>
+            <Button variant="secondary" onClick={() => setIsAddGuestOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" />
               Adicionar Convidado
             </Button>
@@ -87,6 +256,11 @@ export default function LeagueParticipantsView({
                     <p className="text-sm text-muted-foreground">{user.teamName}</p>
                   </div>
                 </div>
+                 {isLeagueAdmin && user.role !== 'admin' && (
+                  <Button variant="ghost" size="icon" onClick={() => setUserToRemove(user)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
               </div>
             ))}
           </div>

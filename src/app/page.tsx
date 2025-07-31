@@ -397,10 +397,9 @@ export default function Home() {
     }
   };
 
-  const handleAddGuestPlayer = () => {
+  const handleAddGuestPlayer = (guestData: Omit<Player, 'last_val' | 'games' | 'performanceHistory' | 'value' | 'points'>) => {
     updateCurrentLeague(league => {
-      const guestNumber = Object.values(league.users).filter(u => u.name.startsWith('Convidado')).length + 1;
-      const guestName = `Convidado ${guestNumber}`;
+      const guestName = guestData.name;
       const guestUserId = `guest_user_${Date.now()}`;
       const guestPlayerId = `guest_player_${Date.now()}`;
 
@@ -415,20 +414,17 @@ export default function Home() {
         lineup: [],
         reserves: [],
         role: 'player',
-        avatar: `https://placehold.co/128x128/8E44AD/FFFFFF?text=C${guestNumber}`,
+        avatar: guestData.img || `https://placehold.co/128x128/8E44AD/FFFFFF?text=${guestName.charAt(0)}`,
         paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
         playerId: guestPlayerId,
       };
 
       const newGuestPlayer: Player = {
-        name: guestName,
-        team: 'CON',
-        pos: 'MEI',
+        ...guestData,
         value: 5.0,
         points: 0,
         last_val: 0,
         games: 0,
-        img: `https://placehold.co/128x128/8E44AD/FFFFFF?text=C${guestNumber}`,
         stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 },
         performanceHistory: [],
       };
@@ -441,7 +437,44 @@ export default function Home() {
     });
     toast({
       title: 'Convidado Adicionado!',
-      description: 'Um jogador convidado foi adicionado à liga e ao mercado.',
+      description: `${guestData.name} foi adicionado à liga e ao mercado.`,
+    });
+  };
+
+  const handleRemoveUserFromLeague = (userIdToRemove: string) => {
+    if (!currentLeague) return;
+
+    // Prevent admin from removing themselves
+    if (userIdToRemove === currentLeague.adminId) {
+      toast({
+        title: "Ação não permitida",
+        description: "O administrador não pode se remover da própria liga.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    updateCurrentLeague(league => {
+      const updatedUsers = { ...league.users };
+      const userToRemove = updatedUsers[userIdToRemove];
+      delete updatedUsers[userIdToRemove];
+
+      const updatedPlayers = { ...league.players };
+      if (userToRemove?.playerId && updatedPlayers[userToRemove.playerId]) {
+          delete updatedPlayers[userToRemove.playerId];
+      }
+      
+      return {
+        ...league,
+        users: updatedUsers,
+        players: updatedPlayers
+      };
+    });
+
+    toast({
+      title: "Usuário Removido",
+      description: `O usuário foi removido da liga.`,
+      variant: "destructive",
     });
   };
 
@@ -896,6 +929,7 @@ export default function Home() {
                   isLeagueAdmin={isLeagueAdmin}
                   onInvite={handleInvite}
                   onAddGuest={handleAddGuestPlayer}
+                  onRemoveUser={handleRemoveUserFromLeague}
                 />;
       case 'modality-selection':
         if (!loggedInUser || !currentLeague) {
