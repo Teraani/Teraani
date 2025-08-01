@@ -8,7 +8,7 @@ import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import type { View, AddPlayerSlot, Modality } from '@/app/page';
+import type { View, AddPlayerSlot, Modality } from '@/components/app-container';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '../lineup/add-player-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
