@@ -14,7 +14,6 @@ import AddPlayerButton from '../lineup/add-player-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
-import { generateBalancedTeam } from '@/ai/flows/suggest-player-replacements';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -380,57 +379,6 @@ export default function LineupView(props: LineupViewProps) {
     }
   };
 
-  const handleBalanceTeams = async () => {
-    setIsBalancing(true);
-    try {
-        const result = await generateBalancedTeam({
-            availablePlayers: players,
-            teamBudget: 150, // This budget is not really used in the new logic but let's keep it
-        });
-
-        const { team1, team2 } = result;
-
-        const placePlayers = (teamData: string[], currentLineup: (string | null)[]) => {
-            const newLineup = Array(currentLineup.length).fill(null);
-            const goalkeeper = teamData.find(id => players[id]?.pos === 'GOL');
-            const fieldPlayers = teamData.filter(id => players[id]?.pos !== 'GOL');
-
-            // Place goalkeeper at the last position
-            if (goalkeeper) {
-                newLineup[newLineup.length - 1] = goalkeeper;
-            }
-
-            // Fill the rest with field players
-            for (let i = 0; i < newLineup.length - 1 && i < fieldPlayers.length; i++) {
-                newLineup[i] = fieldPlayers[i];
-            }
-            return newLineup;
-        };
-        
-        setTeam1Lineup(placePlayers(team1, team1Lineup));
-        setTeam2Lineup(placePlayers(team2, team2Lineup));
-        
-        // Clear reserves
-        setTeam1Reserves(Array(team1Reserves.length).fill(null));
-        setTeam2Reserves(Array(team2Reserves.length).fill(null));
-
-        toast({
-            title: "Times Balanceados!",
-            description: "A IA gerou duas equipes titulares equilibradas para o confronto.",
-        });
-
-    } catch (error) {
-        console.error("Error balancing teams:", error);
-        toast({
-            title: "Erro ao Balancear",
-            description: "Não foi possível gerar os times. Tente novamente.",
-            variant: "destructive",
-        });
-    } finally {
-        setIsBalancing(false);
-    }
-  };
-
   const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
     onAddPlayer({ position, index, team });
   };
@@ -549,9 +497,9 @@ export default function LineupView(props: LineupViewProps) {
         </Card>
         {canEdit && (
             <div className="mt-4 flex flex-col gap-2">
-                <Button onClick={handleBalanceTeams} className="w-full bg-amber-400 text-black hover:bg-amber-500" disabled={isBalancing}>
+                <Button className="w-full bg-amber-400 text-black hover:bg-amber-500" disabled={isBalancing}>
                     {isBalancing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                    {isBalancing ? 'Balanceando...' : 'Balancear Times'}
+                    {isBalancing ? 'Balanceando...' : 'Balancear Times (IA)'}
                 </Button>
             </div>
         )}
