@@ -2,7 +2,7 @@
 "use client";
 
 import { Home, Shirt, Trophy, BarChart2, DollarSign, Award } from 'lucide-react';
-import type { View } from '@/app/page';
+import type { View } from './app-container';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 

@@ -1057,7 +1057,7 @@ export default function AppContainer() {
       <main className={cn(showBottomNav && "pb-20")}>
         {renderView()}
       </main>
-      {showBottomNav && currentUser && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments && isPaymentsEnabled} />}
+      {showBottomNav && currentUser && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={isPaymentsEnabled} />}
     </div>
   );
 }
