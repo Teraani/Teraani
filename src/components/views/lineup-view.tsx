@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import type { View, AddPlayerSlot, Modality } from '@/components/app-container';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '../lineup/add-player-button';
+import AiSuggestions from '@/components/lineup/ai-suggestions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '../ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
@@ -294,7 +295,6 @@ export default function LineupView(props: LineupViewProps) {
 
   const [isMarketOpen, setIsMarketOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('team1');
-  const [isBalancing, setIsBalancing] = useState(false);
   const { toast } = useToast();
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
   const [showTestTeamInfo, setShowTestTeamInfo] = useState(true);
@@ -381,6 +381,11 @@ export default function LineupView(props: LineupViewProps) {
 
   const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
     onAddPlayer({ position, index, team });
+  };
+
+  const handleApplyAiSuggestions = (team1: string[], team2: string[]) => {
+    setTeam1Lineup(team1);
+    setTeam2Lineup(team2);
   };
   
   const team1Score = team1Lineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
@@ -497,10 +502,7 @@ export default function LineupView(props: LineupViewProps) {
         </Card>
         {canEdit && (
             <div className="mt-4 flex flex-col gap-2">
-                <Button className="w-full bg-amber-400 text-black hover:bg-amber-500" disabled={isBalancing}>
-                    {isBalancing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                    {isBalancing ? 'Balanceando...' : 'Balancear Times (IA)'}
-                </Button>
+                <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
             </div>
         )}
      </>
