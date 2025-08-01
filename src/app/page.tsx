@@ -1049,7 +1049,7 @@ export default function Home() {
                   isVotingReleased={isVotingReleased}
                   isVotingClosed={isVotingClosed}
                   onReleaseVoting={handleReleaseVoting}
-                  onCloseVoting={onCloseVoting}
+                  onCloseVoting={handleCloseVoting}
                   modality={selectedModality}
                   isVoteRevelationEnabled={isVoteRevelationEnabled}
                   formation={formation}
