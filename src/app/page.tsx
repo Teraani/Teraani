@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -904,7 +903,7 @@ export default function Home() {
 
   const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'loading'].includes(currentView);
 
-  const renderView = () => {
+  const renderCurrentView = () => {
     const isLeagueAdmin = currentLeague.adminId === currentUser.id;
     switch (currentView) {
       case 'loading':
@@ -1058,7 +1057,7 @@ export default function Home() {
   return (
     <div>
       <main className={cn(showBottomNav && "pb-20")}>
-        {renderView()}
+        {renderCurrentView()}
       </main>
       {showBottomNav && currentUser && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments && isPaymentsEnabled} />}
     </div>
