@@ -880,7 +880,6 @@ export default function Home() {
   }
   
   if (!loggedInUser) {
-    // If not logged in, render views that don't depend on user data.
      switch (currentView) {
         case 'welcome':
           return <WelcomeView onNavigate={navigateTo} />;
@@ -894,170 +893,165 @@ export default function Home() {
   }
 
   if (!currentUser || !currentLeague) {
-    // If logged in but league/user data is not ready yet, show a loading indicator.
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando liga...</div>;
   }
 
-
   const selectedPlayer = selectedPlayerId && currentLeague ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
-
   const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'loading'].includes(currentView);
-
-  const renderCurrentView = () => {
-    const isLeagueAdmin = currentLeague.adminId === currentUser.id;
-    switch (currentView) {
-      case 'loading':
-         return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
-      case 'all-users':
-        return <AllUsersView leagues={appData.leagues} onBack={goBack} />;
-      case 'all-leagues':
-        return <AllLeaguesView leagues={appData.leagues} onBack={goBack} />;
-      case 'leagues':
-        return <LeaguesView 
-                  onBack={goBack} 
-                  leagues={appData.leagues} 
-                  currentLeagueId={currentLeagueId!}
-                  onLeagueChange={handleLeagueChange}
-                  currentUser={currentUser!}
-                />;
-      case 'league-participants':
-        return <LeagueParticipantsView
-                  onBack={goBack}
-                  league={currentLeague}
-                  isLeagueAdmin={isLeagueAdmin}
-                  onInvite={handleInvite}
-                  onAddGuest={handleAddGuestPlayer}
-                  onRemoveUser={handleRemoveUserFromLeague}
-                />;
-      case 'modality-selection':
-        if (!loggedInUser || !currentLeague) {
-           setCurrentView('welcome');
-           return <WelcomeView onNavigate={navigateTo} />;
-        }
-        return <ModalitySelectionView 
-                  onModalitySelect={handleModalitySelect} 
-                  selectedModality={selectedModality}
-                  isLeagueAdmin={isLeagueAdmin}
-                />;
-      case 'dashboard':
-        return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;
-      case 'lineup':
-        return <LineupView 
-                 players={currentLeague!.players} 
-                 onPlayerSelect={selectPlayerForDetails} 
-                 onNavigate={navigateTo} 
-                 onAddPlayer={handleOpenMarket} 
-                 currentUser={currentUser!}
-                 canEdit={canEditLineup}
-                 team1Lineup={team1Lineup}
-                 setTeam1Lineup={setTeam1Lineup}
-                 team1Reserves={team1Reserves}
-                 setTeam1Reserves={setTeam1Reserves}
-                 team2Lineup={team2Lineup}
-                 setTeam2Lineup={setTeam2Lineup}
-                 team2Reserves={team2Reserves}
-                 setTeam2Reserves={setTeam2Reserves}
-                 onSaveLineups={handleSaveLineups}
-                 lineupsSaved={lineupsSaved}
-                 modality={selectedModality}
-                 team1ShirtColor={team1ShirtColor}
-                 setTeam1ShirtColor={setTeam1ShirtColor}
-                 team2ShirtColor={team2ShirtColor}
-                 setTeam2ShirtColor={setTeam2ShirtColor}
-                 formation={formation}
-                 setFormation={setFormation}
-               />;
-      case 'player-details':
-        return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
-      case 'market':
-        return <MarketView 
-                 players={currentLeague!.players} 
-                 onPlayerSelect={addPlayerToLineup} 
-                 onBack={goBack} 
-                 position={slotToAddPlayer?.position ?? null}
-                 scaledPlayerIds={allScaledPlayerIds}
-                 canEdit={canEditLineup}
-                 onAddPlayerToMarket={handleAddPlayerToMarket}
-                 onRemovePlayerFromMarket={handleRemovePlayerFromMarket}
-                 onUpdatePlayerInMarket={() => {}}
-               />;
-      case 'partial-score':
-        return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
-      case 'games':
-        return <GamesView onBack={goBack} gamesData={currentLeague!.games} />;
-      case 'friends-score':
-        return <FriendsScoreView onBack={goBack} user={currentUser!} players={currentLeague!.players} allUsers={currentLeague!.users} />;
-      case 'statistics':
-        return <StatisticsView players={currentLeague!.players} users={currentLeague!.users} onBack={() => navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} scalersRanking={currentLeague!.scalersRanking} goalieRanking={currentLeague!.goalieRanking}/>;
-      case 'admin':
-        return <AdminView 
-                  onBack={goBack} 
-                  users={Object.values(currentLeague!.users)} 
-                  currentUser={currentUser!}
-                  editorOfTheRound={currentLeague!.editorOfTheRound} 
-                  onSetEditor={handleSetEditor} 
-                  scoutEditor={currentLeague!.scoutEditor} 
-                  onSetScoutEditor={handleSetScoutEditor}
-                  paymentEditor={currentLeague!.paymentEditor}
-                  onSetPaymentEditor={handleSetPaymentEditor}
-                  isVoteRevelationEnabled={isVoteRevelationEnabled}
-                  onToggleVoteRevelation={handleToggleVoteRevelation}
-                  leagueId={currentLeague!.id}
-                  isPaymentsEnabled={isPaymentsEnabled}
-                  onTogglePayments={handleTogglePayments}
-                  leagueName={currentLeague!.name}
-                  onUpdateLeagueName={handleUpdateLeagueName}
-                />;
-       case 'live':
-        return <LiveView 
-                  onBack={goBack} 
-                  user={currentUser!} 
-                  players={currentLeague!.players} 
-                  canEditScouts={canEditScouts}
-                  liveEvents={liveEvents}
-                  onAddLiveEvent={handleAddLiveEvent}
-                  onFinishMatch={handleFinishMatch}
-                  team1Lineup={team1Lineup}
-                  team2Lineup={team2Lineup}
-                  allScaledPlayerIds={allScaledPlayerIds}
-                />;
-      case 'payments':
-        return <PaymentsView
-                  onBack={goBack}
-                  currentUser={currentUser!}
-                  users={currentLeague!.users}
-                  canEdit={canEditPayments && !isPersonalPaymentsView}
-                  onSave={handleUpdateUserPayments}
-                />;
-      case 'best-eleven':
-        return <BestElevenView
-                  onBack={goBack}
-                  players={currentLeague!.players}
-                  currentUser={currentUser!}
-                  allUsers={Object.values(currentLeague!.users)}
-                  allScaledPlayerIds={lastRoundPlayerIds}
-                  onVote={handleBestElevenVote}
-                  userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
-                  allVotes={bestElevenVotes}
-                  isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
-                  canManageVoting={canManageVoting}
-                  isVotingReleased={isVotingReleased}
-                  isVotingClosed={isVotingClosed}
-                  onReleaseVoting={handleReleaseVoting}
-                  onCloseVoting={handleCloseVoting}
-                  modality={selectedModality}
-                  isVoteRevelationEnabled={isVoteRevelationEnabled}
-                  formation={formation}
-                />;
-      default:
-        return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
-    }
-  };
 
   return (
     <div>
       <main className={cn(showBottomNav && "pb-20")}>
-        {renderCurrentView()}
+        {(() => {
+          const isLeagueAdmin = currentLeague.adminId === currentUser.id;
+          switch (currentView) {
+            case 'loading':
+              return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
+            case 'all-users':
+              return <AllUsersView leagues={appData.leagues} onBack={goBack} />;
+            case 'all-leagues':
+              return <AllLeaguesView leagues={appData.leagues} onBack={goBack} />;
+            case 'leagues':
+              return <LeaguesView 
+                        onBack={goBack} 
+                        leagues={appData.leagues} 
+                        currentLeagueId={currentLeagueId!}
+                        onLeagueChange={handleLeagueChange}
+                        currentUser={currentUser!}
+                      />;
+            case 'league-participants':
+              return <LeagueParticipantsView
+                        onBack={goBack}
+                        league={currentLeague}
+                        isLeagueAdmin={isLeagueAdmin}
+                        onInvite={handleInvite}
+                        onAddGuest={handleAddGuestPlayer}
+                        onRemoveUser={handleRemoveUserFromLeague}
+                      />;
+            case 'modality-selection':
+              if (!loggedInUser || !currentLeague) {
+                 setCurrentView('welcome');
+                 return <WelcomeView onNavigate={navigateTo} />;
+              }
+              return <ModalitySelectionView 
+                        onModalitySelect={handleModalitySelect} 
+                        selectedModality={selectedModality}
+                        isLeagueAdmin={isLeagueAdmin}
+                      />;
+            case 'dashboard':
+              return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;
+            case 'lineup':
+              return <LineupView 
+                       players={currentLeague!.players} 
+                       onPlayerSelect={selectPlayerForDetails} 
+                       onNavigate={navigateTo} 
+                       onAddPlayer={handleOpenMarket} 
+                       currentUser={currentUser!}
+                       canEdit={canEditLineup}
+                       team1Lineup={team1Lineup}
+                       setTeam1Lineup={setTeam1Lineup}
+                       team1Reserves={team1Reserves}
+                       setTeam1Reserves={setTeam1Reserves}
+                       team2Lineup={team2Lineup}
+                       setTeam2Lineup={setTeam2Lineup}
+                       team2Reserves={team2Reserves}
+                       setTeam2Reserves={setTeam2Reserves}
+                       onSaveLineups={handleSaveLineups}
+                       lineupsSaved={lineupsSaved}
+                       modality={selectedModality}
+                       team1ShirtColor={team1ShirtColor}
+                       setTeam1ShirtColor={setTeam1ShirtColor}
+                       team2ShirtColor={team2ShirtColor}
+                       setTeam2ShirtColor={setTeam2ShirtColor}
+                       formation={formation}
+                       setFormation={setFormation}
+                     />;
+            case 'player-details':
+              return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
+            case 'market':
+              return <MarketView 
+                       players={currentLeague!.players} 
+                       onPlayerSelect={addPlayerToLineup} 
+                       onBack={goBack} 
+                       position={slotToAddPlayer?.position ?? null}
+                       scaledPlayerIds={allScaledPlayerIds}
+                       canEdit={canEditLineup}
+                       onAddPlayerToMarket={handleAddPlayerToMarket}
+                       onRemovePlayerFromMarket={handleRemovePlayerFromMarket}
+                       onUpdatePlayerInMarket={() => {}}
+                     />;
+            case 'partial-score':
+              return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
+            case 'games':
+              return <GamesView onBack={goBack} gamesData={currentLeague!.games} />;
+            case 'friends-score':
+              return <FriendsScoreView onBack={goBack} user={currentUser!} players={currentLeague!.players} allUsers={currentLeague!.users} />;
+            case 'statistics':
+              return <StatisticsView players={currentLeague!.players} users={currentLeague!.users} onBack={() => navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} scalersRanking={currentLeague!.scalersRanking} goalieRanking={currentLeague!.goalieRanking}/>;
+            case 'admin':
+              return <AdminView 
+                        onBack={goBack} 
+                        users={Object.values(currentLeague!.users)} 
+                        currentUser={currentUser!}
+                        editorOfTheRound={currentLeague!.editorOfTheRound} 
+                        onSetEditor={handleSetEditor} 
+                        scoutEditor={currentLeague!.scoutEditor} 
+                        onSetScoutEditor={handleSetScoutEditor}
+                        paymentEditor={currentLeague!.paymentEditor}
+                        onSetPaymentEditor={handleSetPaymentEditor}
+                        isVoteRevelationEnabled={isVoteRevelationEnabled}
+                        onToggleVoteRevelation={handleToggleVoteRevelation}
+                        leagueId={currentLeague!.id}
+                        isPaymentsEnabled={isPaymentsEnabled}
+                        onTogglePayments={handleTogglePayments}
+                        leagueName={currentLeague!.name}
+                        onUpdateLeagueName={handleUpdateLeagueName}
+                      />;
+             case 'live':
+              return <LiveView 
+                        onBack={goBack} 
+                        user={currentUser!} 
+                        players={currentLeague!.players} 
+                        canEditScouts={canEditScouts}
+                        liveEvents={liveEvents}
+                        onAddLiveEvent={handleAddLiveEvent}
+                        onFinishMatch={handleFinishMatch}
+                        team1Lineup={team1Lineup}
+                        team2Lineup={team2Lineup}
+                        allScaledPlayerIds={allScaledPlayerIds}
+                      />;
+            case 'payments':
+              return <PaymentsView
+                        onBack={goBack}
+                        currentUser={currentUser!}
+                        users={currentLeague!.users}
+                        canEdit={canEditPayments && !isPersonalPaymentsView}
+                        onSave={handleUpdateUserPayments}
+                      />;
+            case 'best-eleven':
+              return <BestElevenView
+                        onBack={goBack}
+                        players={currentLeague!.players}
+                        currentUser={currentUser!}
+                        allUsers={Object.values(currentLeague!.users)}
+                        allScaledPlayerIds={lastRoundPlayerIds}
+                        onVote={handleBestElevenVote}
+                        userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined}
+                        allVotes={bestElevenVotes}
+                        isSaved={currentUser ? bestElevenSaved[currentUser.id] : false}
+                        canManageVoting={canManageVoting}
+                        isVotingReleased={isVotingReleased}
+                        isVotingClosed={isVotingClosed}
+                        onReleaseVoting={handleReleaseVoting}
+                        onCloseVoting={handleCloseVoting}
+                        modality={selectedModality}
+                        isVoteRevelationEnabled={isVoteRevelationEnabled}
+                        formation={formation}
+                      />;
+            default:
+              return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
+          }
+        })()}
       </main>
       {showBottomNav && currentUser && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canEditPayments && isPaymentsEnabled} />}
     </div>
