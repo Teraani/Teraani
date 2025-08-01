@@ -729,7 +729,7 @@ export default function AppContainer() {
 
         const team1PlayerIds = new Set([...team1Lineup, ...team1Reserves].filter(Boolean));
         const team2PlayerIds = new Set([...team2Lineup, ...team2Reserves].filter(Boolean));
-        const matchResult = team1Score > team2Score ? 'win' : team2Score > team1Score ? 'loss' : 'draw';
+        const matchResult = team1Score > team2Score ? 'win' : team2Score > team1Score ? 'loss' : (team2Score === team1Score ? 'draw' : 'draw');
 
         playersOfLastRound.forEach(playerId => {
             const player = updatedPlayers[playerId];
