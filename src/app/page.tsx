@@ -655,9 +655,6 @@ export default function Home() {
   };
 
   const handleSaveLineups = () => {
-    console.log("Saving lineups...");
-    console.log("Team 1:", team1Lineup, team1Reserves);
-    console.log("Team 2:", team2Lineup, team2Reserves);
     setLineupsSaved(true);
     toast({
         title: "Times Salvos!",
