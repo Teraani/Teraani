@@ -134,76 +134,22 @@ export default function Home() {
     }
   }, [appData, currentLeagueId]);
 
-  // Effect for Authentication State Change
-  useEffect(() => {
-    // Check for invite link on initial load
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteId = urlParams.get('invite');
-    if (inviteId) {
-        localStorage.setItem('leagueInviteId', inviteId);
-        // Clean the URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+  const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
+    if (view === 'payments') {
+      setIsPersonalPaymentsView(options?.isPersonalPayments || false);
     }
-
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setIsInitializing(true);
-        try {
-            if (user) {
-                setLoggedInUser(user);
-                await handleUserData(user);
-            } else {
-                setLoggedInUser(null);
-                setCurrentLeagueId(null);
-                navigateTo('welcome');
-            }
-        } catch (error) {
-            console.error("Initialization error:", error);
-            await signOut(auth);
-            setLoggedInUser(null);
-            setCurrentLeagueId(null);
-            navigateTo('welcome');
-        } finally {
-            setIsInitializing(false);
-        }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const handleUserData = async (user: FirebaseUser) => {
-    let savedAppData = appData;
-    const savedDataString = localStorage.getItem('amistosos-fc-data');
-    if (savedDataString) {
-        savedAppData = JSON.parse(savedDataString);
-    }
-
-    const inviteId = localStorage.getItem('leagueInviteId');
-    let userIsInAnyLeague = false;
-
-    for (const leagueId in savedAppData.leagues) {
-        if (savedAppData.leagues[leagueId].users[user.uid]) {
-            userIsInAnyLeague = true;
-            break;
-        }
-    }
-
-    if (inviteId) {
-        await handleJoinLeague(user, inviteId);
-        localStorage.removeItem('leagueInviteId');
-    } else if (!userIsInAnyLeague) {
-        await handleCreateLeague(user);
-    } else {
-        const lastLeagueId = localStorage.getItem('last_league_id');
-        if (lastLeagueId && savedAppData.leagues[lastLeagueId] && savedAppData.leagues[lastLeagueId].users[user.uid]) {
-            setCurrentLeagueId(lastLeagueId);
-        } else {
-            // Find the first league the user belongs to
-            const firstLeagueId = Object.keys(savedAppData.leagues).find(id => savedAppData.leagues[id].users[user.uid]);
-            setCurrentLeagueId(firstLeagueId || null);
-        }
-        navigateTo('dashboard');
-    }
+    setPreviousView(currentView);
+    setCurrentView(view);
+    window.scrollTo(0, 0);
   };
   
+  const handleUpdateLeagueName = (newName: string) => {
+    updateCurrentLeague(league => ({ ...league, name: newName }));
+    toast({
+      title: "Nome da Liga Atualizado!",
+    });
+  };
+
   const handleJoinLeague = async (user: FirebaseUser, leagueId: string) => {
     let leagueToJoin = appData.leagues[leagueId];
     // Ensure we are working with the latest data
@@ -290,7 +236,107 @@ export default function Home() {
     navigateTo('modality-selection');
   };
 
+  const handleUserData = async (user: FirebaseUser) => {
+    let savedAppData = appData;
+    const savedDataString = localStorage.getItem('amistosos-fc-data');
+    if (savedDataString) {
+        savedAppData = JSON.parse(savedDataString);
+    }
 
+    const inviteId = localStorage.getItem('leagueInviteId');
+    let userIsInAnyLeague = false;
+
+    for (const leagueId in savedAppData.leagues) {
+        if (savedAppData.leagues[leagueId].users[user.uid]) {
+            userIsInAnyLeague = true;
+            break;
+        }
+    }
+
+    if (inviteId) {
+        await handleJoinLeague(user, inviteId);
+        localStorage.removeItem('leagueInviteId');
+    } else if (!userIsInAnyLeague) {
+        await handleCreateLeague(user);
+    } else {
+        const lastLeagueId = localStorage.getItem('last_league_id');
+        if (lastLeagueId && savedAppData.leagues[lastLeagueId] && savedAppData.leagues[lastLeagueId].users[user.uid]) {
+            setCurrentLeagueId(lastLeagueId);
+        } else {
+            // Find the first league the user belongs to
+            const firstLeagueId = Object.keys(savedAppData.leagues).find(id => savedAppData.leagues[id].users[user.uid]);
+            setCurrentLeagueId(firstLeagueId || null);
+        }
+        navigateTo('dashboard');
+    }
+  };
+  
+  // Effect for Authentication State Change
+  useEffect(() => {
+    // Check for invite link on initial load
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteId = urlParams.get('invite');
+    if (inviteId) {
+        localStorage.setItem('leagueInviteId', inviteId);
+        // Clean the URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        setIsInitializing(true);
+        try {
+            if (user) {
+                setLoggedInUser(user);
+                await handleUserData(user);
+            } else {
+                setLoggedInUser(null);
+                setCurrentLeagueId(null);
+                navigateTo('welcome');
+            }
+        } catch (error) {
+            console.error("Initialization error:", error);
+            await signOut(auth);
+            setLoggedInUser(null);
+            setCurrentLeagueId(null);
+            navigateTo('welcome');
+        } finally {
+            setIsInitializing(false);
+        }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleSaveLineups = () => {
+    setLineupsSaved(true);
+    toast({
+        title: "Times Salvos!",
+        description: "As escalações da rodada foram salvas com sucesso.",
+    });
+  };
+
+  const handleReleaseVoting = () => {
+    setIsVotingReleased(true);
+    toast({
+      title: "Votação Liberada!",
+      description: "Os jogadores agora podem votar na Seleção da Rodada.",
+    });
+  };
+
+  const handleCloseVoting = () => {
+    setIsVotingClosed(true);
+    toast({
+      title: "Votação Encerrada Manualmente",
+      description: "O administrador encerrou a votação.",
+    });
+  };
+  
+  const handleToggleVoteRevelation = (enabled: boolean) => {
+    setIsVoteRevelationEnabled(enabled);
+    toast({
+      title: `Revelação de Votos ${enabled ? 'Ativada' : 'Desativada'}`,
+      description: `A visualização dos votos foi ${enabled ? 'liberada' : 'ocultada'} pelo admin.`,
+    });
+  };
 
   const currentLeague: League | undefined = currentLeagueId ? appData.leagues[currentLeagueId] : undefined;
   // This needs a default value when no user is logged in. Let's use a dummy user or the first one.
@@ -555,15 +601,6 @@ export default function Home() {
     }
   };
 
-  const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
-    if (view === 'payments') {
-      setIsPersonalPaymentsView(options?.isPersonalPayments || false);
-    }
-    setPreviousView(currentView);
-    setCurrentView(view);
-    window.scrollTo(0, 0);
-  };
-
   const selectPlayerForDetails = (playerId: string) => {
     setSelectedPlayerId(playerId);
     navigateTo('player-details');
@@ -651,14 +688,6 @@ export default function Home() {
     toast({
       title: "Pagamentos Salvos!",
       description: "As datas de vencimento foram atualizadas.",
-    });
-  };
-
-  const handleSaveLineups = () => {
-    setLineupsSaved(true);
-    toast({
-        title: "Times Salvos!",
-        description: "As escalações da rodada foram salvas com sucesso.",
     });
   };
 
@@ -838,30 +867,6 @@ export default function Home() {
     });
   };
 
-  const handleReleaseVoting = () => {
-    setIsVotingReleased(true);
-    toast({
-      title: "Votação Liberada!",
-      description: "Os jogadores agora podem votar na Seleção da Rodada.",
-    });
-  };
-
-  const handleCloseVoting = () => {
-    setIsVotingClosed(true);
-    toast({
-      title: "Votação Encerrada Manualmente",
-      description: "O administrador encerrou a votação.",
-    });
-  };
-  
-  const handleToggleVoteRevelation = (enabled: boolean) => {
-    setIsVoteRevelationEnabled(enabled);
-    toast({
-      title: `Revelação de Votos ${enabled ? 'Ativada' : 'Desativada'}`,
-      description: `A visualização dos votos foi ${enabled ? 'liberada' : 'ocultada'} pelo admin.`,
-    });
-  };
-
   const handleTogglePayments = (enabled: boolean) => {
     updateCurrentLeague(league => ({ ...league, paymentsEnabled: enabled }));
     setIsPaymentsEnabled(enabled);
@@ -870,12 +875,6 @@ export default function Home() {
     });
   };
 
-  const handleUpdateLeagueName = (newName: string) => {
-    updateCurrentLeague(league => ({ ...league, name: newName }));
-    toast({
-      title: "Nome da Liga Atualizado!",
-    });
-  };
 
   if (isInitializing) {
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
