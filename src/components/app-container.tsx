@@ -101,11 +101,12 @@ export default function AppContainer() {
   const { toast } = useToast();
   
   // Simulated logged-in user state. We default to 'user27' (Jason (Admin)).
-  const [loggedInUser, setLoggedInUser] = useState<User>(initialData.leagues.defaultLeague.users['user27']);
+  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Revert to localStorage and initialData
   const [appData, setAppData] = useState(initialData);
-  const [currentLeagueId, setCurrentLeagueId] = useState<string>('defaultLeague');
+  const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
 
   // These states are now league-dependent
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -138,18 +139,25 @@ export default function AppContainer() {
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
   useEffect(() => {
-    try {
-        const savedData = localStorage.getItem('amistosos-fc-data');
-        if (savedData) {
-            setAppData(JSON.parse(savedData));
-        } else {
-            setAppData(initialData);
-        }
-    } catch (error) {
-        console.error("Failed to load data from localStorage", error);
-        setAppData(initialData);
-    }
+      try {
+          // Temporarily disable firebase auth and simulate login
+          setLoggedInUser(initialData.leagues.defaultLeague.users['user27']);
+          setCurrentLeagueId('defaultLeague');
+          
+          const savedData = localStorage.getItem('amistosos-fc-data');
+          if (savedData) {
+              setAppData(JSON.parse(savedData));
+          } else {
+              setAppData(initialData);
+          }
+      } catch (error) {
+          console.error("Failed to load data from localStorage", error);
+          setAppData(initialData);
+      } finally {
+          setIsInitializing(false);
+      }
   }, []);
+
 
   useEffect(() => {
     try {
@@ -694,7 +702,7 @@ export default function AppContainer() {
     });
   };
 
-  if (!currentUser || !currentLeague) {
+  if (isInitializing || !currentUser || !currentLeague) {
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
   }
   
@@ -707,8 +715,6 @@ export default function AppContainer() {
         case 'login':
           return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
         default:
-          // In a simulated state, we don't really have a non-logged in view other than welcome.
-          // In a real app, this might redirect to login. For now, we show welcome.
           return <WelcomeView onNavigate={navigateTo} />;
       }
   }
