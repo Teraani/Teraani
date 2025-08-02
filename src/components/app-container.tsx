@@ -157,9 +157,13 @@ export default function AppContainer() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('amistosos-fc-data', JSON.stringify(appData));
-    if(currentLeagueId) {
-        localStorage.setItem('last_league_id', currentLeagueId);
+    try {
+      localStorage.setItem('amistosos-fc-data', JSON.stringify(appData));
+      if(currentLeagueId) {
+          localStorage.setItem('last_league_id', currentLeagueId);
+      }
+    } catch (error) {
+       console.error("Failed to save data to localStorage", error);
     }
   }, [appData, currentLeagueId]);
 
@@ -183,10 +187,14 @@ export default function AppContainer() {
     let leagueToJoin = appData.leagues[leagueId];
     // Ensure we are working with the latest data
      if (!leagueToJoin) {
-        const savedData = localStorage.getItem('amistosos-fc-data');
-        if (savedData) {
-            const parsedData = JSON.parse(savedData);
-            leagueToJoin = parsedData.leagues[leagueId];
+        try {
+            const savedData = localStorage.getItem('amistosos-fc-data');
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                leagueToJoin = parsedData.leagues[leagueId];
+            }
+        } catch (error) {
+            console.error("Error reading from localStorage for join:", error);
         }
     }
 
@@ -267,9 +275,13 @@ export default function AppContainer() {
 
   const handleUserData = async (user: FirebaseUser) => {
     let savedAppData = appData;
-    const savedDataString = localStorage.getItem('amistosos-fc-data');
-    if (savedDataString) {
-        savedAppData = JSON.parse(savedDataString);
+    try {
+        const savedDataString = localStorage.getItem('amistosos-fc-data');
+        if (savedDataString) {
+            savedAppData = JSON.parse(savedDataString);
+        }
+    } catch(error) {
+        console.error("Error parsing app data:", error)
     }
 
     const inviteId = localStorage.getItem('leagueInviteId');
