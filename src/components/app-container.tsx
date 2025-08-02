@@ -58,19 +58,6 @@ const getTeamSizes = (modality: Modality | null) => {
   }
 };
 
-const getFormationsForModality = (modality: Modality | null): Formation[] => {
-  switch (modality) {
-    case 'society':
-      return ['3-2-1', '2-3-1'];
-    case 'futsal':
-      return ['2-2', '3-1'];
-    case 'campo':
-    default:
-      return ['4-4-2', '4-3-3', '3-5-2'];
-  }
-};
-
-
 export default function AppContainer() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -116,6 +103,7 @@ export default function AppContainer() {
     const defaultUser = initialData.leagues.defaultLeague.users['user27'];
     setLoggedInUser(defaultUser);
     setCurrentLeagueId('defaultLeague');
+    setAppData(initialData);
 
     // Simulate loading time
     setTimeout(() => {
@@ -129,7 +117,6 @@ export default function AppContainer() {
     
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
     
-    // Check if the current lineup sizes are already correct for the modality
     const needsUpdate = team1Lineup.length !== newLuSize || team1Reserves.length !== newResSize;
     
     if (needsUpdate) {
@@ -139,7 +126,6 @@ export default function AppContainer() {
         setTeam2Reserves(Array(newResSize).fill(null));
     }
     
-    // Pre-fill with test data only once when modality is campo and no teams are set
     const areTeamsEmpty = team1Lineup.every(p => p === null) && team2Lineup.every(p => p === null);
     if (selectedModality === 'campo' && areTeamsEmpty && newLuSize === 11) {
         setTeam1Lineup(['p31', 'p6', 'p11', 'p13', 'p22', 'p1', 'p3', 'p5', 'p9', 'p7', 'p8']);
