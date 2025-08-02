@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Home, Shirt, Trophy, BarChart2, DollarSign, Award } from 'lucide-react';
+import { Home, Shirt, Trophy, BarChart2, DollarSign, Award, Vote } from 'lucide-react';
 import type { View } from './app-container';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
@@ -15,7 +15,7 @@ interface BottomNavProps {
 const navItems: { view: View, icon: React.ElementType, label: string, isPro?: boolean }[] = [
   { view: 'dashboard', icon: Home, label: 'Início' },
   { view: 'lineup', icon: Shirt, label: 'Escalação' },
-  { view: 'best-eleven', icon: Award, label: 'Seleção', isPro: true },
+  { view: 'best-eleven', icon: Vote, label: 'Votação', isPro: true },
   { view: 'statistics', icon: BarChart2, label: 'Estatísticas' },
 ];
 

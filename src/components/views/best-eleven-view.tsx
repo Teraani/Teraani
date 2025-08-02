@@ -194,7 +194,7 @@ const PlayerSelectionModal = ({ players, onSelectPlayer, lineup, allScaledPlayer
        <DialogHeader>
         <DialogTitle>Selecionar Jogador</DialogTitle>
         <DialogDescription>
-          Escolha um jogador que participou da partida para adicionar à sua seleção.
+          Escolha um jogador que participou da partida para adicionar à sua votação.
         </DialogDescription>
       </DialogHeader>
        <div className="relative">
@@ -367,7 +367,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
 
     const handleAddPlayerClick = (index: number) => {
       if (!isVotingActive || isSaved) {
-        let description = "Não é mais possível alterar a seleção.";
+        let description = "Não é mais possível alterar a votação.";
         if (!isVotingReleased) description = "Aguarde o administrador da liga liberar a votação.";
         else if (isVotingClosed) description = "A votação já foi encerrada.";
         
@@ -392,7 +392,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         if (isAlreadyInLineup) {
             toast({
                 title: "Jogador já escalado",
-                description: "Este jogador já foi adicionado à sua seleção.",
+                description: "Este jogador já foi adicionado à sua votação.",
                 variant: "destructive",
             });
             return;
@@ -481,7 +481,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
           <AlertDialogFooter className="flex-col gap-2">
             <Button variant="destructive" onClick={handleRemovePlayer}>
               <UserX className="mr-2 h-4 w-4" />
-              Remover da Seleção
+              Remover da Votação
             </Button>
             <AlertDialogCancel onClick={() => setPlayerActionState(null)}>Cancelar</AlertDialogCancel>
           </AlertDialogFooter>
@@ -512,7 +512,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
         </Button>
-        <h2 className="text-xl font-bold text-center flex-1">Seleção da Rodada</h2>
+        <h2 className="text-xl font-bold text-center flex-1">Votação da Rodada</h2>
         <div className="w-9 h-9" />
       </header>
 
@@ -522,7 +522,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 <CardHeader>
                     <CardTitle className="text-blue-800 dark:text-blue-300 flex items-center gap-2">
                         <Info className="w-5 h-5" />
-                        Vote na Seleção da Rodada
+                        Vote na Votação da Rodada
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -538,7 +538,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
 
         <Tabs defaultValue="my-selection">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="my-selection">{isVotingClosed ? "Resultado Final" : "Minha Seleção"}</TabsTrigger>
+            <TabsTrigger value="my-selection">{isVotingClosed ? "Resultado Final" : "Minha Votação"}</TabsTrigger>
             <TabsTrigger value="votes">Apuração</TabsTrigger>
           </TabsList>
           <TabsContent value="my-selection">
@@ -664,7 +664,7 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
             <div className="flex-1">
                  <Button className="w-full bg-green-600 text-white hover:bg-green-700 h-12 text-lg" disabled={!isComplete} onClick={() => onVote(lineup)}>
                     <Save className="mr-2 h-5 w-5"/>
-                    Salvar Seleção
+                    Salvar Votação
                 </Button>
             </div>
             <div className="flex-none text-center">

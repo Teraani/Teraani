@@ -186,7 +186,7 @@ export default function AdminView({
                     <div className="space-y-0.5">
                         <Label className="text-base">Revelar Votos</Label>
                         <p className="text-sm text-muted-foreground">
-                            Permite que todos vejam os votos da Seleção da Rodada.
+                            Permite que todos vejam os votos da Votação da Rodada.
                         </p>
                     </div>
                     <Switch
