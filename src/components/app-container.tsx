@@ -59,13 +59,12 @@ const getTeamSizes = (modality: Modality | null) => {
 };
 
 export default function AppContainer() {
-  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [currentView, setCurrentView] = useState<View>('welcome');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('dashboard');
   const { toast } = useToast();
   
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
 
   const [appData, setAppData] = useState(initialData);
   const [currentLeagueId, setCurrentLeagueId] = useState<string | null>('defaultLeague');
@@ -96,21 +95,6 @@ export default function AppContainer() {
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   
-  // This effect simulates authentication and initial data loading
-  useEffect(() => {
-    // We simulate a login for a default user to bypass the login/register flow
-    // In a real app, this would be replaced with Firebase Auth
-    const defaultUser = initialData.leagues.defaultLeague.users['user27'];
-    setLoggedInUser(defaultUser);
-    setCurrentLeagueId('defaultLeague');
-    setAppData(initialData);
-
-    // Simulate loading time
-    setTimeout(() => {
-        setIsInitializing(false);
-    }, 500);
-  }, []);
-
   // This effect dynamically adjusts team sizes when modality changes
   useEffect(() => {
     if (!selectedModality) return;
@@ -142,6 +126,13 @@ export default function AppContainer() {
     setCurrentView(view);
     window.scrollTo(0, 0);
   };
+
+  const handleLogin = () => {
+    const defaultUser = initialData.leagues.defaultLeague.users['user27'];
+    setLoggedInUser(defaultUser);
+    setCurrentLeagueId('defaultLeague');
+    navigateTo('dashboard');
+  }
   
   const handleUpdateLeagueName = (newName: string) => {
     updateCurrentLeague(league => ({ ...league, name: newName }));
@@ -493,16 +484,12 @@ export default function AppContainer() {
     updateCurrentLeague(league => ({ ...league, paymentsEnabled: enabled }));
     toast({ title: `Módulo de Pagamentos ${enabled ? 'Ativado' : 'Desativado'}` });
   };
-
-  if (isInitializing || !currentUser || !currentLeague) {
-    return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
-  }
   
-  if (!loggedInUser) {
+  if (!loggedInUser || !currentUser || !currentLeague) {
      switch (currentView) {
         case 'welcome': return <WelcomeView onNavigate={navigateTo} />;
-        case 'register': return <RegisterView onNavigateToLogin={() => navigateTo('login')} />;
-        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
+        case 'register': return <RegisterView onNavigateToLogin={() => navigateTo('login')} onRegister={handleLogin} />;
+        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} onLogin={handleLogin} />;
         default: return <WelcomeView onNavigate={navigateTo} />;
       }
   }

@@ -10,14 +10,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
-import { auth } from '@/lib/firebase-config';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, updateProfile } from "firebase/auth";
+// import { auth } from '@/lib/firebase-config';
+// import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, updateProfile } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
-import { User as FirebaseUser } from 'firebase/auth';
+import type { User as FirebaseUser } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
+import type { View } from '../app-container';
 
 interface RegisterViewProps {
   onNavigateToLogin: () => void;
+  onRegister: () => void; // Temporary prop
 }
 
 const registerSchema = z.object({
@@ -35,7 +37,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
+export default function RegisterView({ onNavigateToLogin, onRegister }: RegisterViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -49,65 +51,30 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
     },
   });
 
-  useEffect(() => {
-    setIsGoogleLoading(true);
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        // If result exists, onAuthStateChanged in page.tsx will handle it.
-      } catch (error: any) {
-        console.error("Erro ao obter resultado do redirecionamento:", error);
-        toast({
-          title: "Erro de Autenticação",
-          description: "Não foi possível completar o login com o Google.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsGoogleLoading(false);
-      }
-    };
-    handleRedirectResult();
-  }, [toast]);
-
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setIsLoading(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      await updateProfile(userCredential.user, { displayName: values.name });
-      // onAuthStateChanged in page.tsx will handle the navigation and user creation
-    } catch (error: any) {
-       console.error("Erro ao criar conta:", error);
-       toast({
-        title: "Erro ao criar conta",
-        description: error.code === 'auth/email-already-in-use' ? 'Este e-mail já está em uso. Tente fazer login.' : (error.message || "Não foi possível criar sua conta."),
-        variant: "destructive",
-      });
-       setIsLoading(false);
-    }
+    // Simulating a successful registration
+    setTimeout(() => {
+        onRegister();
+        toast({
+            title: "Conta Criada!",
+            description: "Bem-vindo ao Amistosos FC!",
+        });
+        setIsLoading(false);
+    }, 500);
   }
 
   const handleGoogleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
     setIsGoogleLoading(true);
-    try {
-        await signInWithRedirect(auth, provider);
-    } catch (error: any) {
+    // Simulating a successful registration
+     setTimeout(() => {
+        onRegister();
+        toast({
+            title: "Conta Criada com o Google!",
+            description: "Bem-vindo ao Amistosos FC!",
+        });
         setIsGoogleLoading(false);
-        if (error.code === 'auth/unauthorized-domain') {
-            toast({
-                title: "Login com Google Indisponível no Preview",
-                description: "Esta função estará disponível quando o aplicativo for publicado. Por favor, use e-mail e senha para continuar.",
-                variant: "destructive"
-            });
-        } else {
-             toast({
-                title: "Erro de Autenticação",
-                description: "Não foi possível iniciar o login com o Google. Tente novamente mais tarde.",
-                variant: "destructive"
-            });
-        }
-        console.error("Erro no login com Google:", error);
-    }
+    }, 500);
   };
 
 

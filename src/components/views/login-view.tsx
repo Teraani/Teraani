@@ -10,13 +10,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
-import { auth } from '@/lib/firebase-config';
-import { signInWithEmailAndPassword } from "firebase/auth";
+// import { auth } from '@/lib/firebase-config';
+// import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import type { View } from '../app-container';
 
 interface LoginViewProps {
   onNavigateToRegister: () => void;
+  // This is a temporary prop to bypass Firebase auth
+  onLogin: () => void;
 }
 
 const loginSchema = z.object({
@@ -24,33 +27,29 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres." }),
 });
 
-export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
+export default function LoginView({ onNavigateToRegister, onLogin }: LoginViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: "jason.teraani@gmail.com",
+      password: "password",
     },
   });
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      // onAuthStateChanged in page.tsx will handle the navigation
-    } catch (error: any) {
-      console.error("Erro no login:", error);
-       toast({
-        title: "Erro no Login",
-        description: "E-mail ou senha inválidos. Verifique seus dados e tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Simulating a successful login without calling Firebase
+    setTimeout(() => {
+        onLogin();
+        toast({
+            title: "Login realizado",
+            description: "Bem-vindo de volta!",
+        });
+        setIsLoading(false);
+    }, 500);
   }
 
   return (
