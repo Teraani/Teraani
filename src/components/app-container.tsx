@@ -306,6 +306,8 @@ export default function AppContainer() {
     return () => unsubscribe();
   }, []);
 
+  const [lineupsSaved, setLineupsSaved] = useState(false);
+  
   const handleSaveLineups = () => {
     setLineupsSaved(true);
     toast({
@@ -370,7 +372,6 @@ export default function AppContainer() {
   const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
   const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(team1994_ids);
   const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
-  const [lineupsSaved, setLineupsSaved] = useState(false);
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
@@ -1065,3 +1066,4 @@ export default function AppContainer() {
     
 
     
+
