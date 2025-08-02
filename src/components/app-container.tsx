@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -29,9 +30,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LeaguesView from '@/components/views/leagues-view';
 import type { ShirtColor, Formation } from '@/components/views/lineup-view';
-import { auth, db } from '@/lib/firebase-config';
-import { onAuthStateChanged, User as FirebaseUser, signOut, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import LeagueParticipantsView from '@/components/views/league-participants-view';
 import AllUsersView from '@/components/views/all-users-view';
 import AllLeaguesView from '@/components/views/all-leagues-view';
@@ -98,18 +96,17 @@ const team1994_ids = [
 ];
 
 export default function AppContainer() {
-  const [currentView, setCurrentView] = useState<View>('loading');
+  const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [previousView, setPreviousView] = useState<View>('loading');
+  const [previousView, setPreviousView] = useState<View>('dashboard');
   const { toast } = useToast();
-  const [isInitializing, setIsInitializing] = useState(true);
+  
+  // Simulated logged-in user state. We default to 'user27' (Jason (Admin)).
+  const [loggedInUser, setLoggedInUser] = useState<User>(initialData.leagues.defaultLeague.users['user27']);
 
-  // State for multi-league
-  const [loggedInUser, setLoggedInUser] = useState<FirebaseUser | null>(null);
-
-  // Revert to localStorage
+  // Revert to localStorage and initialData
   const [appData, setAppData] = useState(initialData);
-  const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
+  const [currentLeagueId, setCurrentLeagueId] = useState<string>('defaultLeague');
 
   // These states are now league-dependent
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
@@ -182,171 +179,6 @@ export default function AppContainer() {
     });
   };
 
-  const handleJoinLeague = async (user: FirebaseUser, leagueId: string) => {
-    let leagueToJoin = appData.leagues[leagueId];
-    // Ensure we are working with the latest data
-     if (!leagueToJoin) {
-        try {
-            const savedData = localStorage.getItem('amistosos-fc-data');
-            if (savedData) {
-                const parsedData = JSON.parse(savedData);
-                leagueToJoin = parsedData.leagues[leagueId];
-            }
-        } catch (error) {
-            console.error("Error reading from localStorage for join:", error);
-        }
-    }
-
-    if (leagueToJoin && !leagueToJoin.users[user.uid]) {
-        const newUser: User = {
-            id: user.uid,
-            name: user.displayName || 'Novo Jogador',
-            email: user.email || 'sem-email',
-            teamName: `${user.displayName?.split(' ')[0] || 'Novo'} FC`,
-            partialScore: 0,
-            totalScore: 0,
-            valuation: 100,
-            lineup: [],
-            reserves: [],
-            role: 'player',
-            avatar: user.photoURL || `https://placehold.co/128x128/E67E22/FFFFFF?text=${(user.displayName || 'N').charAt(0)}`,
-            paymentDueDate: format(new Date(), 'yyyy-MM-dd')
-        };
-        
-        updateCurrentLeague(currentLeague => ({
-            ...currentLeague,
-            users: {...currentLeague.users, [user.uid]: newUser}
-        }), leagueId);
-
-        setCurrentLeagueId(leagueId);
-        toast({ title: "Bem-vindo!", description: `Você entrou na liga "${leagueToJoin.name}".`});
-        navigateTo('dashboard');
-    } else {
-         setCurrentLeagueId(leagueId);
-         navigateTo('dashboard');
-    }
-  };
-
-  const handleCreateLeague = async (user: FirebaseUser) => {
-    const newLeagueId = `league_${user.uid}_${Date.now()}`;
-    const newUser: User = {
-        id: user.uid,
-        name: user.displayName || 'Novo Admin',
-        email: user.email!,
-        teamName: `${user.displayName?.split(' ')[0] || 'Meu'} FC`,
-        partialScore: 0,
-        totalScore: 0,
-        valuation: 100,
-        lineup: [],
-        reserves: [],
-        role: 'admin',
-        avatar: user.photoURL || `https://placehold.co/128x128/E67E22/FFFFFF?text=${(user.displayName || 'A').charAt(0)}`,
-        paymentDueDate: format(new Date(), 'yyyy-MM-dd')
-    };
-
-    const newLeague: League = {
-        id: newLeagueId,
-        name: `Liga de ${newUser.name}`,
-        adminId: user.uid,
-        modality: null,
-        paymentsEnabled: true,
-        games: {},
-        users: { [user.uid]: newUser },
-        players: initialData.leagues.defaultLeague.players, // Start with a default player set
-        editorOfTheRound: null,
-        scoutEditor: null,
-        paymentEditor: null,
-        scalersRanking: {},
-        goalieRanking: {}
-    };
-
-    setAppData(prevData => ({
-        ...prevData,
-        leagues: {
-            ...prevData.leagues,
-            [newLeagueId]: newLeague
-        }
-    }));
-    setCurrentLeagueId(newLeagueId);
-    toast({ title: "Sua nova liga foi criada!", description: "Agora escolha a modalidade de jogo." });
-    navigateTo('modality-selection');
-  };
-
-  const handleUserData = async (user: FirebaseUser) => {
-    let savedAppData = appData;
-    try {
-        const savedDataString = localStorage.getItem('amistosos-fc-data');
-        if (savedDataString) {
-            savedAppData = JSON.parse(savedDataString);
-        }
-    } catch(error) {
-        console.error("Error parsing app data:", error)
-    }
-
-    const inviteId = localStorage.getItem('leagueInviteId');
-    let userIsInAnyLeague = false;
-
-    for (const leagueId in savedAppData.leagues) {
-        if (savedAppData.leagues[leagueId].users[user.uid]) {
-            userIsInAnyLeague = true;
-            break;
-        }
-    }
-
-    if (inviteId) {
-        await handleJoinLeague(user, inviteId);
-        localStorage.removeItem('leagueInviteId');
-    } else if (!userIsInAnyLeague) {
-        await handleCreateLeague(user);
-    } else {
-        const lastLeagueId = localStorage.getItem('last_league_id');
-        if (lastLeagueId && savedAppData.leagues[lastLeagueId] && savedAppData.leagues[lastLeagueId].users[user.uid]) {
-            setCurrentLeagueId(lastLeagueId);
-        } else {
-            // Find the first league the user belongs to
-            const firstLeagueId = Object.keys(savedAppData.leagues).find(id => savedAppData.leagues[id].users[user.uid]);
-            setCurrentLeagueId(firstLeagueId || null);
-        }
-        navigateTo('dashboard');
-    }
-  };
-  
-  // Effect for Authentication State Change
-  useEffect(() => {
-    // Check for invite link on initial load
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteId = urlParams.get('invite');
-    if (inviteId) {
-        localStorage.setItem('leagueInviteId', inviteId);
-        // Clean the URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setIsInitializing(true);
-        try {
-            if (user) {
-                setLoggedInUser(user);
-                await handleUserData(user);
-            } else {
-                setLoggedInUser(null);
-                setCurrentLeagueId(null);
-                navigateTo('welcome');
-            }
-        } catch (error) {
-            console.error("Initialization error:", error);
-            await signOut(auth);
-            setLoggedInUser(null);
-            setCurrentLeagueId(null);
-            navigateTo('welcome');
-        } finally {
-            setIsInitializing(false);
-        }
-    });
-    return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
   const handleSaveLineups = () => {
     setLineupsSaved(true);
     toast({
@@ -383,7 +215,7 @@ export default function AppContainer() {
   
   const currentUser = useMemo(() => {
     if (!loggedInUser || !currentLeague) return null;
-    return currentLeague.users[loggedInUser.uid] || null;
+    return currentLeague.users[loggedInUser.id] || null;
   }, [currentLeague, loggedInUser]);
 
   const isPaymentsEnabled = currentLeague?.paymentsEnabled ?? true;
@@ -544,14 +376,6 @@ export default function AppContainer() {
   };
 
   const handleUpdateUser = async (userId: string, newName: string) => {
-    if (auth.currentUser && auth.currentUser.uid === userId) {
-      try {
-        await updateProfile(auth.currentUser, { displayName: newName });
-      } catch (error) {
-        console.error("Failed to update Firebase profile:", error);
-      }
-    }
-    
     updateCurrentLeague(league => ({
       ...league,
       users: {
@@ -592,17 +416,10 @@ export default function AppContainer() {
   };
 
   const handleLogout = async (showToast = true) => {
-    try {
-        await signOut(auth);
-        setLoggedInUser(null);
-        setCurrentLeagueId(null);
-        navigateTo('welcome');
-    } catch (error) {
-        console.error("Logout error:", error);
-        if (showToast) {
-            toast({ title: "Erro ao sair", description: "Não foi possível encerrar a sessão.", variant: "destructive" });
-        }
-    }
+    // This is a simulated logout as we removed Firebase auth
+    setLoggedInUser(null!); // Set to null to trigger welcome screen
+    setCurrentLeagueId(null!);
+    navigateTo('welcome');
   };
 
   const selectPlayerForDetails = (playerId: string) => {
@@ -878,8 +695,7 @@ export default function AppContainer() {
     });
   };
 
-
-  if (isInitializing) {
+  if (!currentUser || !currentLeague) {
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
   }
   
@@ -892,13 +708,10 @@ export default function AppContainer() {
         case 'login':
           return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
         default:
+          // In a simulated state, we don't really have a non-logged in view other than welcome.
+          // In a real app, this might redirect to login. For now, we show welcome.
           return <WelcomeView onNavigate={navigateTo} />;
       }
-  }
-
-  // CRITICAL FIX: Ensure app doesn't render main views until user and league are loaded
-  if (!currentUser || !currentLeague) {
-    return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando liga...</div>;
   }
 
   const selectedPlayer = selectedPlayerId && currentLeague ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
@@ -1061,5 +874,3 @@ export default function AppContainer() {
     </div>
   );
 }
-
-    
