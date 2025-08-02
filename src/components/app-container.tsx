@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -153,19 +154,36 @@ export default function AppContainer() {
   }, [appData, currentLeagueId]);
 
   useEffect(() => {
-    // Dynamically adjust team sizes when modality changes
+    if (!selectedModality) return;
+  
     const { lineup: newLineupSize, reserves: newReservesSize } = getTeamSizes(selectedModality);
-    setTeam1Lineup(prev => prev.length === newLineupSize ? prev : Array(newLineupSize).fill(null));
-    setTeam1Reserves(prev => prev.length === newReservesSize ? prev : Array(newReservesSize).fill(null));
-    setTeam2Lineup(prev => prev.length === newLineupSize ? prev : Array(newLineupSize).fill(null));
-    setTeam2Reserves(prev => prev.length === newReservesSize ? prev : Array(newReservesSize).fill(null));
-    
-    // Set default teams for 'campo' modality if empty
-    if (selectedModality === 'campo' && team1Lineup.every(p => p === null) && team2Lineup.every(p => p === null)) {
-      setTeam1Lineup([...team1994_ids]);
-      setTeam2Lineup([...team2002_ids]);
-    }
+  
+    const updateTeam = (prevLineup: (string | null)[], newLineupSize: number) => 
+      prevLineup.length !== newLineupSize ? Array(newLineupSize).fill(null) : prevLineup;
+  
+    setTeam1Lineup(prev => updateTeam(prev, newLineupSize));
+    setTeam1Reserves(prev => updateTeam(prev, newReservesSize));
+    setTeam2Lineup(prev => updateTeam(prev, newLineupSize));
+    setTeam2Reserves(prev => updateTeam(prev, newReservesSize));
+
   }, [selectedModality]);
+
+
+  useEffect(() => {
+    const isTeam1Empty = team1Lineup.every(p => p === null);
+    const isTeam2Empty = team2Lineup.every(p => p === null);
+
+    if (selectedModality === 'campo' && isTeam1Empty && isTeam2Empty) {
+        const { lineup: newLineupSize } = getTeamSizes('campo');
+        const fillTeam = (ids: string[]) => {
+            const team = Array(newLineupSize).fill(null);
+            ids.slice(0, newLineupSize).forEach((id, index) => team[index] = id);
+            return team;
+        };
+        setTeam1Lineup(fillTeam(team1994_ids));
+        setTeam2Lineup(fillTeam(team2002_ids));
+    }
+  }, [selectedModality, team1Lineup, team2Lineup]);
 
 
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
