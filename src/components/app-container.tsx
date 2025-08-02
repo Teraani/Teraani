@@ -96,10 +96,10 @@ export default function AppContainer() {
   
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
 
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(11).fill(null));
-  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(11).fill(null));
-  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
+  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
+  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
 
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
@@ -108,6 +108,15 @@ export default function AppContainer() {
   
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
+
+  useEffect(() => {
+    // Dynamically adjust team sizes when modality changes
+    const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
+    setTeam1Lineup(current => current.length === newLuSize ? current : Array(newLuSize).fill(null));
+    setTeam1Reserves(current => current.length === newResSize ? current : Array(newResSize).fill(null));
+    setTeam2Lineup(current => current.length === newLuSize ? current : Array(newLuSize).fill(null));
+    setTeam2Reserves(current => current.length === newResSize ? current : Array(newResSize).fill(null));
+  }, [selectedModality]);
   
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
