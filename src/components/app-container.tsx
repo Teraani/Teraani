@@ -102,7 +102,6 @@ export default function AppContainer() {
   const [currentView, setCurrentView] = useState<View>('loading');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('loading');
-  
   const { toast } = useToast();
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -112,6 +111,36 @@ export default function AppContainer() {
   // Revert to localStorage
   const [appData, setAppData] = useState(initialData);
   const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
+
+  // These states are now league-dependent
+  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  // Modality is now part of the league data
+  const selectedModality = currentLeagueId ? appData.leagues[currentLeagueId]?.modality ?? null : null;
+  
+  // Maps userId -> best eleven lineup
+  const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
+  const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
+  const [isVotingReleased, setIsVotingReleased] = useState(false);
+  const [isVotingClosed, setIsVotingClosed] = useState(false);
+  const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
+  
+  // State to hold player IDs from the last finished match for voting
+  const [lastRoundPlayerIds, setLastRoundPlayerIds] = useState<string[]>([]);
+  
+  const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
+
+  // State for the two teams the editor can manage
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(team2002_ids);
+  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(team1994_ids);
+  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
+  const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
+  const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
+  const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
+  const [formation, setFormation] = useState<Formation>('4-4-2');
+  
+  const [lineupsSaved, setLineupsSaved] = useState(false);
+  const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
   useEffect(() => {
     try {
@@ -305,8 +334,6 @@ export default function AppContainer() {
     });
     return () => unsubscribe();
   }, []);
-
-  const [lineupsSaved, setLineupsSaved] = useState(false);
   
   const handleSaveLineups = () => {
     setLineupsSaved(true);
@@ -341,49 +368,13 @@ export default function AppContainer() {
   };
 
   const currentLeague: League | undefined = currentLeagueId ? appData.leagues[currentLeagueId] : undefined;
-  // This needs a default value when no user is logged in. Let's use a dummy user or the first one.
+  
   const currentUser = useMemo(() => {
     if (!loggedInUser || !currentLeague) return null;
     return currentLeague.users[loggedInUser.uid] || null;
   }, [currentLeague, loggedInUser]);
 
-
-  // These states are now league-dependent
-  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
-  // Modality is now part of the league data
-  const selectedModality = currentLeague?.modality ?? null;
-  
-  // Maps userId -> best eleven lineup
-  const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
-  const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
-  const [isVotingReleased, setIsVotingReleased] = useState(false);
-  const [isVotingClosed, setIsVotingClosed] = useState(false);
-  const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
-  const [isPaymentsEnabled, setIsPaymentsEnabled] = useState(currentLeague?.paymentsEnabled ?? true);
-
-
-  // State to hold player IDs from the last finished match for voting
-  const [lastRoundPlayerIds, setLastRoundPlayerIds] = useState<string[]>([]);
-
-  const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
-
-  // State for the two teams the editor can manage
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(team2002_ids);
-  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(team1994_ids);
-  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
-  const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
-  const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
-  const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
-  const [formation, setFormation] = useState<Formation>('4-4-2');
-
-  const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
-
-  useEffect(() => {
-    if (currentLeague) {
-      setIsPaymentsEnabled(currentLeague.paymentsEnabled);
-    }
-  }, [currentLeague]);
+  const isPaymentsEnabled = currentLeague?.paymentsEnabled ?? true;
   
   // Helper to update app data
   const updateCurrentLeague = (updater: (league: League) => League, leagueIdToUpdate?: string) => {
@@ -870,7 +861,6 @@ export default function AppContainer() {
 
   const handleTogglePayments = (enabled: boolean) => {
     updateCurrentLeague(league => ({ ...league, paymentsEnabled: enabled }));
-    setIsPaymentsEnabled(enabled);
      toast({
       title: `Módulo de Pagamentos ${enabled ? 'Ativado' : 'Desativado'}`,
     });
@@ -894,6 +884,7 @@ export default function AppContainer() {
       }
   }
 
+  // CRITICAL FIX: Ensure app doesn't render main views until user and league are loaded
   if (!currentUser || !currentLeague) {
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando liga...</div>;
   }
@@ -928,10 +919,6 @@ export default function AppContainer() {
                     onRemoveUser={handleRemoveUserFromLeague}
                     />;
         case 'modality-selection':
-            if (!loggedInUser || !currentLeague) {
-                setCurrentView('welcome');
-                return <WelcomeView onNavigate={navigateTo} />;
-            }
             return <ModalitySelectionView 
                     onModalitySelect={handleModalitySelect} 
                     selectedModality={selectedModality}
