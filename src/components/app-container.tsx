@@ -70,17 +70,6 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
   }
 };
 
-const team2002_ids = [
-    'p-ronaldo', 'p-rivaldo', 'p-ronaldinho', 'p-juninho-paulista', 
-    'p-gilberto-silva', 'p-edmilson', 'p-cafu', 'p-lucio', 
-    'p-roque-junior', 'p-roberto-carlos', 'p-marcos'
-];
-
-const team1994_ids = [
-    'p-romario', 'p-bebeto', 'p-mauro-silva', 'p-dunga', 'p-mazinho', 
-    'p-zinho', 'p-jorginho', 'p-aldair', 'p-marcio-santos', 
-    'p-branco', 'p-taffarel'
-];
 
 export default function AppContainer() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
@@ -88,11 +77,11 @@ export default function AppContainer() {
   const [previousView, setPreviousView] = useState<View>('dashboard');
   const { toast } = useToast();
   
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [loggedInUser, setLoggedInUser] = useState<User | null>(initialData.leagues.defaultLeague.users['user27']);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const [appData, setAppData] = useState(initialData);
-  const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
+  const [currentLeagueId, setCurrentLeagueId] = useState<string | null>('defaultLeague');
 
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const selectedModality = currentLeagueId ? appData.leagues[currentLeagueId]?.modality ?? null : null;
@@ -107,10 +96,10 @@ export default function AppContainer() {
   
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
 
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
-  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
-  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(11).fill(null));
+  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(5).fill(null));
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(11).fill(null));
+  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(5).fill(null));
 
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
@@ -119,73 +108,7 @@ export default function AppContainer() {
   
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
-
-  useEffect(() => {
-    try {
-        const savedData = localStorage.getItem('amistosos-fc-data');
-        if (savedData) {
-            setAppData(JSON.parse(savedData));
-        } else {
-            setAppData(initialData);
-        }
-        
-        // Simulating login
-        const defaultUser = initialData.leagues.defaultLeague.users['user27'];
-        setLoggedInUser(defaultUser);
-        setCurrentLeagueId('defaultLeague');
-
-    } catch (error) {
-        console.error("Failed to load data from localStorage", error);
-        setAppData(initialData);
-    } finally {
-        setIsInitializing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-      try {
-        localStorage.setItem('amistosos-fc-data', JSON.stringify(appData));
-        if(currentLeagueId) {
-            localStorage.setItem('last_league_id', currentLeagueId);
-        }
-      } catch (error) {
-         console.error("Failed to save data to localStorage", error);
-      }
-  }, [appData, currentLeagueId]);
-
-  useEffect(() => {
-    if (!selectedModality) return;
   
-    const { lineup: newLineupSize, reserves: newReservesSize } = getTeamSizes(selectedModality);
-  
-    const updateTeam = (prevLineup: (string | null)[], newLineupSize: number) => 
-      prevLineup.length !== newLineupSize ? Array(newLineupSize).fill(null) : prevLineup;
-  
-    setTeam1Lineup(prev => updateTeam(prev, newLineupSize));
-    setTeam1Reserves(prev => updateTeam(prev, newReservesSize));
-    setTeam2Lineup(prev => updateTeam(prev, newLineupSize));
-    setTeam2Reserves(prev => updateTeam(prev, newReservesSize));
-
-  }, [selectedModality]);
-
-
-  useEffect(() => {
-    const isTeam1Empty = team1Lineup.every(p => p === null);
-    const isTeam2Empty = team2Lineup.every(p => p === null);
-
-    if (selectedModality === 'campo' && isTeam1Empty && isTeam2Empty) {
-        const { lineup: newLineupSize } = getTeamSizes('campo');
-        const fillTeam = (ids: string[]) => {
-            const team = Array(newLineupSize).fill(null);
-            ids.slice(0, newLineupSize).forEach((id, index) => team[index] = id);
-            return team;
-        };
-        setTeam1Lineup(fillTeam(team1994_ids));
-        setTeam2Lineup(fillTeam(team2002_ids));
-    }
-  }, [selectedModality, team1Lineup, team2Lineup]);
-
-
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
       setIsPersonalPaymentsView(options?.isPersonalPayments || false);
@@ -596,5 +519,3 @@ export default function AppContainer() {
     </div>
   );
 }
-
-    
