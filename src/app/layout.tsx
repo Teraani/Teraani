@@ -40,15 +40,27 @@ export default function RootLayout({
             <Toaster />
             <Script id="service-worker-registration">
             {`
-                if ('serviceWorker' in navigator) {
+              if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('/sw.js').then(registration => {
+                  navigator.serviceWorker.register('/sw.js').then(registration => {
                     console.log('SW registered: ', registration);
-                    }).catch(registrationError => {
+                    registration.onupdatefound = () => {
+                      const installingWorker = registration.installing;
+                      if (installingWorker) {
+                        installingWorker.onstatechange = () => {
+                          if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New content is available and has been downloaded.
+                            // The new service worker will take over on the next navigation.
+                            console.log('New content is available and will be used when all tabs for this page are closed.');
+                          }
+                        };
+                      }
+                    };
+                  }).catch(registrationError => {
                     console.log('SW registration failed: ', registrationError);
-                    });
+                  });
                 });
-                }
+              }
             `}
             </Script>
         </ThemeProvider>
