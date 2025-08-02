@@ -77,8 +77,8 @@ export default function AppContainer() {
   const [previousView, setPreviousView] = useState<View>('dashboard');
   const { toast } = useToast();
   
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(initialData.leagues.defaultLeague.users['user27']);
-  const [isInitializing, setIsInitializing] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const [appData, setAppData] = useState(initialData);
   const [currentLeagueId, setCurrentLeagueId] = useState<string | null>('defaultLeague');
@@ -96,10 +96,10 @@ export default function AppContainer() {
   
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
 
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
-  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(Array(lineupSize).fill(null));
-  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>(Array(reservesSize).fill(null));
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>([]);
+  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>([]);
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>([]);
+  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>([]);
 
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
@@ -108,15 +108,45 @@ export default function AppContainer() {
   
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
-
+  
+  // This effect simulates authentication and initial data loading
   useEffect(() => {
-    // Dynamically adjust team sizes when modality changes
+    // We simulate a login for a default user to bypass the login/register flow
+    // In a real app, this would be replaced with Firebase Auth
+    const defaultUser = initialData.leagues.defaultLeague.users['user27'];
+    setLoggedInUser(defaultUser);
+    setCurrentLeagueId('defaultLeague');
+
+    // Simulate loading time
+    setTimeout(() => {
+        setIsInitializing(false);
+    }, 500);
+  }, []);
+
+  // This effect dynamically adjusts team sizes when modality changes
+  useEffect(() => {
+    if (!selectedModality) return;
+    
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
-    setTeam1Lineup(current => current.length === newLuSize ? current : Array(newLuSize).fill(null));
-    setTeam1Reserves(current => current.length === newResSize ? current : Array(newResSize).fill(null));
-    setTeam2Lineup(current => current.length === newLuSize ? current : Array(newLuSize).fill(null));
-    setTeam2Reserves(current => current.length === newResSize ? current : Array(newResSize).fill(null));
-  }, [selectedModality]);
+    
+    // Check if the current lineup sizes are already correct for the modality
+    const needsUpdate = team1Lineup.length !== newLuSize || team1Reserves.length !== newResSize;
+    
+    if (needsUpdate) {
+        setTeam1Lineup(Array(newLuSize).fill(null));
+        setTeam1Reserves(Array(newResSize).fill(null));
+        setTeam2Lineup(Array(newLuSize).fill(null));
+        setTeam2Reserves(Array(newResSize).fill(null));
+    }
+    
+    // Pre-fill with test data only once when modality is campo and no teams are set
+    const areTeamsEmpty = team1Lineup.every(p => p === null) && team2Lineup.every(p => p === null);
+    if (selectedModality === 'campo' && areTeamsEmpty && newLuSize === 11) {
+        setTeam1Lineup(['p31', 'p6', 'p11', 'p13', 'p22', 'p1', 'p3', 'p5', 'p9', 'p7', 'p8']);
+        setTeam2Lineup(['p32', 'p25', 'p15', 'p4', 'p28', 'p16', 'p12', 'p10', 'p14', 'p18', 'p19']);
+    }
+
+  }, [selectedModality, team1Lineup.length, team1Reserves.length]);
   
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
@@ -528,5 +558,3 @@ export default function AppContainer() {
     </div>
   );
 }
-
-    
