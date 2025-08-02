@@ -344,6 +344,7 @@ export default function AppContainer() {
         }
     });
     return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   const handleSaveLineups = () => {
@@ -1060,5 +1061,3 @@ export default function AppContainer() {
     </div>
   );
 }
-
-    
