@@ -88,15 +88,24 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   };
 
   useEffect(() => {
+    // This hook checks for the result of a Google sign-in redirect.
+    // It is triggered when the page loads after returning from Google.
+    // We set isGoogleLoading to true to show a loading state on the button.
+    setIsGoogleLoading(true);
     getRedirectResult(auth)
       .catch((error) => {
-        console.error("Google redirect result error:", error);
-        toast({
-            title: "Erro com o Google",
-            description: "Não foi possível completar o login com o Google. " + error.message,
-            variant: "destructive",
-        });
+        // Only show an error toast if there was actually an error from the redirect.
+        // This prevents showing an error on every page load.
+        if (error.code) {
+          console.error("Google redirect result error:", error);
+          toast({
+              title: "Erro com o Google",
+              description: "Não foi possível completar o login com o Google. " + error.message,
+              variant: "destructive",
+          });
+        }
       }).finally(() => {
+          // Whether it succeeded or failed, stop the loading indicator.
           setIsGoogleLoading(false);
       })
   }, [toast]);
