@@ -332,8 +332,7 @@ const TeamDisplay = ({
   teamIdentifier: 'team1' | 'team2';
   modality: Modality | null;
 }) => {
-    
-  const lineupPlayers = lineup.map(id => id ? { ...players[id], id } : null);
+
   const reservePlayers = reserves.map(id => id ? { ...players[id], id } : null);
   
   const layout = formationLayouts[formation]?.positions;
@@ -341,11 +340,12 @@ const TeamDisplay = ({
   const renderPlayerGrid = () => {
     if (!layout) return null;
 
-    return layout.map((slot, index) => {
-      // Make sure we don't go out of bounds
-      if (index >= lineupPlayers.length) return null;
+    // Ensure we don't try to render more slots than the lineup size allows
+    const lineupSize = lineup.length;
 
-      const player = lineupPlayers[index];
+    return layout.slice(0, lineupSize).map((slot, index) => {
+      const playerId = lineup[index];
+      const player = playerId ? { ...players[playerId], id: playerId } : null;
       const gridStyle = { gridArea: slot.grid };
 
       return (
