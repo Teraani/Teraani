@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { View } from '@/app/page';
@@ -16,6 +17,7 @@ interface LeaguesViewProps {
   currentLeagueId: string;
   onLeagueChange: (leagueId: string) => void;
   currentUser: User;
+  onCreateLeague: () => void;
 }
 
 export default function LeaguesView({
@@ -23,7 +25,8 @@ export default function LeaguesView({
   leagues,
   currentLeagueId,
   onLeagueChange,
-  currentUser
+  currentUser,
+  onCreateLeague,
 }: LeaguesViewProps) {
   const { toast } = useToast();
 
@@ -71,7 +74,11 @@ export default function LeaguesView({
                 <CardDescription>Selecione uma liga para ver os detalhes ou crie uma nova.</CardDescription>
             </CardHeader>
             <CardContent>
-                <ScrollArea className="h-[calc(100vh-250px)]">
+                <Button className="w-full mb-4" onClick={onCreateLeague}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Criar Nova Liga
+                </Button>
+                <ScrollArea className="h-[calc(100vh-320px)]">
                     <div className="space-y-3">
                         {userLeagues.map((league) => (
                             <div
@@ -93,6 +100,12 @@ export default function LeaguesView({
                                 )}
                             </div>
                         ))}
+                         {userLeagues.length === 0 && (
+                            <div className="text-center py-10 text-muted-foreground">
+                                <p>Você ainda não está em nenhuma liga.</p>
+                                <p className="text-sm">Crie uma nova liga para começar!</p>
+                            </div>
+                        )}
                     </div>
                 </ScrollArea>
             </CardContent>
