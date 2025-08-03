@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
-import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, Eye, Info, Upload, Edit } from 'lucide-react';
+import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, Eye, Info, Upload, Edit, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -419,6 +419,7 @@ export default function LineupView(props: LineupViewProps) {
   const [activeTab, setActiveTab] = useState('team1');
   const { toast } = useToast();
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
+  const [showDemoCard, setShowDemoCard] = useState(true);
 
   const handlePlayerCardClick = (state: PlayerActionState) => {
     if (!canEdit) {
@@ -459,7 +460,7 @@ export default function LineupView(props: LineupViewProps) {
     setPlayerActionState(null);
   };
   
-  const handleClearLineup = (team: 'team1' | 'team2') => {
+  const handleClearTeam = (team: 'team1' | 'team2') => {
     if (team === 'team1') {
         setTeam1Lineup(Array(team1Lineup.length).fill(null));
         setTeam1Reserves(Array(team1Reserves.length).fill(null));
@@ -467,6 +468,7 @@ export default function LineupView(props: LineupViewProps) {
         setTeam2Lineup(Array(team2Lineup.length).fill(null));
         setTeam2Reserves(Array(team2Reserves.length).fill(null));
     }
+    toast({ title: `Time ${team === 'team1' ? 1 : 2} limpo!` });
   };
   
 
@@ -563,68 +565,86 @@ export default function LineupView(props: LineupViewProps) {
         <div className="flex-1" />
       </header>
 
-      <div className="p-4">
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-center">{canEdit ? "Editor da Rodada" : "Times da Rodada"}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="team1">Time 1</TabsTrigger>
-                        <TabsTrigger value="team2">Time 2</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="team1" className="mt-4">
-                        {canEdit && (
-                            <div className="flex justify-between items-center mb-4">
-                               <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
-                                <Button variant="destructive" size="sm" onClick={() => handleClearLineup('team1')} disabled={!canEdit}>
-                                    <Trash2 className="mr-2 h-4 w-4"/>
-                                    Limpar Time 1
-                                </Button>
-                            </div>
-                        )}
-                        <TeamDisplay
-                            teamIdentifier="team1"
-                            lineup={team1Lineup}
-                            reserves={team1Reserves}
-                            players={players}
-                            formation={formation}
-                            shirtColor={team1ShirtColor}
-                            onPlayerCardClick={handlePlayerCardClick}
-                            onAddPlayer={handleAddPlayerForTeam('team1')}
-                            canEdit={canEdit}
-                            modality={modality}
-                        />
-                    </TabsContent>
-                    
-                    <TabsContent value="team2" className="mt-4">
-                        {canEdit && (
-                            <div className="flex justify-between items-center mb-4">
-                                <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
-                                <Button variant="destructive" size="sm" onClick={() => handleClearLineup('team2')} disabled={!canEdit}>
-                                    <Trash2 className="mr-2 h-4 w-4"/>
-                                    Limpar Time 2
-                                </Button>
-                            </div>
-                        )}
-                        <TeamDisplay
-                            teamIdentifier="team2"
-                            lineup={team2Lineup}
-                            reserves={team2Reserves}
-                            players={players}
-                            formation={formation}
-                            shirtColor={team2ShirtColor}
-                            onPlayerCardClick={handlePlayerCardClick}
-                            onAddPlayer={handleAddPlayerForTeam('team2')}
-                            canEdit={canEdit}
-                            modality={modality}
-                        />
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-        </Card>
+      <div className="p-4 space-y-4">
+        {canEdit && showDemoCard && (
+            <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div className="flex items-center gap-3">
+                        <Info className="w-6 h-6 text-blue-500" />
+                        <CardTitle className="text-blue-800 dark:text-blue-300">Monte os Times</CardTitle>
+                    </div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500" onClick={() => setShowDemoCard(false)}>
+                        <X className="w-5 h-5"/>
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-blue-700 dark:text-blue-400">
+                        Use os botões '+' para adicionar jogadores ou clique em 'Balancear Times' para uma sugestão da IA.
+                    </p>
+                </CardContent>
+                 <CardFooter>
+                    <Button 
+                        className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" 
+                        onClick={() => { handleClearTeam('team1'); handleClearTeam('team2'); }}>
+                        <Trash2 className="mr-2 h-4 w-4"/>
+                        Limpar Times
+                    </Button>
+                </CardFooter>
+            </Card>
+        )}
+      
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="team1">Time 1</TabsTrigger>
+                <TabsTrigger value="team2">Time 2</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="team1" className="mt-4">
+                <div className="flex justify-between items-center mb-4">
+                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
+                    {canEdit && (
+                       <Button variant="outline" size="sm" onClick={() => handleClearTeam('team1')} >
+                           Limpar Time 1
+                       </Button>
+                    )}
+                </div>
+                <TeamDisplay
+                    teamIdentifier="team1"
+                    lineup={team1Lineup}
+                    reserves={team1Reserves}
+                    players={players}
+                    formation={formation}
+                    shirtColor={team1ShirtColor}
+                    onPlayerCardClick={handlePlayerCardClick}
+                    onAddPlayer={handleAddPlayerForTeam('team1')}
+                    canEdit={canEdit}
+                    modality={modality}
+                />
+            </TabsContent>
+            
+            <TabsContent value="team2" className="mt-4">
+                <div className="flex justify-between items-center mb-4">
+                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
+                     {canEdit && (
+                        <Button variant="outline" size="sm" onClick={() => handleClearTeam('team2')}>
+                            Limpar Time 2
+                        </Button>
+                     )}
+                </div>
+                <TeamDisplay
+                    teamIdentifier="team2"
+                    lineup={team2Lineup}
+                    reserves={team2Reserves}
+                    players={players}
+                    formation={formation}
+                    shirtColor={team2ShirtColor}
+                    onPlayerCardClick={handlePlayerCardClick}
+                    onAddPlayer={handleAddPlayerForTeam('team2')}
+                    canEdit={canEdit}
+                    modality={modality}
+                />
+            </TabsContent>
+        </Tabs>
         
         {canEdit && (
             <div className="mt-4 flex flex-col gap-2">
@@ -669,4 +689,3 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
-
