@@ -127,6 +127,7 @@ export default function AppContainer() {
 
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const selectedModality = currentLeagueId ? appData.leagues[currentLeagueId]?.modality ?? null : null;
+  const [isInitialLoadForModality, setIsInitialLoadForModality] = useState(true);
   
   const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
   const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
@@ -169,7 +170,7 @@ export default function AppContainer() {
       paymentEditor: null,
       scalersRanking: {},
       goalieRanking: {},
-      modality: 'campo',
+      modality: null,
       paymentsEnabled: true,
     };
 
@@ -182,7 +183,7 @@ export default function AppContainer() {
        // Update loggedInUser state to reflect the new admin role
       setLoggedInUser(adminUser);
       setCurrentLeagueId(newLeagueId);
-      navigateTo('dashboard');
+      navigateTo('modality-selection');
       toast({ title: 'Liga Criada com Sucesso!', description: 'Você agora é o admin.' });
       return newLeague;
     } catch (error) {
@@ -233,7 +234,12 @@ export default function AppContainer() {
                     setAppData({ leagues: userLeagues });
                     const firstLeagueId = Object.keys(userLeagues)[0];
                     setCurrentLeagueId(firstLeagueId);
-                    navigateTo('dashboard');
+                    const leagueModality = userLeagues[firstLeagueId]?.modality;
+                    if (leagueModality) {
+                        navigateTo('dashboard');
+                    } else {
+                        navigateTo('modality-selection');
+                    }
                 } else {
                     await handleCreateLeague(userProfile);
                 }
@@ -288,6 +294,17 @@ export default function AppContainer() {
         return;
     };
     
+    // Protect initial lineups from being cleared on first modality selection
+    if (isInitialLoadForModality) {
+        setIsInitialLoadForModality(false);
+        const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
+        setTeam1Lineup(prev => prev.slice(0, newLuSize));
+        setTeam1Reserves(Array(newResSize).fill(null));
+        setTeam2Lineup(prev => prev.slice(0, newLuSize));
+        setTeam2Reserves(Array(newResSize).fill(null));
+        return; 
+    }
+    
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
     
     const adjustLineup = (currentLineup: (string|null)[]) => {
@@ -317,7 +334,7 @@ export default function AppContainer() {
     setTeam2Lineup(prev => adjustLineup(prev));
     setTeam2Reserves(prev => adjustReserves(prev));
 
-  }, [selectedModality]); // Reruns only when the modality changes.
+  }, [selectedModality, isInitialLoadForModality]); // Reruns when modality or the initial load flag changes.
   
   // Set initial lineup when the component mounts or when league changes
     useEffect(() => {
@@ -326,6 +343,7 @@ export default function AppContainer() {
         const { reserves: resSize } = getTeamSizes(selectedModality);
         setTeam1Reserves(Array(resSize).fill(null));
         setTeam2Reserves(Array(resSize).fill(null));
+        setIsInitialLoadForModality(true); // Reset flag on league change
     }, [currentLeagueId]);
 
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
@@ -760,12 +778,16 @@ export default function AppContainer() {
          return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
     }
   }
+  
+  const isLeagueAdmin = currentLeague.adminId === currentUser.id;
+  if (!currentLeague.modality) {
+    return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} />;
+  }
 
   const selectedPlayer = selectedPlayerId && currentLeague ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
   const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'loading'].includes(currentView);
 
   const renderView = () => {
-    const isLeagueAdmin = currentLeague.adminId === currentUser.id;
     switch (currentView) {
         case 'loading': return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
         case 'all-users': return <AllUsersView leagues={appData.leagues} onBack={goBack} />;
