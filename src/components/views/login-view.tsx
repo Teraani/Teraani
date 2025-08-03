@@ -78,7 +78,7 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
         console.error("Google sign in error:", error);
         toast({
             title: "Erro com o Google",
-            description: "Não foi possível completar o login com o Google.",
+            description: "Não foi possível completar o login com o Google. Por favor, tente novamente ou use e-mail e senha.",
             variant: "destructive",
         });
     } finally {

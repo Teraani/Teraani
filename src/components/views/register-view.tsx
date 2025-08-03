@@ -80,7 +80,7 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
         console.error("Google sign in error:", error);
         toast({
             title: "Erro com o Google",
-            description: "Não foi possível completar o login com o Google.",
+            description: "Não foi possível completar o login com o Google. Por favor, tente novamente ou crie uma conta com e-mail e senha.",
             variant: "destructive",
         });
     } finally {
