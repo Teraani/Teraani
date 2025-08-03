@@ -101,6 +101,7 @@ export default function AppContainer() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
         if (firebaseUser) {
             const userDocRef = doc(db, "users", firebaseUser.uid);
             let userDocSnap = await getDoc(userDocRef);
@@ -110,7 +111,6 @@ export default function AppContainer() {
             if (userDocSnap.exists()) {
                 userProfile = userDocSnap.data() as User;
             } else {
-                // New user registration
                 userProfile = {
                     id: firebaseUser.uid,
                     name: firebaseUser.displayName || 'Novo Jogador',
@@ -121,7 +121,7 @@ export default function AppContainer() {
                     paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
                 };
                 await setDoc(userDocRef, userProfile);
-                userDocSnap = await getDoc(userDocRef); // Re-fetch to be safe
+                userDocSnap = await getDoc(userDocRef);
                 userProfile = userDocSnap.data() as User;
             }
             
@@ -144,12 +144,10 @@ export default function AppContainer() {
                 const firstLeagueId = Object.keys(userLeagues)[0];
                 setCurrentLeagueId(firstLeagueId);
             } else {
-                // If user is not in any league, they might be joining via invite
-                // Or we can create a default one for them. For now, let's keep it simple.
                 setAppData({ leagues: {} });
                 setCurrentLeagueId(null);
             }
-            navigateTo('dashboard'); 
+            navigateTo('dashboard');
             
         } else {
             setLoggedInUser(null);
@@ -157,10 +155,19 @@ export default function AppContainer() {
             setAppData({ leagues: {} });
             navigateTo('welcome');
         }
+      } catch (error: any) {
+        console.error("Auth state change error:", error);
+        toast({ title: 'Erro de Conexão', description: 'Não foi possível conectar ao banco de dados. Verifique sua conexão e tente novamente.', variant: 'destructive' });
+        // If there's an error (like offline), log out to be safe and show welcome screen
+        setLoggedInUser(null);
+        setCurrentLeagueId(null);
+        setAppData({ leagues: {} });
+        navigateTo('welcome');
+      }
     });
 
     return () => unsubscribe();
-}, []);
+  }, [toast]);
 
 
   // This effect dynamically adjusts team sizes when modality changes
