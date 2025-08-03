@@ -51,7 +51,8 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     setIsLoading(true);
     try {
         await signInWithEmailAndPassword(auth, values.email, values.password);
-        toast({ title: "Login realizado com sucesso!" });
+        // A confirmação de sucesso agora é feita pelo onAuthStateChanged no AppContainer,
+        // que redireciona para o dashboard. Não mostramos mais o toast aqui.
     } catch (error: any) {
         console.error("Login error:", error);
         let description = "Ocorreu um erro inesperado. Tente novamente.";
@@ -73,7 +74,7 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     const provider = new GoogleAuthProvider();
     try {
         await signInWithPopup(auth, provider);
-        // The onAuthStateChanged listener will handle navigation
+        // O onAuthStateChanged listener irá lidar com a navegação
     } catch (error: any) {
         console.error("Google sign in error:", error);
         toast({
