@@ -670,3 +670,4 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
+
