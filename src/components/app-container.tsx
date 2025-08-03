@@ -98,6 +98,43 @@ export default function AppContainer() {
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
+  const handleCreateLeague = async (user: User) => {
+    const newLeagueId = `league_${Date.now()}`;
+    const newLeague: League = {
+      id: newLeagueId,
+      name: `Liga de ${user.name}`,
+      adminId: user.id,
+      users: {
+        [user.id]: user,
+      },
+      players: {}, // Start with an empty market
+      games: {},
+      editorOfTheRound: null,
+      scoutEditor: null,
+      paymentEditor: null,
+      scalersRanking: {},
+      goalieRanking: {},
+      modality: null, // Admin needs to set this
+      paymentsEnabled: true,
+    };
+
+    try {
+      await setDoc(doc(db, "leagues", newLeagueId), newLeague);
+      setAppData(prev => ({
+        ...prev,
+        leagues: { ...prev.leagues, [newLeagueId]: newLeague },
+      }));
+      setCurrentLeagueId(newLeagueId);
+      navigateTo('modality-selection');
+      toast({ title: 'Liga Criada com Sucesso!', description: 'Agora escolha a modalidade de jogo.' });
+      return newLeague;
+    } catch (error) {
+      console.error("Error creating league:", error);
+      toast({ title: 'Erro ao Criar Liga', variant: 'destructive' });
+      return null;
+    }
+  };
+
   useEffect(() => {
     const handleAuth = async (firebaseUser: FirebaseUser | null) => {
         try {
@@ -146,10 +183,7 @@ export default function AppContainer() {
                         navigateTo('dashboard');
                     }
                 } else {
-                    setAppData({ leagues: {} });
-                    setCurrentLeagueId(null);
-                    // Navigate to a place where they can create or join a league
-                    navigateTo('leagues');
+                    await handleCreateLeague(userProfile);
                 }
             } else {
                 setLoggedInUser(null);
@@ -244,44 +278,6 @@ export default function AppContainer() {
     updateCurrentLeague(league => ({ ...league, name: newName }));
     toast({ title: "Nome da Liga Atualizado!" });
   };
-
-  const handleCreateLeague = async () => {
-    if (!loggedInUser) return;
-
-    const newLeagueId = `league_${Date.now()}`;
-    const newLeague: League = {
-      id: newLeagueId,
-      name: `Liga de ${loggedInUser.name}`,
-      adminId: loggedInUser.id,
-      users: {
-        [loggedInUser.id]: loggedInUser,
-      },
-      players: {}, // Start with an empty market
-      games: {},
-      editorOfTheRound: null,
-      scoutEditor: null,
-      paymentEditor: null,
-      scalersRanking: {},
-      goalieRanking: {},
-      modality: null, // Admin needs to set this
-      paymentsEnabled: true,
-    };
-
-    try {
-      await setDoc(doc(db, "leagues", newLeagueId), newLeague);
-      setAppData(prev => ({
-        ...prev,
-        leagues: { ...prev.leagues, [newLeagueId]: newLeague },
-      }));
-      setCurrentLeagueId(newLeagueId);
-      navigateTo('modality-selection');
-      toast({ title: 'Liga Criada com Sucesso!', description: 'Agora escolha a modalidade de jogo.' });
-    } catch (error) {
-      console.error("Error creating league:", error);
-      toast({ title: 'Erro ao Criar Liga', variant: 'destructive' });
-    }
-  };
-
 
   const handleSaveLineups = () => {
     setLineupsSaved(true);
@@ -678,7 +674,7 @@ export default function AppContainer() {
       
       // These views can be shown even without full context.
       case 'leagues': 
-        return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={loggedInUser!} onCreateLeague={handleCreateLeague} />;
+        return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={loggedInUser!} onCreateLeague={() => handleCreateLeague(loggedInUser)} />;
       case 'modality-selection':
         return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={null} isLeagueAdmin={false} />;
 
@@ -697,7 +693,7 @@ export default function AppContainer() {
         case 'loading': return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
         case 'all-users': return <AllUsersView leagues={appData.leagues} onBack={goBack} />;
         case 'all-leagues': return <AllLeaguesView leagues={appData.leagues} onBack={goBack} />;
-        case 'leagues': return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={currentUser!} onCreateLeague={handleCreateLeague} />;
+        case 'leagues': return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={currentUser!} onCreateLeague={() => handleCreateLeague(currentUser)} />;
         case 'league-participants': return <LeagueParticipantsView onBack={goBack} league={currentLeague} isLeagueAdmin={isLeagueAdmin} onInvite={handleInvite} onAddGuest={handleAddGuestPlayer} onRemoveUser={handleRemoveUserFromLeague} />;
         case 'modality-selection': return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} />;
         case 'dashboard': return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;
