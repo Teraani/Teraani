@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -51,7 +51,7 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     setIsLoading(true);
     try {
         await signInWithEmailAndPassword(auth, values.email, values.password);
-        // The onAuthStateChanged listener in AppContainer will handle navigation
+        toast({ title: "Login realizado com sucesso!" });
     } catch (error: any) {
         console.error("Login error:", error);
         let description = "Ocorreu um erro inesperado. Tente novamente.";
@@ -72,15 +72,16 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithRedirect(auth, provider);
-        // The getRedirectResult will be handled in AppContainer
+        await signInWithPopup(auth, provider);
+        // The onAuthStateChanged listener will handle navigation
     } catch (error: any) {
         console.error("Google sign in error:", error);
         toast({
             title: "Erro com o Google",
-            description: "Não foi possível iniciar o login com o Google.",
+            description: "Não foi possível completar o login com o Google.",
             variant: "destructive",
         });
+    } finally {
         setIsGoogleLoading(false);
     }
   };

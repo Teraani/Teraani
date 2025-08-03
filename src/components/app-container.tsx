@@ -35,7 +35,7 @@ import AllUsersView from '@/components/views/all-users-view';
 import AllLeaguesView from '@/components/views/all-leagues-view';
 import { auth, db } from '@/lib/firebase-config';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { onAuthStateChanged, signOut, getRedirectResult, GoogleAuthProvider } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, getDocs, collection, writeBatch } from "firebase/firestore";
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users' | 'all-leagues';
@@ -100,22 +100,8 @@ export default function AppContainer() {
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
   useEffect(() => {
-    // This effect handles the result of a Google Sign-In redirect
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          // This will trigger the onAuthStateChanged listener below
-          toast({ title: "Login com Google realizado com sucesso!" });
-        }
-      })
-      .catch((error) => {
-        console.error("Google Redirect Error:", error);
-        toast({ title: "Erro no Login com Google", description: "Não foi possível completar o login.", variant: "destructive" });
-      });
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
-            // User is signed in, let's fetch their data from Firestore
             const userDocRef = doc(db, "users", firebaseUser.uid);
             const userDocSnap = await getDoc(userDocRef);
 
@@ -124,7 +110,6 @@ export default function AppContainer() {
             if (userDocSnap.exists()) {
                 userProfile = userDocSnap.data() as User;
             } else {
-                // New user via Email/Pass or Google
                 userProfile = {
                     id: firebaseUser.uid,
                     name: firebaseUser.displayName || 'Novo Jogador',
@@ -137,15 +122,12 @@ export default function AppContainer() {
                 await setDoc(userDocRef, userProfile);
             }
             
-            // Set user first to update the context
             setLoggedInUser(userProfile);
 
-            // Fetch all leagues
             const leaguesSnapshot = await getDocs(collection(db, "leagues"));
             const userLeagues: Record<string, League> = {};
             leaguesSnapshot.forEach(leagueDoc => {
                 const leagueData = leagueDoc.data() as League;
-                // Check if user is a member of this league
                 if (leagueData.users && leagueData.users[userProfile.id]) {
                     userLeagues[leagueDoc.id] = leagueData;
                 }
@@ -157,10 +139,8 @@ export default function AppContainer() {
             if (leagueIds.length > 0) {
                 const firstLeagueId = leagueIds[0];
                 setCurrentLeagueId(firstLeagueId);
-                // We have a league, go to dashboard
                 navigateTo('dashboard'); 
             } else {
-                // If user is in no leagues, create one for them
                 const newLeagueId = `league_${firebaseUser.uid}`;
                 const newLeague: League = {
                     id: newLeagueId,
@@ -179,16 +159,14 @@ export default function AppContainer() {
                 };
                 await setDoc(doc(db, "leagues", newLeagueId), newLeague);
                 
-                // Update state after creating the new league
                 setAppData({ leagues: { [newLeagueId]: newLeague } });
                 setCurrentLeagueId(newLeagueId);
                 navigateTo('dashboard');
             }
         } else {
-            // User is signed out
             setLoggedInUser(null);
             setCurrentLeagueId(null);
-            setAppData({ leagues: {} }); // Clear leagues
+            setAppData({ leagues: {} });
             navigateTo('welcome');
         }
     });
@@ -407,7 +385,6 @@ export default function AppContainer() {
   const handleLogout = async (showToast = true) => {
     try {
         await signOut(auth);
-        // The onAuthStateChanged listener will handle navigation and state clearing.
         if(showToast) {
             toast({ title: "Você saiu com sucesso." });
         }
