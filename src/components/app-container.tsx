@@ -1,9 +1,4 @@
 
-
-
-
-
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -218,7 +213,8 @@ export default function AppContainer() {
           // This will be handled by the onAuthStateChanged listener
         } else {
           // If no redirect result, check the current auth state
-          handleAuth(auth.currentUser);
+          const unsubscribe = onAuthStateChanged(auth, handleAuth);
+          return () => unsubscribe();
         }
       })
       .catch((error) => {
@@ -232,8 +228,8 @@ export default function AppContainer() {
       });
 
     const unsubscribe = onAuthStateChanged(auth, handleAuth);
-
     return () => unsubscribe();
+    
   }, [toast]); // useEffect dependencies
 
 
@@ -728,3 +724,5 @@ export default function AppContainer() {
     </div>
   );
 }
+
+    
