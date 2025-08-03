@@ -135,20 +135,28 @@ export default function AppContainer() {
                 userLeagues[leagueDoc.id] = leagueData;
             }
         });
-
+        
         if (Object.keys(userLeagues).length > 0) {
             setAppData({ leagues: userLeagues });
-            setCurrentLeagueId(Object.keys(userLeagues)[0]); // Set to the first league found
+            const firstLeagueId = Object.keys(userLeagues)[0];
+            setCurrentLeagueId(firstLeagueId); // Set the first league as active
         } else {
             // If user is in no leagues, create a new one for them
             const newLeagueId = `league_${firebaseUser.uid}`;
             const newLeague: League = {
-                ...initialData.leagues.defaultLeague, // use as a template for players
                 id: newLeagueId,
                 name: `Liga de ${userProfile.name}`,
                 adminId: userProfile.id,
                 users: { [userProfile.id]: userProfile },
+                players: { ...initialData.leagues.defaultLeague.players }, // Use default players
                 games: {}, // Start with no games
+                modality: 'campo',
+                paymentsEnabled: true,
+                editorOfTheRound: null,
+                scoutEditor: null,
+                paymentEditor: null,
+                scalersRanking: {},
+                goalieRanking: {}
             };
             await setDoc(doc(db, "leagues", newLeagueId), newLeague);
             setAppData({ leagues: { [newLeagueId]: newLeague } });
@@ -573,7 +581,7 @@ export default function AppContainer() {
      switch (currentView) {
         case 'welcome': return <WelcomeView onNavigate={navigateTo} />;
         case 'register': return <RegisterView onNavigateToLogin={() => navigateTo('login')} />;
-        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} onNavigateToDashboard={() => navigateTo('dashboard')}/>;
+        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
         default: return <WelcomeView onNavigate={navigateTo} />;
       }
   }
