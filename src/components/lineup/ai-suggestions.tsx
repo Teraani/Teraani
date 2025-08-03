@@ -69,7 +69,7 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
         ) : (
           <>
             <Wand2 className="mr-2 h-4 w-4" />
-            Balancear Times com IA
+            Balancear Times
           </>
         )}
       </Button>
@@ -117,3 +117,5 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
     </>
   );
 }
+
+    

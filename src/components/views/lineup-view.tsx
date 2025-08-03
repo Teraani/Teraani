@@ -490,9 +490,19 @@ export default function LineupView(props: LineupViewProps) {
   };
 
   const handleApplyAiSuggestions = (team1: string[], team2: string[]) => {
-    setTeam1Lineup(team1);
-    setTeam2Lineup(team2);
-  };
+    const { lineup: luSize, reserves: resSize } = getTeamSizes(modality);
+    
+    const fillArray = (arr: string[], size: number) => {
+        const filled = [...arr];
+        while(filled.length < size) filled.push(null as any);
+        return filled.slice(0, size);
+    }
+
+    setTeam1Lineup(fillArray(team1, luSize));
+    setTeam1Reserves(Array(resSize).fill(null));
+    setTeam2Lineup(fillArray(team2, luSize));
+    setTeam2Reserves(Array(resSize).fill(null));
+};
   
   const handleShare = () => {
     const getTeamText = (teamName: string, lineup: (string | null)[], reserves: (string | null)[]) => {
@@ -520,6 +530,18 @@ export default function LineupView(props: LineupViewProps) {
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(fullMessage)}`;
     
     window.open(whatsappUrl, '_blank');
+  };
+
+  const getTeamSizes = (modality: Modality | null) => {
+    switch (modality) {
+      case 'society':
+        return { lineup: 7, reserves: 4 };
+      case 'futsal':
+        return { lineup: 5, reserves: 4 };
+      case 'campo':
+      default:
+        return { lineup: 11, reserves: 5 };
+    }
   };
 
   return (
@@ -672,3 +694,5 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
+
+    
