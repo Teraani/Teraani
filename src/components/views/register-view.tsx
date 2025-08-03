@@ -13,9 +13,7 @@ import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, updateProfile } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
-import type { User as FirebaseUser } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
-import type { View } from '../app-container';
 
 interface RegisterViewProps {
   onNavigateToLogin: () => void;
@@ -92,6 +90,7 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
   };
 
   useEffect(() => {
+    setIsGoogleLoading(true);
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
@@ -103,15 +102,17 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
         }
       }).catch((error) => {
         console.error("Google redirect result error:", error);
-        toast({
-            title: "Erro com o Google",
-            description: "Não foi possível entrar com o Google. " + error.message,
-            variant: "destructive",
-        });
+        if (error.code) { // Only show toast if it's a real error
+            toast({
+                title: "Erro com o Google",
+                description: "Não foi possível entrar com o Google. " + error.message,
+                variant: "destructive",
+            });
+        }
       }).finally(() => {
           setIsGoogleLoading(false);
       })
-  }, []);
+  }, [toast]);
 
 
   return (
@@ -164,7 +165,7 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg" disabled={isLoading}>
+              <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg" disabled={isLoading || isGoogleLoading}>
                 {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                 {isLoading ? 'Criando...' : 'Criar conta'}
               </Button>
@@ -182,7 +183,7 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
             </div>
           </div>
 
-          <Button onClick={handleGoogleSignIn} variant="outline" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-base font-bold rounded-xl shadow-lg" disabled={isGoogleLoading}>
+          <Button onClick={handleGoogleSignIn} variant="outline" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-base font-bold rounded-xl shadow-lg" disabled={isGoogleLoading || isLoading}>
              {isGoogleLoading ? (
                 <Loader2 className="mr-3 h-5 w-5 animate-spin" />
              ) : (
