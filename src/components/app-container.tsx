@@ -3,6 +3,7 @@
 
 
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -103,12 +104,14 @@ export default function AppContainer() {
 
   const handleCreateLeague = async (user: User) => {
     const newLeagueId = `league_${Date.now()}`;
+    const adminUser = { ...user, role: 'admin' as const };
+    
     const newLeague: League = {
       id: newLeagueId,
       name: `Liga de ${user.name}`,
       adminId: user.id,
       users: {
-        [user.id]: user,
+        [user.id]: adminUser,
       },
       players: {}, // Start with an empty market
       games: {},
@@ -127,9 +130,11 @@ export default function AppContainer() {
         ...prev,
         leagues: { ...prev.leagues, [newLeagueId]: newLeague },
       }));
+       // Update loggedInUser state to reflect the new admin role
+      setLoggedInUser(adminUser);
       setCurrentLeagueId(newLeagueId);
       navigateTo('modality-selection');
-      toast({ title: 'Liga Criada com Sucesso!', description: 'Agora escolha a modalidade de jogo.' });
+      toast({ title: 'Liga Criada com Sucesso!', description: 'Você agora é o admin. Escolha a modalidade de jogo.' });
       return newLeague;
     } catch (error) {
       console.error("Error creating league:", error);
