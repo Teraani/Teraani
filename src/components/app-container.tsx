@@ -114,9 +114,9 @@ export default function AppContainer() {
   
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
 
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(initialTeam1Lineup);
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>([]);
   const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>([]);
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(initialTeam2Lineup);
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>([]);
   const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>([]);
 
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
@@ -145,7 +145,7 @@ export default function AppContainer() {
       paymentEditor: null,
       scalersRanking: {},
       goalieRanking: {},
-      modality: null, // Admin needs to set this
+      modality: 'campo', // Start with a default modality to avoid reset
       paymentsEnabled: true,
     };
 
@@ -158,8 +158,8 @@ export default function AppContainer() {
        // Update loggedInUser state to reflect the new admin role
       setLoggedInUser(adminUser);
       setCurrentLeagueId(newLeagueId);
-      navigateTo('modality-selection');
-      toast({ title: 'Liga Criada com Sucesso!', description: 'Você agora é o admin. Escolha a modalidade de jogo.' });
+      navigateTo('dashboard'); // Go directly to dashboard
+      toast({ title: 'Liga Criada com Sucesso!', description: 'Você agora é o admin.' });
       return newLeague;
     } catch (error) {
       console.error("Error creating league:", error);
@@ -209,12 +209,7 @@ export default function AppContainer() {
                     setAppData({ leagues: userLeagues });
                     const firstLeagueId = Object.keys(userLeagues)[0];
                     setCurrentLeagueId(firstLeagueId);
-                    const currentLeague = userLeagues[firstLeagueId];
-                    if (currentLeague && !currentLeague.modality) {
-                        navigateTo('modality-selection');
-                    } else {
-                        navigateTo('dashboard');
-                    }
+                    navigateTo('dashboard');
                 } else {
                     await handleCreateLeague(userProfile);
                 }
@@ -266,24 +261,49 @@ export default function AppContainer() {
   // This effect dynamically adjusts team sizes when modality changes
   useEffect(() => {
     if (!selectedModality) {
-        const { lineup: defaultLuSize, reserves: defaultResSize } = getTeamSizes('campo');
-        setTeam1Lineup(initialTeam1Lineup);
-        setTeam1Reserves(Array(defaultResSize).fill(null));
-        setTeam2Lineup(initialTeam2Lineup);
-        setTeam2Reserves(Array(defaultResSize).fill(null));
         return;
     };
     
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
     
-    // Always reset the lineup to empty slots when modality changes.
-    setTeam1Lineup(Array(newLuSize).fill(null));
-    setTeam1Reserves(Array(newResSize).fill(null));
-    setTeam2Lineup(Array(newLuSize).fill(null));
-    setTeam2Reserves(Array(newResSize).fill(null));
+    const adjustLineup = (currentLineup: (string|null)[]) => {
+        const newLineup = [...currentLineup];
+        if (newLineup.length > newLuSize) {
+            return newLineup.slice(0, newLuSize);
+        }
+        while (newLineup.length < newLuSize) {
+            newLineup.push(null);
+        }
+        return newLineup;
+    };
+
+    const adjustReserves = (currentReserves: (string|null)[]) => {
+         const newReserves = [...currentReserves];
+        if (newReserves.length > newResSize) {
+            return newReserves.slice(0, newResSize);
+        }
+        while (newReserves.length < newResSize) {
+            newReserves.push(null);
+        }
+        return newReserves;
+    }
+
+    setTeam1Lineup(prev => adjustLineup(prev));
+    setTeam1Reserves(prev => adjustReserves(prev));
+    setTeam2Lineup(prev => adjustLineup(prev));
+    setTeam2Reserves(prev => adjustReserves(prev));
 
   }, [selectedModality]); // Reruns only when the modality changes.
   
+  // Set initial lineup when the component mounts or when league changes
+    useEffect(() => {
+        setTeam1Lineup(initialTeam1Lineup);
+        setTeam2Lineup(initialTeam2Lineup);
+        const { reserves: resSize } = getTeamSizes(selectedModality);
+        setTeam1Reserves(Array(resSize).fill(null));
+        setTeam2Reserves(Array(resSize).fill(null));
+    }, [currentLeagueId]);
+
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
       setIsPersonalPaymentsView(options?.isPersonalPayments || false);
