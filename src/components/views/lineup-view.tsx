@@ -340,7 +340,6 @@ const TeamDisplay = ({
   const renderPlayerGrid = () => {
     if (!layout) return null;
 
-    // Ensure we don't try to render more slots than the lineup size allows
     const lineupSize = lineup.length;
 
     return layout.slice(0, lineupSize).map((slot, index) => {
