@@ -514,16 +514,16 @@ export default function LineupView(props: LineupViewProps) {
 };
   
   const handleShare = () => {
-    const getTeamText = (teamName: string, lineup: (string | null)[], reserves: (string | null)[]) => {
+    const getTeamText = (teamName: string, lineupIds: (string | null)[], reserveIds: (string | null)[]) => {
       let text = `*${teamName}*\n\n`;
       text += "*Titulares:*\n";
-      lineup.forEach((id, index) => {
+      lineupIds.forEach((id, index) => {
         if (id && players[id]) {
           text += `${index + 1}. ${players[id].name} (${players[id].pos})\n`;
         }
       });
       text += "\n*Reservas:*\n";
-      reserves.forEach((id, index) => {
+      reserveIds.forEach((id, index) => {
         if (id && players[id]) {
           text += `${index + 1}. ${players[id].name} (${players[id].pos})\n`;
         }
