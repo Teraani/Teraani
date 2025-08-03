@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -267,9 +266,9 @@ export default function AppContainer() {
   useEffect(() => {
     if (!selectedModality) {
         const { lineup: defaultLuSize, reserves: defaultResSize } = getTeamSizes('campo');
-        setTeam1Lineup(Array(defaultLuSize).fill(null));
+        setTeam1Lineup(initialTeam1Lineup);
         setTeam1Reserves(Array(defaultResSize).fill(null));
-        setTeam2Lineup(Array(defaultLuSize).fill(null));
+        setTeam2Lineup(initialTeam2Lineup);
         setTeam2Reserves(Array(defaultResSize).fill(null));
         return;
     };
@@ -754,5 +753,7 @@ export default function AppContainer() {
     </div>
   );
 }
+
+    
 
     
