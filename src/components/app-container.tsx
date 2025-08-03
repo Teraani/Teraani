@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -60,6 +61,35 @@ const getTeamSizes = (modality: Modality | null) => {
   }
 };
 
+const initialTeam1Lineup = [
+  'p-mc-haaland',
+  'p-mc-grealish',
+  'p-mc-foden',
+  'p-mc-de-bruyne',
+  'p-mc-silva',
+  'p-mc-rodri',
+  'p-mc-walker',
+  'p-mc-dias',
+  'p-mc-stones',
+  'p-mc-gvardiol',
+  'p-mc-ederson'
+];
+
+const initialTeam2Lineup = [
+  'p-rm-vinicius',
+  'p-rm-rodrygo',
+  'p-rm-bellingham',
+  'p-rm-valverde',
+  'p-rm-modric',
+  'p-rm-tchouameni',
+  'p-rm-carvajal',
+  'p-rm-militao',
+  'p-rm-rudiger',
+  'p-rm-mendy',
+  'p-rm-courtois'
+];
+
+
 export default function AppContainer() {
   const [currentView, setCurrentView] = useState<View>('loading');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -84,15 +114,15 @@ export default function AppContainer() {
   
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
 
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>([]);
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>(initialTeam1Lineup);
   const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>([]);
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>([]);
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>(initialTeam2Lineup);
   const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>([]);
 
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
   const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
-  const [formation, setFormation] = useState<Formation>('4-4-2');
+  const [formation, setFormation] = useState<Formation>('4-3-3');
   
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
