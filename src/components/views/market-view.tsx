@@ -105,12 +105,14 @@ const PlayerForm = ({
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col items-center gap-4">
-           {img && (
+           {img ? (
             <Avatar className="w-24 h-24">
                 <AvatarImage src={img} alt="Pré-visualização" data-ai-hint="player avatar"/>
-                <AvatarFallback className="text-4xl">
-                <UserPlus />
-                </AvatarFallback>
+                <AvatarFallback className="text-4xl">{name.charAt(0) || 'C'}</AvatarFallback>
+            </Avatar>
+           ) : (
+            <Avatar className="w-24 h-24">
+                <AvatarFallback className="text-4xl bg-muted"><UserPlus/></AvatarFallback>
             </Avatar>
            )}
           <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
@@ -126,7 +128,7 @@ const PlayerForm = ({
         </div>
         <div>
           <Label htmlFor="playerTeam">Time</Label>
-          <Select onValueChange={setTeam} value={team}>
+          <Select onValueChange={setTeam} value={team} required>
               <SelectTrigger>
                   <SelectValue placeholder="Selecione a cor/time" />
               </SelectTrigger>
@@ -142,7 +144,7 @@ const PlayerForm = ({
         </div>
         <div>
           <Label htmlFor="playerPos">Posição</Label>
-           <Select onValueChange={(v) => setPos(v as Player['pos'])} value={pos}>
+           <Select onValueChange={(v) => setPos(v as Player['pos'])} value={pos} required>
               <SelectTrigger>
                   <SelectValue placeholder="Selecione a posição" />
               </SelectTrigger>
@@ -171,8 +173,6 @@ export default function MarketView({ players, onPlayerSelect, onBack, position, 
   const [searchTerm, setSearchTerm] = useState('');
   const [playerToRemove, setPlayerToRemove] = useState<string | null>(null);
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
-  const [playerToEdit, setPlayerToEdit] = useState<(Player & {id: string}) | null>(null);
-
   const { toast } = useToast();
 
   const scaledIdsSet = useMemo(() => new Set(scaledPlayerIds), [scaledPlayerIds]);
@@ -254,25 +254,11 @@ export default function MarketView({ players, onPlayerSelect, onBack, position, 
       </AlertDialog>
 
        <Dialog open={isAddPlayerOpen} onOpenChange={setIsAddPlayerOpen}>
-        {canEdit && <DialogTrigger asChild>
-           <div />
-        </DialogTrigger>}
         <PlayerForm
             formType="add"
             onSave={(data) => onAddPlayerToMarket(data as any)}
             onClose={() => setIsAddPlayerOpen(false)}
         />
-       </Dialog>
-
-       <Dialog open={!!playerToEdit} onOpenChange={(open) => !open && setPlayerToEdit(null)}>
-         {playerToEdit && (
-          <PlayerForm
-            formType="edit"
-            player={playerToEdit}
-            onSave={onUpdatePlayerInMarket}
-            onClose={() => setPlayerToEdit(null)}
-          />
-         )}
        </Dialog>
 
       <header className="bg-card p-4 shadow-md flex items-center sticky top-0 z-20">
@@ -319,16 +305,6 @@ export default function MarketView({ players, onPlayerSelect, onBack, position, 
                           isScaled={scaledIdsSet.has(player.id)}
                         />
                       </div>
-                      {canEdit && (
-                        <div className="flex gap-2">
-                           <Button variant="outline" size="icon" onClick={() => setPlayerToEdit(player)}>
-                              <Edit className="h-4 w-4" />
-                           </Button>
-                           <Button variant="destructive" size="icon" onClick={() => setPlayerToRemove(player.id)}>
-                              <Trash2 className="h-4 w-4" />
-                           </Button>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>

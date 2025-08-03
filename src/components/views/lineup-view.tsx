@@ -1,10 +1,10 @@
 
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
 import PlayerCard from '@/components/lineup/player-card';
-import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, Eye, Info } from 'lucide-react';
+import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, Eye, Info, Upload, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -17,16 +17,15 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter }
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
 
 export type Formation = '4-3-3' | '4-4-2' | '3-5-2' | '3-2-1' | '2-3-1' | '2-2' | '3-1';
 export type ShirtColor = 'verde' | 'amarelo' | 'preto' | 'vermelho' | 'branco';
@@ -55,6 +54,7 @@ export interface LineupViewProps {
   setTeam2ShirtColor: (color: ShirtColor) => void;
   formation: Formation;
   setFormation: (formation: Formation) => void;
+  onUpdatePlayerInMarket: (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => void;
 }
 
 
@@ -160,6 +160,126 @@ const getFormationsForModality = (modality: Modality | null): Formation[] => {
   }
 };
 
+const PlayerEditorDialog = ({
+  player,
+  onSave,
+  onClose,
+  onRemove
+}: {
+  player: Player & { id: string };
+  onSave: (data: any, id?: string) => void;
+  onClose: () => void;
+  onRemove: () => void;
+}) => {
+  const [name, setName] = useState(player?.name || '');
+  const [pos, setPos] = useState<Player['pos'] | ''>(player?.pos || '');
+  const [team, setTeam] = useState(player?.team || '');
+  const [img, setImg] = useState(player?.img || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImg(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !pos || !team) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+    const data = {
+      name,
+      pos: pos as Player['pos'],
+      team,
+      img: img || `https://placehold.co/128x128/8E44AD/FFFFFF?text=${name.charAt(0)}`,
+    };
+    onSave(data, player?.id);
+    onClose();
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Editar Jogador</DialogTitle>
+        <DialogDescription>Atualize os dados do atleta.</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex flex-col items-center gap-4">
+          {img ? (
+            <Avatar className="w-24 h-24">
+              <AvatarImage src={img} alt="Pré-visualização" data-ai-hint="player avatar" />
+              <AvatarFallback className="text-4xl">{name.charAt(0) || 'C'}</AvatarFallback>
+            </Avatar>
+          ) : (
+            <Avatar className="w-24 h-24">
+              <AvatarFallback className="text-4xl bg-muted"><UserPlus /></AvatarFallback>
+            </Avatar>
+          )}
+          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Anexar Imagem
+          </Button>
+          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+        </div>
+
+        <div>
+          <Label htmlFor="playerName">Nome</Label>
+          <Input id="playerName" value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        <div>
+          <Label htmlFor="playerTeam">Time</Label>
+          <Select onValueChange={setTeam} value={team} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a cor/time" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Verde">Verde</SelectItem>
+              <SelectItem value="Amarelo">Amarelo</SelectItem>
+              <SelectItem value="Preto">Preto</SelectItem>
+              <SelectItem value="Vermelho">Vermelho</SelectItem>
+              <SelectItem value="Branco">Branco</SelectItem>
+              <SelectItem value="Azul">Azul</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="playerPos">Posição</Label>
+          <Select onValueChange={(v) => setPos(v as Player['pos'])} value={pos} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a posição" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="GOL">Goleiro (GOL)</SelectItem>
+              <SelectItem value="LAT">Lateral (LAT)</SelectItem>
+              <SelectItem value="ZAG">Zagueiro (ZAG)</SelectItem>
+              <SelectItem value="MEI">Meio-campo (MEI)</SelectItem>
+              <SelectItem value="VOL">Volante (VOL)</SelectItem>
+              <SelectItem value="ATA">Atacante (ATA)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <DialogFooter className='flex-col-reverse sm:flex-row sm:justify-between w-full'>
+            <Button type="button" variant="destructive" onClick={onRemove}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Remover da Escalação
+            </Button>
+            <div className='flex justify-end gap-2'>
+                <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
+                <Button type="submit">Salvar Alterações</Button>
+            </div>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+};
 
 const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtColor, onColorChange: (color: ShirtColor) => void, disabled: boolean }) => {
     const colors: { value: ShirtColor, label: string }[] = [
@@ -282,7 +402,7 @@ export default function LineupView(props: LineupViewProps) {
     team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves,
     onSaveLineups, lineupsSaved, modality,
     team1ShirtColor, setTeam1ShirtColor, team2ShirtColor, setTeam2ShirtColor,
-    formation, setFormation
+    formation, setFormation, onUpdatePlayerInMarket
   } = props;
     
   const availableFormations = useMemo(() => getFormationsForModality(modality), [modality]);
@@ -395,8 +515,8 @@ export default function LineupView(props: LineupViewProps) {
     }
   };
   
-  const team1Score = team1Lineup.reduce((sum, id) => sum + (id ? (players[id]?.points || 0) : 0), 0);
-  const team2Score = team2Lineup.reduce((sum, id) => sum + (id ? (players[id]?.points || 0) : 0), 0);
+  const team1Score = team1Lineup.reduce((sum, id) => sum + (id ? (players[id]?.points ?? 0) : 0), 0);
+  const team2Score = team2Lineup.reduce((sum, id) => sum + (id ? (players[id]?.points ?? 0) : 0), 0);
   
   const handleShare = () => {
     const getTeamText = (teamName: string, lineup: (string | null)[], reserves: (string | null)[]) => {
@@ -517,29 +637,19 @@ export default function LineupView(props: LineupViewProps) {
 
   return (
     <div>
-      <AlertDialog open={!!playerActionState} onOpenChange={(open) => !open && setPlayerActionState(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{playerActionState && players[playerActionState.playerId]?.name}</AlertDialogTitle>
-            <AlertDialogDescription>
-              O que você gostaria de fazer?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <div className="flex flex-col sm:flex-row-reverse gap-2 w-full">
-              <AlertDialogCancel onClick={() => setPlayerActionState(null)}>Cancelar</AlertDialogCancel>
-              <Button variant="destructive" onClick={handleRemovePlayer} className="w-full sm:w-auto">
-                <UserX className="mr-2 h-4 w-4" />
-                Remover da Escalação
-              </Button>
-              <Button variant="outline" onClick={() => { onPlayerSelect(playerActionState!.playerId); setPlayerActionState(null); }} className="w-full sm:w-auto">
-                <Eye className="mr-2 h-4 w-4" />
-                Ver Detalhes
-              </Button>
-            </div>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <Dialog open={!!playerActionState} onOpenChange={(open) => !open && setPlayerActionState(null)}>
+            {playerActionState && (
+                <PlayerEditorDialog
+                    player={{ ...players[playerActionState.playerId], id: playerActionState.playerId }}
+                    onSave={onUpdatePlayerInMarket}
+                    onClose={() => setPlayerActionState(null)}
+                    onRemove={() => {
+                        handleRemovePlayer();
+                    }}
+                />
+            )}
+        </Dialog>
+
 
       <header className="bg-card p-4 flex flex-col items-center gap-4">
         <div className="flex justify-between items-center w-full">
