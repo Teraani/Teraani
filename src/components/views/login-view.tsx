@@ -10,16 +10,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
-// import { auth } from '@/lib/firebase-config';
-// import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from '@/lib/firebase-config';
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import type { View } from '../app-container';
 
 interface LoginViewProps {
   onNavigateToRegister: () => void;
-  // This is a temporary prop to bypass Firebase auth
-  onLogin: () => void;
 }
 
 const loginSchema = z.object({
@@ -27,7 +25,7 @@ const loginSchema = z.object({
   password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres." }),
 });
 
-export default function LoginView({ onNavigateToRegister, onLogin }: LoginViewProps) {
+export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
@@ -41,15 +39,23 @@ export default function LoginView({ onNavigateToRegister, onLogin }: LoginViewPr
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
-    // Simulating a successful login without calling Firebase
-    setTimeout(() => {
-        onLogin();
+    try {
+        await signInWithEmailAndPassword(auth, values.email, values.password);
+        // The onAuthStateChanged listener in AppContainer will handle navigation
         toast({
             title: "Login realizado",
             description: "Bem-vindo de volta!",
         });
+    } catch (error: any) {
+        console.error("Login error:", error);
+        toast({
+            title: "Erro no Login",
+            description: "Verifique seu e-mail e senha. " + error.message,
+            variant: "destructive",
+        });
+    } finally {
         setIsLoading(false);
-    }, 500);
+    }
   }
 
   return (

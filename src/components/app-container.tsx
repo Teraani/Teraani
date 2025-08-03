@@ -33,6 +33,9 @@ import type { ShirtColor, Formation } from '@/components/views/lineup-view';
 import LeagueParticipantsView from '@/components/views/league-participants-view';
 import AllUsersView from '@/components/views/all-users-view';
 import AllLeaguesView from '@/components/views/all-leagues-view';
+import { auth } from '@/lib/firebase-config';
+import type { User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users' | 'all-leagues';
 export type Position = Player['pos'] | null;
@@ -59,7 +62,7 @@ const getTeamSizes = (modality: Modality | null) => {
 };
 
 export default function AppContainer() {
-  const [currentView, setCurrentView] = useState<View>('welcome');
+  const [currentView, setCurrentView] = useState<View>('loading');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [previousView, setPreviousView] = useState<View>('dashboard');
   const { toast } = useToast();
@@ -94,10 +97,55 @@ export default function AppContainer() {
   
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
+        if (user) {
+            // This is a simplified logic. In a real app, you'd fetch user data from Firestore.
+            // For now, we find a matching user in our local data.
+            const localUser = Object.values(appData.leagues.defaultLeague.users).find(u => u.email === user.email);
+            if (localUser) {
+                setLoggedInUser(localUser);
+                setCurrentLeagueId('defaultLeague');
+                navigateTo('dashboard');
+            } else {
+                // User authenticated with Firebase, but not found in our local data.
+                // This could be a new registration.
+                // For now, we'll create a basic user object.
+                const newUser: User = {
+                  id: user.uid,
+                  name: user.displayName || 'Novo Jogador',
+                  email: user.email!,
+                  teamName: `${user.displayName || 'Novo'} FC`,
+                  partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
+                  role: 'player',
+                  paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
+                };
+                setLoggedInUser(newUser);
+                setCurrentLeagueId('defaultLeague');
+                navigateTo('dashboard');
+            }
+        } else {
+            setLoggedInUser(null);
+            navigateTo('welcome');
+        }
+    });
+
+    return () => unsubscribe();
+  }, [appData.leagues.defaultLeague.users]);
   
   // This effect dynamically adjusts team sizes when modality changes
   useEffect(() => {
-    if (!selectedModality) return;
+    if (!selectedModality) {
+        // When there is no modality, we still need to initialize the state with some default size
+        // to avoid crashes. Defaulting to 'campo' size is a safe bet.
+        const { lineup: defaultLuSize, reserves: defaultResSize } = getTeamSizes('campo');
+        setTeam1Lineup(Array(defaultLuSize).fill(null));
+        setTeam1Reserves(Array(defaultResSize).fill(null));
+        setTeam2Lineup(Array(defaultLuSize).fill(null));
+        setTeam2Reserves(Array(defaultResSize).fill(null));
+        return;
+    };
     
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
     
@@ -126,13 +174,6 @@ export default function AppContainer() {
     setCurrentView(view);
     window.scrollTo(0, 0);
   };
-
-  const handleLogin = () => {
-    const defaultUser = initialData.leagues.defaultLeague.users['user27'];
-    setLoggedInUser(defaultUser);
-    setCurrentLeagueId('defaultLeague');
-    navigateTo('dashboard');
-  }
   
   const handleUpdateLeagueName = (newName: string) => {
     updateCurrentLeague(league => ({ ...league, name: newName }));
@@ -163,7 +204,7 @@ export default function AppContainer() {
   
   const currentUser = useMemo(() => {
     if (!loggedInUser || !currentLeague) return null;
-    return currentLeague.users[loggedInUser.id] || null;
+    return currentLeague.users[loggedInUser.id] || loggedInUser;
   }, [currentLeague, loggedInUser]);
 
   const isPaymentsEnabled = currentLeague?.paymentsEnabled ?? true;
@@ -301,9 +342,15 @@ export default function AppContainer() {
   };
 
   const handleLogout = async (showToast = true) => {
-    setLoggedInUser(null!);
-    setCurrentLeagueId(null!);
-    navigateTo('welcome');
+    try {
+        await signOut(auth);
+        // The onAuthStateChanged listener will handle navigation
+        if(showToast) {
+            toast({ title: "Você saiu com sucesso." });
+        }
+    } catch (error) {
+        toast({ title: "Erro ao sair", description: "Não foi possível fazer o logout.", variant: "destructive" });
+    }
   };
 
   const selectPlayerForDetails = (playerId: string) => {
@@ -485,11 +532,15 @@ export default function AppContainer() {
     toast({ title: `Módulo de Pagamentos ${enabled ? 'Ativado' : 'Desativado'}` });
   };
   
+  if (currentView === 'loading') {
+    return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
+  }
+  
   if (!loggedInUser || !currentUser || !currentLeague) {
      switch (currentView) {
         case 'welcome': return <WelcomeView onNavigate={navigateTo} />;
-        case 'register': return <RegisterView onNavigateToLogin={() => navigateTo('login')} onRegister={handleLogin} />;
-        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} onLogin={handleLogin} />;
+        case 'register': return <RegisterView onNavigateToLogin={() => navigateTo('login')} />;
+        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
         default: return <WelcomeView onNavigate={navigateTo} />;
       }
   }

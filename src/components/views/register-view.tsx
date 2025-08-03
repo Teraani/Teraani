@@ -10,8 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
-// import { auth } from '@/lib/firebase-config';
-// import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, updateProfile } from "firebase/auth";
+import { auth } from '@/lib/firebase-config';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, updateProfile } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
@@ -19,7 +19,6 @@ import type { View } from '../app-container';
 
 interface RegisterViewProps {
   onNavigateToLogin: () => void;
-  onRegister: () => void; // Temporary prop
 }
 
 const registerSchema = z.object({
@@ -37,7 +36,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-export default function RegisterView({ onNavigateToLogin, onRegister }: RegisterViewProps) {
+export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -51,31 +50,68 @@ export default function RegisterView({ onNavigateToLogin, onRegister }: Register
     },
   });
 
-  async function onSubmit(values: z.infer<typeof registerSchema>) {
+   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setIsLoading(true);
-    // Simulating a successful registration
-    setTimeout(() => {
-        onRegister();
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        await updateProfile(userCredential.user, { displayName: values.name });
+
+        // The onAuthStateChanged listener in AppContainer will handle navigation
         toast({
             title: "Conta Criada!",
             description: "Bem-vindo ao Amistosos FC!",
         });
+    } catch (error: any) {
+        console.error("Registration error:", error);
+        toast({
+            title: "Erro ao Criar Conta",
+            description: "Não foi possível criar a conta. " + error.message,
+            variant: "destructive",
+        });
+    } finally {
         setIsLoading(false);
-    }, 500);
+    }
   }
 
-  const handleGoogleSignIn = async () => {
+   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    // Simulating a successful registration
-     setTimeout(() => {
-        onRegister();
+    const provider = new GoogleAuthProvider();
+    try {
+        // We use signInWithRedirect for a better mobile experience.
+        await signInWithRedirect(auth, provider);
+        // The result is handled by getRedirectResult and onAuthStateChanged
+    } catch (error: any) {
+        console.error("Google sign in error:", error);
         toast({
-            title: "Conta Criada com o Google!",
-            description: "Bem-vindo ao Amistosos FC!",
+            title: "Erro com o Google",
+            description: "Não foi possível entrar com o Google. " + error.message,
+            variant: "destructive",
         });
         setIsGoogleLoading(false);
-    }, 500);
+    }
   };
+
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // This means the user has just come back from the Google sign-in page.
+          toast({
+            title: "Conta Criada com o Google!",
+            description: "Bem-vindo ao Amistosos FC!",
+          });
+        }
+      }).catch((error) => {
+        console.error("Google redirect result error:", error);
+        toast({
+            title: "Erro com o Google",
+            description: "Não foi possível entrar com o Google. " + error.message,
+            variant: "destructive",
+        });
+      }).finally(() => {
+          setIsGoogleLoading(false);
+      })
+  }, []);
 
 
   return (
