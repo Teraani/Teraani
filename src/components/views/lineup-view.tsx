@@ -333,16 +333,11 @@ const TeamDisplay = ({
   modality: Modality | null;
 }) => {
 
-  const reservePlayers = reserves.map(id => id ? { ...players[id], id } : null);
-  
-  const layout = formationLayouts[formation]?.positions;
-  
   const renderPlayerGrid = () => {
+    const layout = formationLayouts[formation]?.positions;
     if (!layout) return null;
 
-    const lineupSize = lineup.length;
-
-    return layout.slice(0, lineupSize).map((slot, index) => {
+    return layout.map((slot, index) => {
       const playerId = lineup[index];
       const player = playerId ? { ...players[playerId], id: playerId } : null;
       const gridStyle = { gridArea: slot.grid };
@@ -371,7 +366,8 @@ const TeamDisplay = ({
   const renderReserves = () => (
     <div className="flex flex-wrap justify-center gap-4">
         {Array.from({ length: reserves.length }).map((_, i) => {
-            const player = reservePlayers[i];
+            const playerId = reserves[i];
+            const player = playerId ? { ...players[playerId], id: playerId } : null;
             if (player) {
                 return <PlayerCard key={`${teamIdentifier}-res-${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
             } else if (canEdit) {
@@ -419,7 +415,13 @@ export default function LineupView(props: LineupViewProps) {
   const [activeTab, setActiveTab] = useState('team1');
   const { toast } = useToast();
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
-  const [showDemoCard, setShowDemoCard] = useState(true);
+  const [showInfoCard, setShowInfoCard] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem('lineupInfoDismissed')) {
+      setShowInfoCard(true);
+    }
+  }, []);
 
   const handlePlayerCardClick = (state: PlayerActionState) => {
     if (!canEdit) {
@@ -483,6 +485,18 @@ export default function LineupView(props: LineupViewProps) {
   const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
     onAddPlayer({ position, index, team });
   };
+  
+  const getTeamSizes = (modality: Modality | null) => {
+    switch (modality) {
+      case 'society':
+        return { lineup: 7, reserves: 4 };
+      case 'futsal':
+        return { lineup: 5, reserves: 4 };
+      case 'campo':
+      default:
+        return { lineup: 11, reserves: 5 };
+    }
+  };
 
   const handleApplyAiSuggestions = (team1: string[], team2: string[]) => {
     const { lineup: luSize, reserves: resSize } = getTeamSizes(modality);
@@ -527,16 +541,9 @@ export default function LineupView(props: LineupViewProps) {
     window.open(whatsappUrl, '_blank');
   };
 
-  const getTeamSizes = (modality: Modality | null) => {
-    switch (modality) {
-      case 'society':
-        return { lineup: 7, reserves: 4 };
-      case 'futsal':
-        return { lineup: 5, reserves: 4 };
-      case 'campo':
-      default:
-        return { lineup: 11, reserves: 5 };
-    }
+  const handleDismissInfo = () => {
+    setShowInfoCard(false);
+    localStorage.setItem('lineupInfoDismissed', 'true');
   };
 
   return (
@@ -566,14 +573,14 @@ export default function LineupView(props: LineupViewProps) {
       </header>
 
       <div className="p-4 space-y-4">
-        {canEdit && showDemoCard && (
+        {canEdit && showInfoCard && (
             <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="flex items-center gap-3">
                         <Info className="w-6 h-6 text-blue-500" />
                         <CardTitle className="text-blue-800 dark:text-blue-300">Monte os Times</CardTitle>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500" onClick={() => setShowDemoCard(false)}>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500" onClick={handleDismissInfo}>
                         <X className="w-5 h-5"/>
                     </Button>
                 </CardHeader>
