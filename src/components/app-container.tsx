@@ -103,13 +103,14 @@ export default function AppContainer() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         if (firebaseUser) {
             const userDocRef = doc(db, "users", firebaseUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
+            let userDocSnap = await getDoc(userDocRef);
 
             let userProfile: User;
 
             if (userDocSnap.exists()) {
                 userProfile = userDocSnap.data() as User;
             } else {
+                // New user registration
                 userProfile = {
                     id: firebaseUser.uid,
                     name: firebaseUser.displayName || 'Novo Jogador',
@@ -120,49 +121,36 @@ export default function AppContainer() {
                     paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
                 };
                 await setDoc(userDocRef, userProfile);
+                userDocSnap = await getDoc(userDocRef); // Re-fetch to be safe
+                userProfile = userDocSnap.data() as User;
             }
             
             setLoggedInUser(userProfile);
 
             const leaguesSnapshot = await getDocs(collection(db, "leagues"));
             const userLeagues: Record<string, League> = {};
+            let userHasLeagues = false;
+
             leaguesSnapshot.forEach(leagueDoc => {
                 const leagueData = leagueDoc.data() as League;
                 if (leagueData.users && leagueData.users[userProfile.id]) {
                     userLeagues[leagueDoc.id] = leagueData;
+                    userHasLeagues = true;
                 }
             });
-            
-            setAppData({ leagues: userLeagues });
-            const leagueIds = Object.keys(userLeagues);
 
-            if (leagueIds.length > 0) {
-                const firstLeagueId = leagueIds[0];
+            if (userHasLeagues) {
+                setAppData({ leagues: userLeagues });
+                const firstLeagueId = Object.keys(userLeagues)[0];
                 setCurrentLeagueId(firstLeagueId);
-                navigateTo('dashboard'); 
             } else {
-                const newLeagueId = `league_${firebaseUser.uid}`;
-                const newLeague: League = {
-                    id: newLeagueId,
-                    name: `Liga de ${userProfile.name}`,
-                    adminId: userProfile.id,
-                    users: { [userProfile.id]: userProfile },
-                    players: { ...initialData.leagues.defaultLeague.players },
-                    games: {},
-                    modality: 'campo',
-                    paymentsEnabled: true,
-                    editorOfTheRound: null,
-                    scoutEditor: null,
-                    paymentEditor: null,
-                    scalersRanking: {},
-                    goalieRanking: {}
-                };
-                await setDoc(doc(db, "leagues", newLeagueId), newLeague);
-                
-                setAppData({ leagues: { [newLeagueId]: newLeague } });
-                setCurrentLeagueId(newLeagueId);
-                navigateTo('dashboard');
+                // If user is not in any league, they might be joining via invite
+                // Or we can create a default one for them. For now, let's keep it simple.
+                setAppData({ leagues: {} });
+                setCurrentLeagueId(null);
             }
+            navigateTo('dashboard'); 
+            
         } else {
             setLoggedInUser(null);
             setCurrentLeagueId(null);

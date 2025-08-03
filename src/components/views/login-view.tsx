@@ -21,7 +21,7 @@ interface LoginViewProps {
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um e-mail válido." }),
-  password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres." }),
+  password: z.string().min(1, { message: "A senha é obrigatória." }),
 });
 
 
@@ -51,8 +51,8 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // Success is handled by onAuthStateChanged in AppContainer.
-      // No toast needed here as the app will navigate to the dashboard.
+      // Success is handled by the onAuthStateChanged listener in AppContainer.
+      // It will navigate to the dashboard automatically.
     } catch (error: any) {
       console.error("Login error:", error);
       let description = "Ocorreu um erro inesperado. Tente novamente.";
@@ -65,6 +65,7 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
         variant: "destructive",
       });
     } finally {
+      // This will run regardless of success or failure.
       setIsLoading(false);
     }
   }
@@ -77,14 +78,11 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
         // The onAuthStateChanged listener will handle navigation
     } catch (error: any) {
         console.error("Google sign in error:", error);
-        // Do not show toast for unauthorized-domain, as it's a known issue in this environment.
-        if (error.code !== 'auth/unauthorized-domain') {
-           toast({
-                title: "Erro com o Google",
-                description: "Não foi possível completar o login com o Google. Por favor, tente novamente ou use e-mail e senha.",
-                variant: "destructive",
-            });
-        }
+        toast({
+            title: "Erro com o Google",
+            description: "Não foi possível completar o login com o Google. Por favor, tente novamente ou use e-mail e senha.",
+            variant: "destructive",
+        });
     } finally {
         setIsGoogleLoading(false);
     }
