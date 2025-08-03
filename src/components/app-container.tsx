@@ -69,8 +69,9 @@ export default function AppContainer() {
   
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
 
+  // This will now hold data fetched from Firestore
   const [appData, setAppData] = useState(initialData);
-  const [currentLeagueId, setCurrentLeagueId] = useState<string | null>('defaultLeague');
+  const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
 
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const selectedModality = currentLeagueId ? appData.leagues[currentLeagueId]?.modality ?? null : null;
@@ -99,46 +100,65 @@ export default function AppContainer() {
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user: FirebaseUser | null) => {
-        if (user) {
-            // This is a simplified logic. In a real app, you'd fetch user data from Firestore.
-            // For now, we find a matching user in our local data.
-            const localUser = Object.values(appData.leagues.defaultLeague.users).find(u => u.email === user.email);
+    // This is where we re-introduce Firebase auth listening.
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+        if (firebaseUser) {
+            // User is signed in.
+            // In a real app, you would now fetch data from Firestore.
+            // For this example, we'll simulate it by finding the user in our local data.
+            // This logic will be replaced with actual Firestore calls.
+            
+            // Simulating finding a user and their league data.
+            const localUser = Object.values(initialData.leagues.defaultLeague.users).find(u => u.email === firebaseUser.email);
+            
             if (localUser) {
                 setLoggedInUser(localUser);
+                // In a real app, you'd fetch the leagues this user belongs to.
+                // For now, we set it to the default league.
                 setCurrentLeagueId('defaultLeague');
+                setAppData(initialData); // Load all data for now
                 navigateTo('dashboard');
             } else {
-                // User authenticated with Firebase, but not found in our local data.
-                // This could be a new registration.
-                // For now, we'll create a basic user object.
+                // This is a new user who just registered.
                 const newUser: User = {
-                  id: user.uid,
-                  name: user.displayName || 'Novo Jogador',
-                  email: user.email!,
-                  teamName: `${user.displayName || 'Novo'} FC`,
+                  id: firebaseUser.uid,
+                  name: firebaseUser.displayName || 'Novo Jogador',
+                  email: firebaseUser.email!,
+                  teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
                   partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
                   role: 'player',
                   paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
                 };
+                // This is where you would create a new user and a new league for them in Firestore.
+                // We'll simulate this locally for now.
+                const newLeagueId = `league_${firebaseUser.uid}`;
+                const newLeague: League = {
+                    ...initialData.leagues.defaultLeague, // a template
+                    id: newLeagueId,
+                    name: `Liga de ${newUser.name}`,
+                    adminId: newUser.id,
+                    users: { [newUser.id]: newUser }
+                };
+                
                 setLoggedInUser(newUser);
-                setCurrentLeagueId('defaultLeague');
+                setCurrentLeagueId(newLeagueId);
+                setAppData({ leagues: { ...appData.leagues, [newLeagueId]: newLeague } });
                 navigateTo('dashboard');
             }
         } else {
+            // User is signed out.
             setLoggedInUser(null);
+            setCurrentLeagueId(null);
             navigateTo('welcome');
         }
     });
 
     return () => unsubscribe();
-  }, [appData.leagues.defaultLeague.users]);
+  }, []); // We can remove dependencies as onAuthStateChanged handles updates.
   
   // This effect dynamically adjusts team sizes when modality changes
   useEffect(() => {
     if (!selectedModality) {
-        // When there is no modality, we still need to initialize the state with some default size
-        // to avoid crashes. Defaulting to 'campo' size is a safe bet.
         const { lineup: defaultLuSize, reserves: defaultResSize } = getTeamSizes('campo');
         setTeam1Lineup(Array(defaultLuSize).fill(null));
         setTeam1Reserves(Array(defaultResSize).fill(null));
@@ -149,8 +169,10 @@ export default function AppContainer() {
     
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
     
+    // Check if team sizes need updating or if teams are empty for initial setup
     const needsUpdate = team1Lineup.length !== newLuSize || team1Reserves.length !== newResSize;
-    
+    const areTeamsEmpty = team1Lineup.every(p => p === null) && team2Lineup.every(p => p === null);
+
     if (needsUpdate) {
         setTeam1Lineup(Array(newLuSize).fill(null));
         setTeam1Reserves(Array(newResSize).fill(null));
@@ -158,13 +180,13 @@ export default function AppContainer() {
         setTeam2Reserves(Array(newResSize).fill(null));
     }
     
-    const areTeamsEmpty = team1Lineup.every(p => p === null) && team2Lineup.every(p => p === null);
-    if (selectedModality === 'campo' && areTeamsEmpty && newLuSize === 11) {
+    // Only set test team if modality is campo and teams are truly empty
+    if (areTeamsEmpty && selectedModality === 'campo' && newLuSize === 11) {
         setTeam1Lineup(['p31', 'p6', 'p11', 'p13', 'p22', 'p1', 'p3', 'p5', 'p9', 'p7', 'p8']);
         setTeam2Lineup(['p32', 'p25', 'p15', 'p4', 'p28', 'p16', 'p12', 'p10', 'p14', 'p18', 'p19']);
     }
 
-  }, [selectedModality, team1Lineup.length, team1Reserves.length]);
+  }, [selectedModality]); // Reruns only when the modality changes.
   
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
@@ -344,7 +366,7 @@ export default function AppContainer() {
   const handleLogout = async (showToast = true) => {
     try {
         await signOut(auth);
-        // The onAuthStateChanged listener will handle navigation
+        // The onAuthStateChanged listener will handle navigation and state clearing.
         if(showToast) {
             toast({ title: "Você saiu com sucesso." });
         }
@@ -540,7 +562,7 @@ export default function AppContainer() {
      switch (currentView) {
         case 'welcome': return <WelcomeView onNavigate={navigateTo} />;
         case 'register': return <RegisterView onNavigateToLogin={() => navigateTo('login')} />;
-        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
+        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} onNavigateToDashboard={() => navigateTo('dashboard')}/>;
         default: return <WelcomeView onNavigate={navigateTo} />;
       }
   }
