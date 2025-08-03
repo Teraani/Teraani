@@ -416,7 +416,6 @@ export default function LineupView(props: LineupViewProps) {
   const [activeTab, setActiveTab] = useState('team1');
   const { toast } = useToast();
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
-  const [showTestTeamInfo, setShowTestTeamInfo] = useState(true);
 
   const handlePlayerCardClick = (state: PlayerActionState) => {
     if (!canEdit) {
@@ -467,15 +466,6 @@ export default function LineupView(props: LineupViewProps) {
     }
   };
   
-  const handleClearAllTestTeams = () => {
-    handleClearLineup('team1');
-    handleClearLineup('team2');
-    setShowTestTeamInfo(false);
-    toast({
-      title: "Campo Limpo!",
-      description: "Agora é com você! Escale seus times para a rodada.",
-    });
-  };
 
   const handleClearReserves = (team: 'team1' | 'team2') => {
     if (team === 'team1') {
@@ -571,24 +561,6 @@ export default function LineupView(props: LineupViewProps) {
       </header>
 
       <div className="p-4">
-        {showTestTeamInfo && canEdit && (
-        <Card className="mb-4 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
-          <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-            <Info className="w-6 h-6 text-blue-500" />
-            <CardTitle className="text-blue-800 dark:text-blue-300">Times de Demonstração</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <p className="text-sm text-blue-700 dark:text-blue-400">
-              Estes são times de teste para você explorar. Sinta-se à vontade para alterá-los ou clique abaixo para começar do zero.
-            </p>
-            <Button variant="ghost" className="w-full text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900 justify-start p-0 h-auto mt-2" onClick={handleClearAllTestTeams}>
-              <Trash2 className="mr-2 h-4 w-4"/>
-              Limpar Times e Começar do Zero
-            </Button>
-          </CardContent>
-        </Card>
-        )}
-
         <Card>
             <CardHeader>
                 <CardTitle className="text-center">{canEdit ? "Editor da Rodada" : "Times da Rodada"}</CardTitle>

@@ -2,6 +2,7 @@
 
 
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -244,22 +245,11 @@ export default function AppContainer() {
     
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
     
-    // Check if team sizes need updating or if teams are empty for initial setup
-    const needsUpdate = team1Lineup.length !== newLuSize || team1Reserves.length !== newResSize;
-    const areTeamsEmpty = team1Lineup.every(p => p === null) && team2Lineup.every(p => p === null);
-
-    if (needsUpdate) {
-        setTeam1Lineup(Array(newLuSize).fill(null));
-        setTeam1Reserves(Array(newResSize).fill(null));
-        setTeam2Lineup(Array(newLuSize).fill(null));
-        setTeam2Reserves(Array(newResSize).fill(null));
-    }
-    
-    // Only set test team if modality is campo and teams are truly empty
-    if (areTeamsEmpty && selectedModality === 'campo' && newLuSize === 11) {
-        setTeam1Lineup(['p31', 'p6', 'p11', 'p13', 'p22', 'p1', 'p3', 'p5', 'p9', 'p7', 'p8']);
-        setTeam2Lineup(['p32', 'p25', 'p15', 'p4', 'p28', 'p16', 'p12', 'p10', 'p14', 'p18', 'p19']);
-    }
+    // Always reset the lineup to empty slots when modality changes.
+    setTeam1Lineup(Array(newLuSize).fill(null));
+    setTeam1Reserves(Array(newResSize).fill(null));
+    setTeam2Lineup(Array(newLuSize).fill(null));
+    setTeam2Reserves(Array(newResSize).fill(null));
 
   }, [selectedModality]); // Reruns only when the modality changes.
   
