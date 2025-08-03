@@ -413,24 +413,10 @@ export default function LineupView(props: LineupViewProps) {
     }
   }, [availableFormations, formation, setFormation]);
 
-  const [isMarketOpen, setIsMarketOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('team1');
   const { toast } = useToast();
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
   const [showTestTeamInfo, setShowTestTeamInfo] = useState(true);
-
-  useEffect(() => {
-    const checkMarketStatus = () => {
-      const now = new Date();
-      const day = now.getDay();
-      const hour = now.getHours();
-      setIsMarketOpen(!(day === 4 && hour >= 18));
-    };
-
-    checkMarketStatus();
-    const interval = setInterval(checkMarketStatus, 60000); 
-    return () => clearInterval(interval);
-  }, []);
 
   const handlePlayerCardClick = (state: PlayerActionState) => {
     if (!canEdit) {
@@ -504,19 +490,9 @@ export default function LineupView(props: LineupViewProps) {
   };
 
   const handleApplyAiSuggestions = (team1: string[], team2: string[]) => {
-    // This function seems to be for two teams, but the AI suggestion only returns one.
-    // Assuming the AI suggestion should apply to the currently active tab.
-    if(activeTab === 'team1') {
-        setTeam1Lineup(team1);
-        setTeam1Reserves(team2); // Assuming reserves are the second array
-    } else {
-        setTeam2Lineup(team1);
-        setTeam2Reserves(team2);
-    }
+    setTeam1Lineup(team1);
+    setTeam2Lineup(team2);
   };
-  
-  const team1Score = team1Lineup.reduce((sum, id) => sum + (id ? (players[id]?.points ?? 0) : 0), 0);
-  const team2Score = team2Lineup.reduce((sum, id) => sum + (id ? (players[id]?.points ?? 0) : 0), 0);
   
   const handleShare = () => {
     const getTeamText = (teamName: string, lineup: (string | null)[], reserves: (string | null)[]) => {
@@ -546,31 +522,54 @@ export default function LineupView(props: LineupViewProps) {
     window.open(whatsappUrl, '_blank');
   };
 
-  const editorView = (
-     <>
+  return (
+    <div className="pb-32">
+        <Dialog open={!!playerActionState} onOpenChange={(open) => !open && setPlayerActionState(null)}>
+            {playerActionState && (
+                <PlayerEditorDialog
+                    player={{ ...players[playerActionState.playerId], id: playerActionState.playerId }}
+                    onSave={onUpdatePlayerInMarket}
+                    onClose={() => setPlayerActionState(null)}
+                    onRemove={() => {
+                        handleRemovePlayer();
+                    }}
+                />
+            )}
+        </Dialog>
+
+
+      <header className="bg-card p-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+        <div className="flex-1">
+            <Button variant="ghost" className="text-foreground" onClick={handleShare}>
+                <Share2 className="w-5 h-5" />
+            </Button>
+        </div>
+        <h2 className="text-xl font-bold text-center flex-1">Escalação</h2>
+        <div className="flex-1" />
+      </header>
+
+      <div className="p-4">
         {showTestTeamInfo && canEdit && (
         <Card className="mb-4 bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
           <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
             <Info className="w-6 h-6 text-blue-500" />
             <CardTitle className="text-blue-800 dark:text-blue-300">Times de Demonstração</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-2">
             <p className="text-sm text-blue-700 dark:text-blue-400">
               Estes são times de teste para você explorar. Sinta-se à vontade para alterá-los ou clique abaixo para começar do zero.
             </p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="ghost" className="w-full text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900" onClick={handleClearAllTestTeams}>
+            <Button variant="ghost" className="w-full text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900 justify-start p-0 h-auto mt-2" onClick={handleClearAllTestTeams}>
               <Trash2 className="mr-2 h-4 w-4"/>
               Limpar Times e Começar do Zero
             </Button>
-          </CardFooter>
+          </CardContent>
         </Card>
-      )}
+        )}
 
         <Card>
             <CardHeader>
-                <CardTitle>{canEdit ? "Editor da Rodada" : "Times da Rodada"}</CardTitle>
+                <CardTitle className="text-center">{canEdit ? "Editor da Rodada" : "Times da Rodada"}</CardTitle>
             </CardHeader>
             <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -578,6 +577,7 @@ export default function LineupView(props: LineupViewProps) {
                         <TabsTrigger value="team1">Time 1</TabsTrigger>
                         <TabsTrigger value="team2">Time 2</TabsTrigger>
                     </TabsList>
+                    
                     <TabsContent value="team1" className="mt-4">
                         {canEdit && (
                             <div className="flex justify-between items-center mb-4">
@@ -601,6 +601,7 @@ export default function LineupView(props: LineupViewProps) {
                             modality={modality}
                         />
                     </TabsContent>
+                    
                     <TabsContent value="team2" className="mt-4">
                         {canEdit && (
                             <div className="flex justify-between items-center mb-4">
@@ -627,104 +628,21 @@ export default function LineupView(props: LineupViewProps) {
                 </Tabs>
             </CardContent>
         </Card>
+        
         {canEdit && (
             <div className="mt-4 flex flex-col gap-2">
                 <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
             </div>
         )}
-     </>
-  );
-
-  return (
-    <div>
-        <Dialog open={!!playerActionState} onOpenChange={(open) => !open && setPlayerActionState(null)}>
-            {playerActionState && (
-                <PlayerEditorDialog
-                    player={{ ...players[playerActionState.playerId], id: playerActionState.playerId }}
-                    onSave={onUpdatePlayerInMarket}
-                    onClose={() => setPlayerActionState(null)}
-                    onRemove={() => {
-                        handleRemovePlayer();
-                    }}
-                />
-            )}
-        </Dialog>
-
-
-      <header className="bg-card p-4 flex flex-col items-center gap-4">
-        <div className="flex justify-between items-center w-full">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={currentUser.avatar ?? undefined} alt="Avatar do Usuário" />
-                    <AvatarFallback>
-                      <Users />
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="start" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{currentUser.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {currentUser.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {currentUser.role === 'admin' && (
-                  <DropdownMenuItem onClick={() => onNavigate('admin')}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Admin</span>
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => onNavigate('welcome')}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <h2 className="text-xl font-bold">Escalação</h2>
-            
-            <Button variant="ghost" className="text-foreground" onClick={handleShare}>
-                <Share2 className="w-5 h-5" />
-            </Button>
-        </div>
-        <div className="grid grid-cols-3 items-center w-full max-w-sm">
-           <div className="text-center">
-              <p className="font-bold text-lg">{team1Score.toFixed(2)}</p>
-              <p className="text-xs text-muted-foreground">Time 1</p>
-           </div>
-           <div className="text-center font-bold text-muted-foreground">VS</div>
-            <div className="text-center">
-                <p className="font-bold text-lg">{team2Score.toFixed(2)}</p>
-                <p className="text-xs text-muted-foreground">Time 2</p>
-            </div>
-        </div>
-      </header>
-      <div className="p-4 pb-32">
-        {editorView}
-        
-        <div className="mt-4 flex flex-col gap-2">
-            <div className={cn(
-                "p-3 rounded-lg flex items-center justify-center space-x-2 shadow-lg text-center font-bold text-primary-foreground",
-                isMarketOpen ? "bg-green-600" : "bg-orange-500"
-            )}>
-                <Clock className="w-5 h-5" />
-                <span>{isMarketOpen ? "MERCADO ABERTO" : "MERCADO FECHADO"}</span>
-            </div>
-        </div>
       </div>
+
       {canEdit && (
-         <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-50">
-            <div className="flex justify-around items-center px-2 pb-2">
+         <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-30">
+             <div className="flex justify-around items-center px-2 pb-2">
                 <div className="flex flex-col items-center gap-1">
                     <span className="text-xs">Esquema Tático</span>
                      <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
-                        <SelectTrigger className="w-auto bg-muted border-none h-8">
+                        <SelectTrigger className="w-[120px] bg-muted border-none h-8">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
