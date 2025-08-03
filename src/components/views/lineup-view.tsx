@@ -167,7 +167,7 @@ const PlayerEditorDialog = ({
   onRemove
 }: {
   player: Player & { id: string };
-  onSave: (data: any, id?: string) => void;
+  onSave: (data: Partial<Player>, id: string) => void;
   onClose: () => void;
   onRemove: () => void;
 }) => {
@@ -198,9 +198,9 @@ const PlayerEditorDialog = ({
       name,
       pos: pos as Player['pos'],
       team,
-      img: img || `https://placehold.co/128x128/8E44AD/FFFFFF?text=${name.charAt(0)}`,
+      img,
     };
-    onSave(data, player?.id);
+    onSave(data, player.id);
     onClose();
   };
 
@@ -234,7 +234,7 @@ const PlayerEditorDialog = ({
           <Input id="playerName" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div>
-          <Label htmlFor="playerTeam">Time</Label>
+          <Label htmlFor="playerTeam">Cor da Camisa/Time</Label>
           <Select onValueChange={setTeam} value={team} required>
             <SelectTrigger>
               <SelectValue placeholder="Selecione a cor/time" />
@@ -267,7 +267,7 @@ const PlayerEditorDialog = ({
         </div>
 
         <DialogFooter className='flex-col-reverse sm:flex-row sm:justify-between w-full'>
-            <Button type="button" variant="destructive" onClick={onRemove}>
+            <Button type="button" variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={onRemove}>
                 <Trash2 className="mr-2 h-4 w-4" />
                 Remover da Escalação
             </Button>
@@ -280,6 +280,7 @@ const PlayerEditorDialog = ({
     </DialogContent>
   );
 };
+
 
 const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtColor, onColorChange: (color: ShirtColor) => void, disabled: boolean }) => {
     const colors: { value: ShirtColor, label: string }[] = [
