@@ -234,7 +234,7 @@ const PlayerEditorDialog = ({
           <Input id="playerName" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div>
-          <Label htmlFor="playerTeam">Cor da Camisa/Time</Label>
+          <Label htmlFor="playerTeam">Time</Label>
           <Select onValueChange={setTeam} value={team} required>
             <SelectTrigger>
               <SelectValue placeholder="Selecione a cor/time" />
