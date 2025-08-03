@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -52,7 +52,6 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     try {
         await signInWithEmailAndPassword(auth, values.email, values.password);
         // The onAuthStateChanged listener in AppContainer will handle navigation
-        // and success toast.
     } catch (error: any) {
         console.error("Login error:", error);
         let description = "Ocorreu um erro inesperado. Tente novamente.";
@@ -73,22 +72,16 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithPopup(auth, provider);
-        // The onAuthStateChanged listener in AppContainer will handle navigation
-        // and success toast.
+        await signInWithRedirect(auth, provider);
+        // The getRedirectResult will be handled in AppContainer
     } catch (error: any) {
         console.error("Google sign in error:", error);
-        let description = "Não foi possível entrar com o Google.";
-        if (error.code === 'auth/account-exists-with-different-credential') {
-          description = "Já existe uma conta com este e-mail. Tente fazer login com o método original.";
-        }
         toast({
             title: "Erro com o Google",
-            description: description,
+            description: "Não foi possível iniciar o login com o Google.",
             variant: "destructive",
         });
-    } finally {
-      setIsGoogleLoading(false);
+        setIsGoogleLoading(false);
     }
   };
 
