@@ -101,79 +101,87 @@ export default function AppContainer() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // User is signed in, let's fetch their data from Firestore
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
+        if (firebaseUser) {
+            // User is signed in, let's fetch their data from Firestore
+            const userDocRef = doc(db, "users", firebaseUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
 
-        let userProfile: User;
+            let userProfile: User;
 
-        if (userDocSnap.exists()) {
-          // Existing user
-          userProfile = userDocSnap.data() as User;
-        } else {
-          // New user
-          userProfile = {
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName || 'Novo Jogador',
-            email: firebaseUser.email!,
-            teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
-            partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
-            role: 'player',
-            paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
-          };
-          await setDoc(userDocRef, userProfile);
-        }
-        setLoggedInUser(userProfile);
-
-        // Fetch all leagues this user belongs to
-        const leaguesSnapshot = await getDocs(collection(db, "leagues"));
-        const userLeagues: Record<string, League> = {};
-        leaguesSnapshot.forEach(leagueDoc => {
-            const leagueData = leagueDoc.data() as League;
-            if (leagueData.users && leagueData.users[userProfile.id]) {
-                userLeagues[leagueDoc.id] = leagueData;
+            if (userDocSnap.exists()) {
+                userProfile = userDocSnap.data() as User;
+            } else {
+                userProfile = {
+                    id: firebaseUser.uid,
+                    name: firebaseUser.displayName || 'Novo Jogador',
+                    email: firebaseUser.email!,
+                    teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
+                    partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
+                    role: 'player',
+                    paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
+                };
+                await setDoc(userDocRef, userProfile);
             }
-        });
-        
-        if (Object.keys(userLeagues).length > 0) {
-            setAppData({ leagues: userLeagues });
-            const firstLeagueId = Object.keys(userLeagues)[0];
-            setCurrentLeagueId(firstLeagueId); // Set the first league as active
-        } else {
-            // If user is in no leagues, create a new one for them
-            const newLeagueId = `league_${firebaseUser.uid}`;
-            const newLeague: League = {
-                id: newLeagueId,
-                name: `Liga de ${userProfile.name}`,
-                adminId: userProfile.id,
-                users: { [userProfile.id]: userProfile },
-                players: { ...initialData.leagues.defaultLeague.players }, // Use default players
-                games: {}, // Start with no games
-                modality: 'campo',
-                paymentsEnabled: true,
-                editorOfTheRound: null,
-                scoutEditor: null,
-                paymentEditor: null,
-                scalersRanking: {},
-                goalieRanking: {}
-            };
-            await setDoc(doc(db, "leagues", newLeagueId), newLeague);
-            setAppData({ leagues: { [newLeagueId]: newLeague } });
-            setCurrentLeagueId(newLeagueId);
-        }
-        navigateTo('dashboard');
+            
+            // Set user first to update the context
+            setLoggedInUser(userProfile);
 
-      } else {
-        // User is signed out
-        setLoggedInUser(null);
-        setCurrentLeagueId(null);
-        navigateTo('welcome');
-      }
+            // Fetch all leagues
+            const leaguesSnapshot = await getDocs(collection(db, "leagues"));
+            const userLeagues: Record<string, League> = {};
+            leaguesSnapshot.forEach(leagueDoc => {
+                const leagueData = leagueDoc.data() as League;
+                // Check if user is a member of this league
+                if (leagueData.users && leagueData.users[userProfile.id]) {
+                    userLeagues[leagueDoc.id] = leagueData;
+                }
+            });
+            
+            setAppData({ leagues: userLeagues });
+            const leagueIds = Object.keys(userLeagues);
+
+            if (leagueIds.length > 0) {
+                const firstLeagueId = leagueIds[0];
+                setCurrentLeagueId(firstLeagueId);
+                // We have a league, go to dashboard
+                navigateTo('dashboard'); 
+            } else {
+                // If user is in no leagues, create one for them
+                const newLeagueId = `league_${firebaseUser.uid}`;
+                const newLeague: League = {
+                    id: newLeagueId,
+                    name: `Liga de ${userProfile.name}`,
+                    adminId: userProfile.id,
+                    users: { [userProfile.id]: userProfile },
+                    players: { ...initialData.leagues.defaultLeague.players },
+                    games: {},
+                    modality: 'campo',
+                    paymentsEnabled: true,
+                    editorOfTheRound: null,
+                    scoutEditor: null,
+                    paymentEditor: null,
+                    scalersRanking: {},
+                    goalieRanking: {}
+                };
+                await setDoc(doc(db, "leagues", newLeagueId), newLeague);
+                
+                // Update state after creating the new league
+                setAppData({ leagues: { [newLeagueId]: newLeague } });
+                setCurrentLeagueId(newLeagueId);
+                navigateTo('dashboard');
+            }
+        } else {
+            // User is signed out
+            setLoggedInUser(null);
+            setCurrentLeagueId(null);
+            setAppData({ leagues: {} }); // Clear leagues
+            navigateTo('welcome');
+        }
     });
 
     return () => unsubscribe();
-  }, []); // Empty dependency array, onAuthStateChanged handles updates.
+}, []);
+
 
   // This effect dynamically adjusts team sizes when modality changes
   useEffect(() => {
