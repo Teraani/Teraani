@@ -49,8 +49,11 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
-    signInWithEmailAndPassword(auth, values.email, values.password)
-      .catch((error: any) => {
+    try {
+        await signInWithEmailAndPassword(auth, values.email, values.password);
+        // onAuthStateChanged in AppContainer will handle the navigation.
+        // No need to do anything here on success.
+    } catch (error: any) {
         console.error("Login error:", error);
         let description = "Ocorreu um erro inesperado. Tente novamente.";
         if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
@@ -61,10 +64,9 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
           description: description,
           variant: "destructive",
         });
-      })
-      .finally(() => {
+    } finally {
         setIsLoading(false);
-      });
+    }
   }
 
   const handleGoogleSignIn = async () => {
