@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '../ui/input';
 import { useForm } from "react-hook-form";
@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -37,7 +37,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -51,10 +51,8 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     setIsLoading(true);
     try {
         await signInWithEmailAndPassword(auth, values.email, values.password);
-        toast({
-            title: "Login realizado",
-            description: "Bem-vindo de volta!",
-        });
+        // The onAuthStateChanged listener in AppContainer will handle navigation
+        // and success toast.
     } catch (error: any) {
         console.error("Login error:", error);
         let description = "Ocorreu um erro inesperado. Tente novamente.";
@@ -74,38 +72,26 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-        prompt: 'select_account'
-    });
-    auth.tenantId = auth.config.tenantId;
     try {
-        await signInWithRedirect(auth, provider);
+        await signInWithPopup(auth, provider);
+        // The onAuthStateChanged listener in AppContainer will handle navigation
+        // and success toast.
     } catch (error: any) {
         console.error("Google sign in error:", error);
+        let description = "Não foi possível entrar com o Google.";
+        if (error.code === 'auth/account-exists-with-different-credential') {
+          description = "Já existe uma conta com este e-mail. Tente fazer login com o método original.";
+        }
         toast({
             title: "Erro com o Google",
-            description: "Não foi possível entrar com o Google. " + error.message,
+            description: description,
             variant: "destructive",
         });
-        setIsGoogleLoading(false);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
-  useEffect(() => {
-    getRedirectResult(auth)
-      .catch((error) => {
-        if (error.code) {
-          console.error("Google redirect result error:", error);
-          toast({
-              title: "Erro com o Google",
-              description: `Firebase: Error (${error.code}).`,
-              variant: "destructive",
-          });
-        }
-      }).finally(() => {
-          setIsGoogleLoading(false);
-      })
-  }, [toast]);
 
   return (
     <div className="flex flex-col min-h-screen bg-primary p-6 text-primary-foreground text-center">

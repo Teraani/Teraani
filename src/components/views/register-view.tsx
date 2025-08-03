@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '../ui/input';
 import { useForm } from "react-hook-form";
@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -37,7 +37,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -53,17 +53,16 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
         await updateProfile(userCredential.user, { displayName: values.name });
-
         // The onAuthStateChanged listener in AppContainer will handle navigation
-        toast({
-            title: "Conta Criada!",
-            description: "Bem-vindo ao Amistosos FC!",
-        });
     } catch (error: any) {
         console.error("Registration error:", error);
+        let description = "Não foi possível criar a conta.";
+        if (error.code === 'auth/email-already-in-use') {
+            description = "Este e-mail já está em uso. Tente fazer login ou use um e-mail diferente."
+        }
         toast({
             title: "Erro ao Criar Conta",
-            description: "Não foi possível criar a conta. " + error.message,
+            description: description,
             variant: "destructive",
         });
     } finally {
@@ -74,45 +73,24 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
    const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({
-        prompt: 'select_account'
-    });
-    auth.tenantId = auth.config.tenantId;
     try {
-        await signInWithRedirect(auth, provider);
+        await signInWithPopup(auth, provider);
+         // The onAuthStateChanged listener in AppContainer will handle navigation
     } catch (error: any) {
         console.error("Google sign in error:", error);
+        let description = "Não foi possível entrar com o Google.";
+        if (error.code === 'auth/account-exists-with-different-credential') {
+          description = "Já existe uma conta com este e-mail. Tente fazer login com o método original.";
+        }
         toast({
             title: "Erro com o Google",
-            description: "Não foi possível entrar com o Google. " + error.message,
+            description: description,
             variant: "destructive",
         });
-        setIsGoogleLoading(false);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
-
-  useEffect(() => {
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) {
-          toast({
-            title: "Conta Criada com o Google!",
-            description: "Bem-vindo ao Amistosos FC!",
-          });
-        }
-      }).catch((error) => {
-        if (error.code) { 
-            console.error("Google redirect result error:", error);
-            toast({
-                title: "Erro com o Google",
-                description: `Firebase: Error (${error.code}).`,
-                variant: "destructive",
-            });
-        }
-      }).finally(() => {
-          setIsGoogleLoading(false);
-      })
-  }, [toast]);
 
 
   return (
