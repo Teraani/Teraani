@@ -89,6 +89,30 @@ const initialTeam2Lineup = [
   'p-rm-courtois'
 ];
 
+const initialPlayers: Record<string, Player> = {
+  'p-mc-haaland': { name: 'Haaland', team: 'Man City', pos: 'ATA', value: 18.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=EH', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-de-bruyne': { name: 'De Bruyne', team: 'Man City', pos: 'MEI', value: 17.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=KB', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-foden': { name: 'Foden', team: 'Man City', pos: 'MEI', value: 16.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=PF', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-rodri': { name: 'Rodri', team: 'Man City', pos: 'VOL', value: 15.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=R', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-dias': { name: 'Rúben Dias', team: 'Man City', pos: 'ZAG', value: 14.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=RD', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-walker': { name: 'Walker', team: 'Man City', pos: 'LAT', value: 13.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=KW', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-ederson': { name: 'Ederson', team: 'Man City', pos: 'GOL', value: 12.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=E', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-silva': { name: 'Bernardo Silva', team: 'Man City', pos: 'MEI', value: 15.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=BS', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-gvardiol': { name: 'Gvardiol', team: 'Man City', pos: 'ZAG', value: 13.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=JG', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-stones': { name: 'Stones', team: 'Man City', pos: 'ZAG', value: 13.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=JS', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-mc-grealish': { name: 'Grealish', team: 'Man City', pos: 'ATA', value: 14.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=JG', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-bellingham': { name: 'Bellingham', team: 'Real Madrid', pos: 'MEI', value: 18.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=JB', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-vinicius': { name: 'Vinícius Jr.', team: 'Real Madrid', pos: 'ATA', value: 17.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=VJ', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-valverde': { name: 'Valverde', team: 'Real Madrid', pos: 'MEI', value: 16.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=FV', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-modric': { name: 'Modrić', team: 'Real Madrid', pos: 'MEI', value: 15.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=LM', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-rudiger': { name: 'Rüdiger', team: 'Real Madrid', pos: 'ZAG', value: 14.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=AR', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-carvajal': { name: 'Carvajal', team: 'Real Madrid', pos: 'LAT', value: 13.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=DC', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-courtois': { name: 'Courtois', team: 'Real Madrid', pos: 'GOL', value: 12.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=TC', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-rodrygo': { name: 'Rodrygo', team: 'Real Madrid', pos: 'ATA', value: 16.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=R', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-militao': { name: 'Militão', team: 'Real Madrid', pos: 'ZAG', value: 14.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=EM', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-tchouameni': { name: 'Tchouaméni', team: 'Real Madrid', pos: 'VOL', value: 15.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=AT', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+  'p-rm-mendy': { name: 'Mendy', team: 'Real Madrid', pos: 'LAT', value: 12.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=FM', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
+};
 
 export default function AppContainer() {
   const [currentView, setCurrentView] = useState<View>('loading');
@@ -138,14 +162,14 @@ export default function AppContainer() {
       users: {
         [user.id]: adminUser,
       },
-      players: {}, // Start with an empty market
+      players: initialPlayers, // Start with the initial market
       games: {},
       editorOfTheRound: null,
       scoutEditor: null,
       paymentEditor: null,
       scalersRanking: {},
       goalieRanking: {},
-      modality: 'campo', // Start with a default modality to avoid reset
+      modality: 'campo',
       paymentsEnabled: true,
     };
 
@@ -158,7 +182,7 @@ export default function AppContainer() {
        // Update loggedInUser state to reflect the new admin role
       setLoggedInUser(adminUser);
       setCurrentLeagueId(newLeagueId);
-      navigateTo('dashboard'); // Go directly to dashboard
+      navigateTo('dashboard');
       toast({ title: 'Liga Criada com Sucesso!', description: 'Você agora é o admin.' });
       return newLeague;
     } catch (error) {
