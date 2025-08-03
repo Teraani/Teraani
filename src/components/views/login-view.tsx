@@ -49,25 +49,22 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      // Success is handled by the onAuthStateChanged listener in AppContainer.
-      // It will navigate to the dashboard automatically.
-    } catch (error: any) {
-      console.error("Login error:", error);
-      let description = "Ocorreu um erro inesperado. Tente novamente.";
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-        description = "E-mail ou senha incorretos. Por favor, verifique seus dados."
-      }
-      toast({
-        title: "Erro no Login",
-        description: description,
-        variant: "destructive",
+    signInWithEmailAndPassword(auth, values.email, values.password)
+      .catch((error: any) => {
+        console.error("Login error:", error);
+        let description = "Ocorreu um erro inesperado. Tente novamente.";
+        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+          description = "E-mail ou senha incorretos. Por favor, verifique seus dados."
+        }
+        toast({
+          title: "Erro no Login",
+          description: description,
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
-    } finally {
-      // This will run regardless of success or failure.
-      setIsLoading(false);
-    }
   }
 
   const handleGoogleSignIn = async () => {
