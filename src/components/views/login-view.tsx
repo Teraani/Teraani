@@ -50,22 +50,22 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
     try {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
-        // A confirmação de sucesso agora é feita pelo onAuthStateChanged no AppContainer,
-        // que redireciona para o dashboard. Não mostramos mais o toast aqui.
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // Success is handled by onAuthStateChanged in AppContainer.
+      // No toast needed here as the app will navigate to the dashboard.
     } catch (error: any) {
-        console.error("Login error:", error);
-        let description = "Ocorreu um erro inesperado. Tente novamente.";
-        if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-            description = "E-mail ou senha incorretos. Por favor, verifique seus dados."
-        }
-        toast({
-            title: "Erro no Login",
-            description: description,
-            variant: "destructive",
-        });
+      console.error("Login error:", error);
+      let description = "Ocorreu um erro inesperado. Tente novamente.";
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        description = "E-mail ou senha incorretos. Por favor, verifique seus dados."
+      }
+      toast({
+        title: "Erro no Login",
+        description: description,
+        variant: "destructive",
+      });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -74,14 +74,17 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     const provider = new GoogleAuthProvider();
     try {
         await signInWithPopup(auth, provider);
-        // O onAuthStateChanged listener irá lidar com a navegação
+        // The onAuthStateChanged listener will handle navigation
     } catch (error: any) {
         console.error("Google sign in error:", error);
-        toast({
-            title: "Erro com o Google",
-            description: "Não foi possível completar o login com o Google. Por favor, tente novamente ou use e-mail e senha.",
-            variant: "destructive",
-        });
+        // Do not show toast for unauthorized-domain, as it's a known issue in this environment.
+        if (error.code !== 'auth/unauthorized-domain') {
+           toast({
+                title: "Erro com o Google",
+                description: "Não foi possível completar o login com o Google. Por favor, tente novamente ou use e-mail e senha.",
+                variant: "destructive",
+            });
+        }
     } finally {
         setIsGoogleLoading(false);
     }
