@@ -102,7 +102,7 @@ export default function PlayerDetailsView({ player, games, onBack, onImageChange
         <div className="relative">
           <Avatar className="w-20 h-20 border-4 border-card cursor-pointer" onClick={handleAvatarClick}>
             <AvatarImage src={player.img} alt={player.name} className="object-cover" />
-            <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+            <AvatarFallback>{player.name ? player.name.charAt(0) : 'P'}</AvatarFallback>
           </Avatar>
           <div className="absolute bottom-0 right-0 bg-primary rounded-full p-1 cursor-pointer" onClick={handleAvatarClick}>
             <Upload className="h-4 w-4 text-primary-foreground" />
