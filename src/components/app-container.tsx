@@ -33,9 +33,10 @@ import type { ShirtColor, Formation } from '@/components/views/lineup-view';
 import LeagueParticipantsView from '@/components/views/league-participants-view';
 import AllUsersView from '@/components/views/all-users-view';
 import AllLeaguesView from '@/components/views/all-leagues-view';
-import { auth } from '@/lib/firebase-config';
+import { auth, db } from '@/lib/firebase-config';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, getDocs, collection, writeBatch } from "firebase/firestore";
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users' | 'all-leagues';
 export type Position = Player['pos'] | null;
@@ -69,7 +70,6 @@ export default function AppContainer() {
   
   const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
 
-  // This will now hold data fetched from Firestore
   const [appData, setAppData] = useState(initialData);
   const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
 
@@ -100,62 +100,73 @@ export default function AppContainer() {
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
   useEffect(() => {
-    // This is where we re-introduce Firebase auth listening.
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-        if (firebaseUser) {
-            // User is signed in.
-            // In a real app, you would now fetch data from Firestore.
-            // For this example, we'll simulate it by finding the user in our local data.
-            // This logic will be replaced with actual Firestore calls.
-            
-            // Simulating finding a user and their league data.
-            const localUser = Object.values(initialData.leagues.defaultLeague.users).find(u => u.email === firebaseUser.email);
-            
-            if (localUser) {
-                setLoggedInUser(localUser);
-                // In a real app, you'd fetch the leagues this user belongs to.
-                // For now, we set it to the default league.
-                setCurrentLeagueId('defaultLeague');
-                setAppData(initialData); // Load all data for now
-                navigateTo('dashboard');
-            } else {
-                // This is a new user who just registered.
-                const newUser: User = {
-                  id: firebaseUser.uid,
-                  name: firebaseUser.displayName || 'Novo Jogador',
-                  email: firebaseUser.email!,
-                  teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
-                  partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
-                  role: 'player',
-                  paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
-                };
-                // This is where you would create a new user and a new league for them in Firestore.
-                // We'll simulate this locally for now.
-                const newLeagueId = `league_${firebaseUser.uid}`;
-                const newLeague: League = {
-                    ...initialData.leagues.defaultLeague, // a template
-                    id: newLeagueId,
-                    name: `Liga de ${newUser.name}`,
-                    adminId: newUser.id,
-                    users: { [newUser.id]: newUser }
-                };
-                
-                setLoggedInUser(newUser);
-                setCurrentLeagueId(newLeagueId);
-                setAppData({ leagues: { ...appData.leagues, [newLeagueId]: newLeague } });
-                navigateTo('dashboard');
-            }
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in, let's fetch their data from Firestore
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        let userProfile: User;
+
+        if (userDocSnap.exists()) {
+          // Existing user
+          userProfile = userDocSnap.data() as User;
         } else {
-            // User is signed out.
-            setLoggedInUser(null);
-            setCurrentLeagueId(null);
-            navigateTo('welcome');
+          // New user
+          userProfile = {
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || 'Novo Jogador',
+            email: firebaseUser.email!,
+            teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
+            partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
+            role: 'player',
+            paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
+          };
+          await setDoc(userDocRef, userProfile);
         }
+        setLoggedInUser(userProfile);
+
+        // Fetch all leagues this user belongs to
+        const leaguesSnapshot = await getDocs(collection(db, "leagues"));
+        const userLeagues: Record<string, League> = {};
+        leaguesSnapshot.forEach(leagueDoc => {
+            const leagueData = leagueDoc.data() as League;
+            if (leagueData.users && leagueData.users[userProfile.id]) {
+                userLeagues[leagueDoc.id] = leagueData;
+            }
+        });
+
+        if (Object.keys(userLeagues).length > 0) {
+            setAppData({ leagues: userLeagues });
+            setCurrentLeagueId(Object.keys(userLeagues)[0]); // Set to the first league found
+        } else {
+            // If user is in no leagues, create a new one for them
+            const newLeagueId = `league_${firebaseUser.uid}`;
+            const newLeague: League = {
+                ...initialData.leagues.defaultLeague, // use as a template for players
+                id: newLeagueId,
+                name: `Liga de ${userProfile.name}`,
+                adminId: userProfile.id,
+                users: { [userProfile.id]: userProfile },
+                games: {}, // Start with no games
+            };
+            await setDoc(doc(db, "leagues", newLeagueId), newLeague);
+            setAppData({ leagues: { [newLeagueId]: newLeague } });
+            setCurrentLeagueId(newLeagueId);
+        }
+        navigateTo('dashboard');
+
+      } else {
+        // User is signed out
+        setLoggedInUser(null);
+        setCurrentLeagueId(null);
+        navigateTo('welcome');
+      }
     });
 
     return () => unsubscribe();
-  }, []); // We can remove dependencies as onAuthStateChanged handles updates.
-  
+  }, []); // Empty dependency array, onAuthStateChanged handles updates.
+
   // This effect dynamically adjusts team sizes when modality changes
   useEffect(() => {
     if (!selectedModality) {

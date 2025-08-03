@@ -7,7 +7,7 @@ import type { Player, User, League } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail, Landmark, Edit, Globe } from 'lucide-react';
+import { Upload, Users, BarChart3, Trophy, LogOut, ShieldCheck, FilePenLine, Radio, CalendarClock, AlertCircle, Crown, Check, Search, ChevronRight, Mail, Landmark, Edit, Globe, Vote } from 'lucide-react';
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   DropdownMenu,
@@ -336,6 +336,10 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
                 <span>Pagamentos</span>
               </DropdownMenuItem>
             )}
+             <DropdownMenuItem onClick={() => onNavigate('best-eleven')}>
+                  <Vote className="mr-2 h-4 w-4" />
+                  <span>Votação da Rodada</span>
+              </DropdownMenuItem>
             {isSuperAdmin && (
               <>
                <DropdownMenuItem onClick={() => onNavigate('all-users')}>
