@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '../ui/input';
 import { useForm } from "react-hook-form";
@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -72,8 +72,8 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithPopup(auth, provider);
-        // The onAuthStateChanged listener will handle navigation
+        await signInWithRedirect(auth, provider);
+        // After redirect, the app will reload and getRedirectResult will be handled in AppContainer
     } catch (error: any) {
         console.error("Google sign in error:", error);
         toast({
@@ -81,7 +81,6 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
             description: "Não foi possível completar o login com o Google. Por favor, tente novamente ou use e-mail e senha.",
             variant: "destructive",
         });
-    } finally {
         setIsGoogleLoading(false);
     }
   };

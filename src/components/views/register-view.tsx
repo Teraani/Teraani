@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, updateProfile } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -74,8 +74,8 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-        await signInWithPopup(auth, provider);
-         // The onAuthStateChanged listener will handle navigation
+        await signInWithRedirect(auth, provider);
+        // After redirect, the app will reload and getRedirectResult will be handled in AppContainer
     } catch (error: any) {
         console.error("Google sign in error:", error);
         toast({
@@ -83,7 +83,6 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
             description: "Não foi possível completar o login com o Google. Por favor, tente novamente ou crie uma conta com e-mail e senha.",
             variant: "destructive",
         });
-    } finally {
         setIsGoogleLoading(false);
     }
   };

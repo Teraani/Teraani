@@ -35,7 +35,7 @@ import AllUsersView from '@/components/views/all-users-view';
 import AllLeaguesView from '@/components/views/all-leagues-view';
 import { auth, db } from '@/lib/firebase-config';
 import type { User as FirebaseUser } from 'firebase/auth';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
 import { doc, getDoc, setDoc, getDocs, collection, writeBatch } from "firebase/firestore";
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users' | 'all-leagues';
@@ -100,6 +100,19 @@ export default function AppContainer() {
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
   useEffect(() => {
+    // This handles the result from a Google Sign-In redirect
+    getRedirectResult(auth)
+      .catch((error) => {
+        // Handle Errors here.
+        console.error("Redirect Result Error:", error);
+        toast({
+          title: "Erro no Login com Google",
+          description: "Não foi possível completar o login. Tente novamente.",
+          variant: "destructive",
+        });
+      });
+
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
