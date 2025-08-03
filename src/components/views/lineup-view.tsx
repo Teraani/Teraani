@@ -384,12 +384,19 @@ export default function LineupView(props: LineupViewProps) {
   };
 
   const handleApplyAiSuggestions = (team1: string[], team2: string[]) => {
-    setTeam1Lineup(team1);
-    setTeam2Lineup(team2);
+    // This function seems to be for two teams, but the AI suggestion only returns one.
+    // Assuming the AI suggestion should apply to the currently active tab.
+    if(activeTab === 'team1') {
+        setTeam1Lineup(team1);
+        setTeam1Reserves(team2); // Assuming reserves are the second array
+    } else {
+        setTeam2Lineup(team1);
+        setTeam2Reserves(team2);
+    }
   };
   
-  const team1Score = team1Lineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
-  const team2Score = team2Lineup.reduce((sum, id) => sum + (id ? players[id]?.points ?? 0 : 0), 0);
+  const team1Score = team1Lineup.reduce((sum, id) => sum + (id ? (players[id]?.points || 0) : 0), 0);
+  const team2Score = team2Lineup.reduce((sum, id) => sum + (id ? (players[id]?.points || 0) : 0), 0);
   
   const handleShare = () => {
     const getTeamText = (teamName: string, lineup: (string | null)[], reserves: (string | null)[]) => {

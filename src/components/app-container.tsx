@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -622,6 +623,16 @@ export default function AppContainer() {
      toast({ title: "Jogador Removido!", variant: "destructive" });
   };
   
+  const handleUpdatePlayerInMarket = (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => {
+    if (!playerId) return;
+    updateCurrentLeague(league => {
+      const newPlayers = { ...league.players };
+      newPlayers[playerId] = { ...newPlayers[playerId], ...updatedData };
+      return { ...league, players: newPlayers };
+    });
+    toast({ title: "Jogador Atualizado!", description: "Os dados do jogador foram atualizados." });
+  };
+
   const handleBestElevenVote = (lineup: (BestElevenVote | null)[]) => {
     if (!currentUser) return;
     setBestElevenVotes(prev => ({ ...prev, [currentUser.id]: lineup }));
@@ -699,7 +710,7 @@ export default function AppContainer() {
         case 'dashboard': return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;
         case 'lineup': return <LineupView players={currentLeague!.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} currentUser={currentUser!} canEdit={canEditLineup} team1Lineup={team1Lineup} setTeam1Lineup={setTeam1Lineup} team1Reserves={team1Reserves} setTeam1Reserves={setTeam1Reserves} team2Lineup={team2Lineup} setTeam2Lineup={setTeam2Lineup} team2Reserves={team2Reserves} setTeam2Reserves={setTeam2Reserves} onSaveLineups={handleSaveLineups} lineupsSaved={lineupsSaved} modality={selectedModality} team1ShirtColor={team1ShirtColor} setTeam1ShirtColor={setTeam1ShirtColor} team2ShirtColor={team2ShirtColor} setTeam2ShirtColor={setTeam2ShirtColor} formation={formation} setFormation={setFormation} />;
         case 'player-details': return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
-        case 'market': return <MarketView players={currentLeague!.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} scaledPlayerIds={allScaledPlayerIds} canEdit={canEditLineup} onAddPlayerToMarket={handleAddPlayerToMarket} onRemovePlayerFromMarket={handleRemovePlayerFromMarket} onUpdatePlayerInMarket={() => {}} />;
+        case 'market': return <MarketView players={currentLeague!.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} scaledPlayerIds={allScaledPlayerIds} canEdit={canEditLineup} onAddPlayerToMarket={handleAddPlayerToMarket} onRemovePlayerFromMarket={handleRemovePlayerFromMarket} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} />;
         case 'partial-score': return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
         case 'games': return <GamesView onBack={goBack} gamesData={currentLeague!.games} />;
         case 'friends-score': return <FriendsScoreView onBack={goBack} user={currentUser!} players={currentLeague!.players} allUsers={currentLeague!.users} />;

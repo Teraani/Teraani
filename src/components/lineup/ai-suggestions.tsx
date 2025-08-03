@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from 'react';
@@ -14,7 +15,7 @@ import Image from 'next/image';
 interface AiSuggestionsProps {
   user: User;
   players: Record<string, Player>;
-  onApplyLineup: (lineup: string[], reserves: string[]) => void;
+  onApplyLineup: (team1: string[], team2: string[]) => void;
 }
 
 export default function AiSuggestions({ user, players, onApplyLineup }: AiSuggestionsProps) {
@@ -48,10 +49,10 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
 
   const handleApplyClick = () => {
     if (suggestion) {
-      onApplyLineup(suggestion.lineup, suggestion.reserves);
+      onApplyLineup(suggestion.team1, suggestion.team2);
       setIsDialogOpen(false);
       toast({
-        title: "Time escalado!",
+        title: "Times escalados!",
         description: "A escalação sugerida pela IA foi aplicada.",
       });
     }
@@ -63,12 +64,12 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Analisando...
+            Balanceando...
           </>
         ) : (
           <>
             <Wand2 className="mr-2 h-4 w-4" />
-            Gerar Time com IA
+            Balancear Times com IA
           </>
         )}
       </Button>
@@ -78,10 +79,10 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wand2 className="text-primary"/>
-              Time Gerado pela IA
+              Times Gerados pela IA
             </DialogTitle>
             <DialogDescription>
-              A nossa IA montou um time balanceado para você.
+              A nossa IA montou dois times balanceados para o confronto.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-4 max-h-[60vh] overflow-y-auto pr-2 space-y-4">
@@ -101,14 +102,14 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
             )}
             {!isLoading && !suggestion && (
                  <p className="text-center text-muted-foreground py-10">
-                    Ocorreu um erro ao gerar o time.
+                    Ocorreu um erro ao gerar os times.
                 </p>
             )}
           </div>
            {suggestion && !isLoading && (
             <DialogFooter className="mt-4">
                 <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={handleApplyClick}>Escalar Time</Button>
+                <Button onClick={handleApplyClick}>Escalar Times</Button>
             </DialogFooter>
            )}
         </DialogContent>
