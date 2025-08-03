@@ -46,7 +46,7 @@ export default function PlayerCard({ player, onPlayerSelect, isReserve = false, 
           {player.name}
         </p>
         <div className="flex items-center justify-center text-[10px] text-white/80 pb-0.5">
-          <span>{player.points.toFixed(2)}</span>
+          <span>{(player.points ?? 0).toFixed(2)}</span>
           <ValIcon className={cn("w-2.5 h-2.5 ml-1", valColor)} />
         </div>
       </div>
