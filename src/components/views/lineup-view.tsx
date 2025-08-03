@@ -341,6 +341,9 @@ const TeamDisplay = ({
     if (!layout) return null;
 
     return layout.map((slot, index) => {
+      // Make sure we don't go out of bounds
+      if (index >= lineupPlayers.length) return null;
+
       const player = lineupPlayers[index];
       const gridStyle = { gridArea: slot.grid };
 
@@ -367,7 +370,7 @@ const TeamDisplay = ({
 
   const renderReserves = () => (
     <div className="flex flex-wrap justify-center gap-4">
-        {Array.from({ length: reservePlayers.length }).map((_, i) => {
+        {Array.from({ length: reserves.length }).map((_, i) => {
             const player = reservePlayers[i];
             if (player) {
                 return <PlayerCard key={`${teamIdentifier}-res-${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
@@ -666,5 +669,3 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
-
-    
