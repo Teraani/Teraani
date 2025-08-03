@@ -4,7 +4,6 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import type { Player, User, Ranking, GoalieRanking, Game, League, PlayerPerformance } from '@/lib/data';
-import { initialData } from '@/lib/initial-data-backup';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
 import LineupView from '@/components/views/lineup-view';
@@ -36,7 +35,7 @@ import AllLeaguesView from '@/components/views/all-leagues-view';
 import { auth, db } from '@/lib/firebase-config';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection, writeBatch } from "firebase/firestore";
+import { doc, getDoc, setDoc, getDocs, collection, writeBatch, updateDoc } from "firebase/firestore";
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users' | 'all-leagues';
 export type Position = Player['pos'] | null;
@@ -100,87 +99,100 @@ export default function AppContainer() {
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
 
   useEffect(() => {
-    // This handles the result from a Google Sign-In redirect
+    const handleAuth = async (firebaseUser: FirebaseUser | null) => {
+        try {
+            if (firebaseUser) {
+                const userDocRef = doc(db, "users", firebaseUser.uid);
+                let userDocSnap = await getDoc(userDocRef);
+
+                let userProfile: User;
+
+                if (userDocSnap.exists()) {
+                    userProfile = userDocSnap.data() as User;
+                } else {
+                    userProfile = {
+                        id: firebaseUser.uid,
+                        name: firebaseUser.displayName || 'Novo Jogador',
+                        email: firebaseUser.email!,
+                        teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
+                        partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
+                        role: 'player',
+                        paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
+                    };
+                    await setDoc(userDocRef, userProfile);
+                }
+                setLoggedInUser(userProfile);
+
+                const leaguesSnapshot = await getDocs(collection(db, "leagues"));
+                const userLeagues: Record<string, League> = {};
+                let userHasLeagues = false;
+
+                leaguesSnapshot.forEach(leagueDoc => {
+                    const leagueData = leagueDoc.data() as League;
+                    if (leagueData.users && leagueData.users[userProfile.id]) {
+                        userLeagues[leagueDoc.id] = leagueData;
+                        userHasLeagues = true;
+                    }
+                });
+
+                if (userHasLeagues) {
+                    setAppData({ leagues: userLeagues });
+                    const firstLeagueId = Object.keys(userLeagues)[0];
+                    setCurrentLeagueId(firstLeagueId);
+                    const currentLeague = userLeagues[firstLeagueId];
+                    if (currentLeague && !currentLeague.modality) {
+                        navigateTo('modality-selection');
+                    } else {
+                        navigateTo('dashboard');
+                    }
+                } else {
+                    setAppData({ leagues: {} });
+                    setCurrentLeagueId(null);
+                    // Navigate to a place where they can create or join a league
+                    navigateTo('leagues');
+                }
+            } else {
+                setLoggedInUser(null);
+                setCurrentLeagueId(null);
+                setAppData({ leagues: {} });
+                navigateTo('welcome');
+            }
+        } catch (error: any) {
+            console.error("Auth state change error:", error);
+            if (error.code === 'unavailable') {
+                toast({ title: 'Erro de Conexão', description: 'Não foi possível conectar ao banco de dados. Verifique sua conexão e tente novamente.', variant: 'destructive' });
+            }
+            // Fallback to welcome screen on any error
+            setLoggedInUser(null);
+            setCurrentLeagueId(null);
+            setAppData({ leagues: {} });
+            navigateTo('welcome');
+        }
+    };
+
     getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // This will be handled by the onAuthStateChanged listener
+        } else {
+          // If no redirect result, check the current auth state
+          handleAuth(auth.currentUser);
+        }
+      })
       .catch((error) => {
-        // Handle Errors here.
         console.error("Redirect Result Error:", error);
         toast({
           title: "Erro no Login com Google",
           description: "Não foi possível completar o login. Tente novamente.",
           variant: "destructive",
         });
+        handleAuth(null);
       });
 
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (firebaseUser) {
-            const userDocRef = doc(db, "users", firebaseUser.uid);
-            let userDocSnap = await getDoc(userDocRef);
-
-            let userProfile: User;
-
-            if (userDocSnap.exists()) {
-                userProfile = userDocSnap.data() as User;
-            } else {
-                userProfile = {
-                    id: firebaseUser.uid,
-                    name: firebaseUser.displayName || 'Novo Jogador',
-                    email: firebaseUser.email!,
-                    teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
-                    partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
-                    role: 'player',
-                    paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
-                };
-                await setDoc(userDocRef, userProfile);
-                userDocSnap = await getDoc(userDocRef);
-                userProfile = userDocSnap.data() as User;
-            }
-            
-            setLoggedInUser(userProfile);
-
-            const leaguesSnapshot = await getDocs(collection(db, "leagues"));
-            const userLeagues: Record<string, League> = {};
-            let userHasLeagues = false;
-
-            leaguesSnapshot.forEach(leagueDoc => {
-                const leagueData = leagueDoc.data() as League;
-                if (leagueData.users && leagueData.users[userProfile.id]) {
-                    userLeagues[leagueDoc.id] = leagueData;
-                    userHasLeagues = true;
-                }
-            });
-
-            if (userHasLeagues) {
-                setAppData({ leagues: userLeagues });
-                const firstLeagueId = Object.keys(userLeagues)[0];
-                setCurrentLeagueId(firstLeagueId);
-            } else {
-                setAppData({ leagues: {} });
-                setCurrentLeagueId(null);
-            }
-            navigateTo('dashboard');
-            
-        } else {
-            setLoggedInUser(null);
-            setCurrentLeagueId(null);
-            setAppData({ leagues: {} });
-            navigateTo('welcome');
-        }
-      } catch (error: any) {
-        console.error("Auth state change error:", error);
-        toast({ title: 'Erro de Conexão', description: 'Não foi possível conectar ao banco de dados. Verifique sua conexão e tente novamente.', variant: 'destructive' });
-        // If there's an error (like offline), log out to be safe and show welcome screen
-        setLoggedInUser(null);
-        setCurrentLeagueId(null);
-        setAppData({ leagues: {} });
-        navigateTo('welcome');
-      }
-    });
+    const unsubscribe = onAuthStateChanged(auth, handleAuth);
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast]); // useEffect dependencies
 
 
   // This effect dynamically adjusts team sizes when modality changes
@@ -225,6 +237,10 @@ export default function AppContainer() {
   };
   
   const handleUpdateLeagueName = (newName: string) => {
+    if(!currentLeagueId) return;
+    const leagueDocRef = doc(db, "leagues", currentLeagueId);
+    updateDoc(leagueDocRef, { name: newName });
+
     updateCurrentLeague(league => ({ ...league, name: newName }));
     toast({ title: "Nome da Liga Atualizado!" });
   };
@@ -386,6 +402,10 @@ export default function AppContainer() {
   }, [currentUser, currentLeague]);
   
   const handleModalitySelect = (modality: Modality) => {
+    if(!currentLeagueId) return;
+    const leagueDocRef = doc(db, "leagues", currentLeagueId);
+    updateDoc(leagueDocRef, { modality: modality });
+
     updateCurrentLeague(league => ({ ...league, modality }));
     navigateTo('dashboard');
   };
@@ -584,13 +604,50 @@ export default function AppContainer() {
     return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
   }
   
-  if (!loggedInUser || !currentUser || !currentLeague) {
+  if (!loggedInUser) {
      switch (currentView) {
         case 'welcome': return <WelcomeView onNavigate={navigateTo} />;
         case 'register': return <RegisterView onNavigateToLogin={() => navigateTo('login')} />;
         case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
         default: return <WelcomeView onNavigate={navigateTo} />;
       }
+  }
+
+  // From this point, loggedInUser is guaranteed to be non-null.
+  // We now decide what to show based on whether the full currentUser and currentLeague context is loaded.
+  
+  if (!currentUser || !currentLeague) {
+    // If we have a loggedInUser but not their league/full profile context yet,
+    // we need to handle specific views that might be requested.
+    switch (currentView) {
+      // These views depend on league/user context, so show loading.
+      case 'dashboard':
+      case 'lineup':
+      case 'player-details':
+      case 'market':
+      case 'partial-score':
+      case 'games':
+      case 'friends-score':
+      case 'statistics':
+      case 'admin':
+      case 'live':
+      case 'payments':
+      case 'best-eleven':
+      case 'league-participants':
+      case 'all-users':
+      case 'all-leagues':
+        return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando dados da liga...</div>;
+      
+      // These views can be shown even without full context.
+      case 'leagues': 
+        return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={loggedInUser!} />;
+      case 'modality-selection':
+        return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={null} isLeagueAdmin={false} />;
+
+      // Fallback to loading for any other case
+      default:
+         return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
+    }
   }
 
   const selectedPlayer = selectedPlayerId && currentLeague ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
