@@ -37,7 +37,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true
   
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -74,6 +74,10 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+        prompt: 'select_account'
+    });
+    auth.tenantId = auth.config.tenantId;
     try {
         await signInWithRedirect(auth, provider);
     } catch (error: any) {
@@ -88,24 +92,17 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
   };
 
   useEffect(() => {
-    // This hook checks for the result of a Google sign-in redirect.
-    // It is triggered when the page loads after returning from Google.
-    // We set isGoogleLoading to true to show a loading state on the button.
-    setIsGoogleLoading(true);
     getRedirectResult(auth)
       .catch((error) => {
-        // Only show an error toast if there was actually an error from the redirect.
-        // This prevents showing an error on every page load.
         if (error.code) {
           console.error("Google redirect result error:", error);
           toast({
               title: "Erro com o Google",
-              description: "Não foi possível completar o login com o Google. " + error.message,
+              description: `Firebase: Error (${error.code}).`,
               variant: "destructive",
           });
         }
       }).finally(() => {
-          // Whether it succeeded or failed, stop the loading indicator.
           setIsGoogleLoading(false);
       })
   }, [toast]);
@@ -149,8 +146,9 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
                 )}
               />
               <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg" disabled={isLoading || isGoogleLoading}>
-                {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                {isLoading ? 'Entrando...' : 'Entrar'}
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : 'Entrar' }
               </Button>
             </form>
           </Form>

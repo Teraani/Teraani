@@ -37,7 +37,7 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(true); // Start as true
   
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -74,10 +74,12 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
    const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+        prompt: 'select_account'
+    });
+    auth.tenantId = auth.config.tenantId;
     try {
-        // We use signInWithRedirect for a better mobile experience.
         await signInWithRedirect(auth, provider);
-        // The result is handled by getRedirectResult and onAuthStateChanged
     } catch (error: any) {
         console.error("Google sign in error:", error);
         toast({
@@ -90,22 +92,20 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
   };
 
   useEffect(() => {
-    setIsGoogleLoading(true);
     getRedirectResult(auth)
       .then((result) => {
         if (result) {
-          // This means the user has just come back from the Google sign-in page.
           toast({
             title: "Conta Criada com o Google!",
             description: "Bem-vindo ao Amistosos FC!",
           });
         }
       }).catch((error) => {
-        console.error("Google redirect result error:", error);
-        if (error.code) { // Only show toast if it's a real error
+        if (error.code) { 
+            console.error("Google redirect result error:", error);
             toast({
                 title: "Erro com o Google",
-                description: "Não foi possível entrar com o Google. " + error.message,
+                description: `Firebase: Error (${error.code}).`,
                 variant: "destructive",
             });
         }
@@ -166,8 +166,9 @@ export default function RegisterView({ onNavigateToLogin }: RegisterViewProps) {
                 )}
               />
               <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg" disabled={isLoading || isGoogleLoading}>
-                {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                {isLoading ? 'Criando...' : 'Criar conta'}
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : 'Criar conta' }
               </Button>
             </form>
           </Form>
