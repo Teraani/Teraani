@@ -125,10 +125,11 @@ export default function AppContainer() {
   
   const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
 
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[]>([]);
-  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[]>([]);
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[]>([]);
-  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[]>([]);
+  // Start with null to indicate that data is not yet loaded.
+  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[] | null>(null);
+  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[] | null>(null);
+  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[] | null>(null);
+  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[] | null>(null);
 
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
   const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
@@ -312,7 +313,8 @@ export default function AppContainer() {
     
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
     
-    const adjustLineup = (currentLineup: (string|null)[]) => {
+    const adjustLineup = (currentLineup: (string|null)[] | null) => {
+        if (!currentLineup) return Array(newLuSize).fill(null);
         const newLineup = [...currentLineup];
         if (newLineup.length > newLuSize) {
             return newLineup.slice(0, newLuSize);
@@ -323,7 +325,8 @@ export default function AppContainer() {
         return newLineup;
     };
 
-    const adjustReserves = (currentReserves: (string|null)[]) => {
+    const adjustReserves = (currentReserves: (string|null)[] | null) => {
+        if (!currentReserves) return Array(newResSize).fill(null);
          const newReserves = [...currentReserves];
         if (newReserves.length > newResSize) {
             return newReserves.slice(0, newResSize);
@@ -350,6 +353,11 @@ export default function AppContainer() {
             setTeam2Lineup(league.team2Lineup || []);
             setTeam2Reserves(league.team2Reserves || []);
             setIsInitialLoadForModality(true); // Reset flag on league change
+        } else {
+             setTeam1Lineup(null);
+             setTeam1Reserves(null);
+             setTeam2Lineup(null);
+             setTeam2Reserves(null);
         }
     }, [currentLeagueId, appData.leagues]);
 
@@ -565,13 +573,15 @@ export default function AppContainer() {
 
     if (position === 'RES') {
       setReserves(prevReserves => {
-        const newReserves = [...(prevReserves || [])];
+        if (!prevReserves) return null;
+        const newReserves = [...prevReserves];
         if (index >= 0 && index < newReserves.length) newReserves[index] = playerId;
         return newReserves;
       });
     } else {
       setLineup(prevLineup => {
-        const newLineup = [...(prevLineup || [])];
+        if (!prevLineup) return null;
+        const newLineup = [...prevLineup];
         if (index >= 0 && index < newLineup.length) newLineup[index] = playerId;
         return newLineup;
       });
@@ -609,7 +619,7 @@ export default function AppContainer() {
 
   const allScaledPlayerIds = useMemo(() => {
     const scaledIds = new Set<string>();
-    [...team1Lineup, ...team1Reserves, ...team2Lineup, ...team2Reserves].forEach(id => {
+    [...(team1Lineup || []), ...(team1Reserves || []), ...(team2Lineup || []), ...(team2Reserves || [])].forEach(id => {
       if (id) scaledIds.add(id);
     });
     return Array.from(scaledIds);
@@ -634,7 +644,7 @@ export default function AppContainer() {
         };
         updatedGames[gameId] = newGame;
 
-        const team1PlayerIds = new Set([...team1Lineup, ...team1Reserves].filter(Boolean));
+        const team1PlayerIds = new Set([...(team1Lineup || []), ...(team1Reserves || [])].filter(Boolean));
         const matchResult = team1Score > team2Score ? 'win' : team2Score > team1Score ? 'loss' : 'draw';
 
         playersOfLastRound.forEach(playerId => {

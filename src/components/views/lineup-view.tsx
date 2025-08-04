@@ -37,13 +37,13 @@ export interface LineupViewProps {
   onAddPlayer: (slot: AddPlayerSlot) => void;
   currentUser: User;
   canEdit: boolean;
-  team1Lineup: (string | null)[];
+  team1Lineup: (string | null)[] | null;
   setTeam1Lineup: (lineup: (string | null)[]) => void;
-  team1Reserves: (string | null)[];
+  team1Reserves: (string | null)[] | null;
   setTeam1Reserves: (reserves: (string | null)[]) => void;
-  team2Lineup: (string | null)[];
+  team2Lineup: (string | null)[] | null;
   setTeam2Lineup: (lineup: (string | null)[]) => void;
-  team2Reserves: (string | null)[];
+  team2Reserves: (string | null)[] | null;
   setTeam2Reserves: (reserves: (string | null)[]) => void;
   onSaveLineups: () => void;
   lineupsSaved: boolean;
@@ -348,7 +348,7 @@ export default function LineupView(props: LineupViewProps) {
   };
 
   const handleRemovePlayer = () => {
-    if (!playerActionState) return;
+    if (!playerActionState || !team1Lineup || !team2Lineup || !team1Reserves || !team2Reserves) return;
 
     const { team, isReserve, index } = playerActionState;
 
@@ -379,10 +379,10 @@ export default function LineupView(props: LineupViewProps) {
   };
   
   const handleClearTeam = (team: 'team1' | 'team2') => {
-    if (team === 'team1') {
+    if (team === 'team1' && team1Lineup && team1Reserves) {
         setTeam1Lineup(Array(team1Lineup.length).fill(null));
         setTeam1Reserves(Array(team1Reserves.length).fill(null));
-    } else {
+    } else if (team2Lineup && team2Reserves){
         setTeam2Lineup(Array(team2Lineup.length).fill(null));
         setTeam2Reserves(Array(team2Reserves.length).fill(null));
     }
@@ -391,9 +391,9 @@ export default function LineupView(props: LineupViewProps) {
   
 
   const handleClearReserves = (team: 'team1' | 'team2') => {
-    if (team === 'team1') {
+    if (team === 'team1' && team1Reserves) {
       setTeam1Reserves(Array(team1Reserves.length).fill(null));
-    } else {
+    } else if (team2Reserves) {
       setTeam2Reserves(Array(team2Reserves.length).fill(null));
     }
   };
@@ -430,16 +430,16 @@ export default function LineupView(props: LineupViewProps) {
 };
   
   const handleShare = () => {
-    const getTeamText = (teamName: string, lineupIds: (string | null)[], reserveIds: (string | null)[]) => {
+    const getTeamText = (teamName: string, lineupIds: (string | null)[] | null, reserveIds: (string | null)[] | null) => {
       let text = `*${teamName}*\n\n`;
       text += "*Titulares:*\n";
-      lineupIds.forEach((id, index) => {
+      (lineupIds || []).forEach((id, index) => {
         if (id && players[id]) {
           text += `${index + 1}. ${players[id].name} (${players[id].pos})\n`;
         }
       });
       text += "\n*Reservas:*\n";
-      reserveIds.forEach((id, index) => {
+      (reserveIds || []).forEach((id, index) => {
         if (id && players[id]) {
           text += `${index + 1}. ${players[id].name} (${players[id].pos})\n`;
         }
@@ -463,10 +463,11 @@ export default function LineupView(props: LineupViewProps) {
   };
 
   const renderReserves = (
-    reserves: (string | null)[],
+    reserves: (string | null)[] | null,
     teamIdentifier: 'team1' | 'team2',
     onAddPlayer: (position: 'RES', index: number) => void
   ) => {
+    if (!reserves) return null;
     const reservesCount = getTeamSizes(modality).reserves;
     const displayReserves = Array(reservesCount).fill(null).map((_, i) => reserves[i] || null);
   
@@ -493,6 +494,15 @@ export default function LineupView(props: LineupViewProps) {
       </div>
     );
   };
+  
+  if (!team1Lineup || !team2Lineup) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-background text-xl">
+        <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+        Carregando escalação...
+      </div>
+    );
+  }
 
   return (
     <div className="pb-32">
