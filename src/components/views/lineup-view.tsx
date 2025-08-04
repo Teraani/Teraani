@@ -334,8 +334,16 @@ const TeamDisplay = ({
 }) => {
 
   const renderPitchContent = () => {
-    const layout = formationLayouts[formation]?.positions || [];
-
+    const layout = formationLayouts[formation]?.positions;
+    // If layout is not defined for the formation, return a message or empty.
+    if (!layout) {
+      return (
+        <div className="col-span-full row-span-full flex items-center justify-center text-white">
+          Formação indisponível para esta modalidade.
+        </div>
+      );
+    }
+    
     return layout.map((slot, index) => {
       const playerId = lineup[index];
       const player = playerId ? { ...players[playerId], id: playerId } : null;
@@ -361,25 +369,47 @@ const TeamDisplay = ({
     });
   };
   
-    const renderReserves = () => (
-    <div className="flex flex-wrap justify-center gap-4">
-        {Array.from({ length: reserves.length }).map((_, i) => {
-            const playerId = reserves[i];
-            const player = playerId ? { ...players[playerId], id: playerId } : null;
-            return (
-              <div key={`${teamIdentifier}-res-${i}`}>
-                {player ? (
-                    <PlayerCard player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />
-                ) : canEdit ? (
-                    <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
-                ) : (
-                    <div className="w-20 h-28" />
-                )}
-              </div>
-            );
-        })}
-    </div>
-  );
+  const renderReserves = () => {
+    // Ensure reserves array has the correct length based on modality
+    const reservesCount = getTeamSizes(modality).reserves;
+    const displayReserves = Array(reservesCount).fill(null).map((_, i) => reserves[i] || null);
+
+    return (
+        <div className="flex flex-wrap justify-center gap-4">
+            {displayReserves.map((playerId, i) => {
+                const player = playerId ? { ...players[playerId], id: playerId } : null;
+                return (
+                  <div key={`${teamIdentifier}-res-${i}`}>
+                    {player ? (
+                        <PlayerCard 
+                            player={player} 
+                            onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} 
+                            isReserve 
+                        />
+                    ) : canEdit ? (
+                        <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
+                    ) : (
+                        <div className="w-20 h-28" />
+                    )}
+                  </div>
+                );
+            })}
+        </div>
+    );
+  };
+  
+  const getTeamSizes = (modality: Modality | null) => {
+    switch (modality) {
+      case 'society':
+        return { lineup: 7, reserves: 4 };
+      case 'futsal':
+        return { lineup: 5, reserves: 4 };
+      case 'campo':
+      default:
+        return { lineup: 11, reserves: 5 };
+    }
+  };
+
 
   return (
     <div className="space-y-4">
@@ -420,7 +450,7 @@ export default function LineupView(props: LineupViewProps) {
   const [showInfoCard, setShowInfoCard] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem('lineupInfoDismissed')) {
+    if (typeof window !== 'undefined' && !localStorage.getItem('lineupInfoDismissed')) {
       setShowInfoCard(true);
     }
   }, []);
@@ -698,3 +728,4 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
+
