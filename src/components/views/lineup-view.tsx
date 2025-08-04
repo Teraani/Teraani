@@ -335,10 +335,18 @@ const TeamDisplay = ({
 
   const renderPlayerGrid = () => {
     const layout = formationLayouts[formation]?.positions;
-    if (!layout) return null;
+    if (!layout) return null; // Or some fallback UI
 
-    return layout.map((slot, index) => {
-      const playerId = lineup[index];
+    const formationSlots = layout;
+
+    // Ensure the lineup array has enough elements for the formation
+    const lineupWithPlaceholders = [...lineup];
+    while (lineupWithPlaceholders.length < formationSlots.length) {
+      lineupWithPlaceholders.push(null);
+    }
+    
+    return formationSlots.map((slot, index) => {
+      const playerId = lineupWithPlaceholders[index];
       const player = playerId ? { ...players[playerId], id: playerId } : null;
       const gridStyle = { gridArea: slot.grid };
 

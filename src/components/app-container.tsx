@@ -61,34 +61,6 @@ const getTeamSizes = (modality: Modality | null) => {
   }
 };
 
-const initialTeam1Lineup = [
-  'p-mc-haaland',
-  'p-mc-grealish',
-  'p-mc-foden',
-  'p-mc-de-bruyne',
-  'p-mc-silva',
-  'p-mc-rodri',
-  'p-mc-walker',
-  'p-mc-dias',
-  'p-mc-stones',
-  'p-mc-gvardiol',
-  'p-mc-ederson'
-];
-
-const initialTeam2Lineup = [
-  'p-rm-vinicius',
-  'p-rm-rodrygo',
-  'p-rm-bellingham',
-  'p-rm-valverde',
-  'p-rm-modric',
-  'p-rm-tchouameni',
-  'p-rm-carvajal',
-  'p-rm-militao',
-  'p-rm-rudiger',
-  'p-rm-mendy',
-  'p-rm-courtois'
-];
-
 const initialPlayers: Record<string, Player> = {
   'p-mc-haaland': { name: 'Haaland', team: 'Man City', pos: 'ATA', value: 18.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=EH', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
   'p-mc-de-bruyne': { name: 'De Bruyne', team: 'Man City', pos: 'MEI', value: 17.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/6CABDD/FFFFFF?text=KB', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
@@ -113,6 +85,20 @@ const initialPlayers: Record<string, Player> = {
   'p-rm-tchouameni': { name: 'Tchouaméni', team: 'Real Madrid', pos: 'VOL', value: 15.0, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=AT', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
   'p-rm-mendy': { name: 'Mendy', team: 'Real Madrid', pos: 'LAT', value: 12.5, points: 0, last_val: 0, games: 0, img: 'https://placehold.co/60x60/FEBE10/000000?text=FM', stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 }, performanceHistory: [] },
 };
+
+const initialTeam1Lineup = [
+  'p-mc-haaland', 'p-mc-grealish', 'p-mc-foden',
+  'p-mc-de-bruyne', 'p-mc-silva', 'p-mc-rodri',
+  'p-mc-walker', 'p-mc-dias', 'p-mc-stones', 'p-mc-gvardiol',
+  'p-mc-ederson'
+];
+
+const initialTeam2Lineup = [
+  'p-rm-vinicius', 'p-rm-rodrygo', 'p-rm-bellingham',
+  'p-rm-valverde', 'p-rm-modric', 'p-rm-tchouameni',
+  'p-rm-carvajal', 'p-rm-militao', 'p-rm-rudiger', 'p-rm-mendy',
+  'p-rm-courtois'
+];
 
 export default function AppContainer() {
   const [currentView, setCurrentView] = useState<View>('loading');
@@ -257,7 +243,7 @@ export default function AppContainer() {
                        navigateTo('welcome');
                     }
                 } else {
-                    await handleCreateLeague(userProfile);
+                    navigateTo('leagues');
                 }
             } else {
                 setLoggedInUser(null);
@@ -841,5 +827,3 @@ export default function AppContainer() {
     </div>
   );
 }
-
-    
