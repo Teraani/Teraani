@@ -309,122 +309,6 @@ const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtCo
 };
 
 
-const TeamDisplay = ({
-  lineup,
-  reserves,
-  players,
-  formation,
-  shirtColor,
-  onPlayerCardClick,
-  onAddPlayer,
-  canEdit,
-  teamIdentifier,
-  modality
-}: {
-  lineup: (string | null)[];
-  reserves: (string | null)[];
-  players: Record<string, Player>;
-  formation: Formation;
-  shirtColor: ShirtColor;
-  onPlayerCardClick: (state: PlayerActionState) => void;
-  onAddPlayer: (position: Player['pos'] | 'RES', index: number) => void;
-  canEdit: boolean;
-  teamIdentifier: 'team1' | 'team2';
-  modality: Modality | null;
-}) => {
-
-  const renderPitchContent = () => {
-    const layout = formationLayouts[formation]?.positions;
-    // If layout is not defined for the formation, return a message or empty.
-    if (!layout) {
-      return (
-        <div className="col-span-full row-span-full flex items-center justify-center text-white">
-          Formação indisponível para esta modalidade.
-        </div>
-      );
-    }
-    
-    return layout.map((slot, index) => {
-      const playerId = lineup[index];
-      const player = playerId ? { ...players[playerId], id: playerId } : null;
-
-      return (
-        <div key={`${teamIdentifier}-grid-${index}`} className="flex items-center justify-center" style={{ gridArea: slot.grid }}>
-          {player ? (
-            <PlayerCard
-              player={player}
-              onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: teamIdentifier })}
-              shirtColor={shirtColor}
-            />
-          ) : canEdit ? (
-            <AddPlayerButton
-              variant="pitch"
-              onClick={() => onAddPlayer(slot.pos, index)}
-            />
-          ) : (
-             <div className="w-16 h-24" /> // Placeholder for empty slot in view mode
-          )}
-        </div>
-      );
-    });
-  };
-  
-  const renderReserves = () => {
-    // Ensure reserves array has the correct length based on modality
-    const reservesCount = getTeamSizes(modality).reserves;
-    const displayReserves = Array(reservesCount).fill(null).map((_, i) => reserves[i] || null);
-
-    return (
-        <div className="flex flex-wrap justify-center gap-4">
-            {displayReserves.map((playerId, i) => {
-                const player = playerId ? { ...players[playerId], id: playerId } : null;
-                return (
-                  <div key={`${teamIdentifier}-res-${i}`}>
-                    {player ? (
-                        <PlayerCard 
-                            player={player} 
-                            onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} 
-                            isReserve 
-                        />
-                    ) : canEdit ? (
-                        <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
-                    ) : (
-                        <div className="w-20 h-28" />
-                    )}
-                  </div>
-                );
-            })}
-        </div>
-    );
-  };
-  
-  const getTeamSizes = (modality: Modality | null) => {
-    switch (modality) {
-      case 'society':
-        return { lineup: 7, reserves: 4 };
-      case 'futsal':
-        return { lineup: 5, reserves: 4 };
-      case 'campo':
-      default:
-        return { lineup: 11, reserves: 5 };
-    }
-  };
-
-
-  return (
-    <div className="space-y-4">
-        <Pitch modality={modality}>
-            {renderPitchContent()}
-        </Pitch>
-        <div className="mt-8">
-            <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
-            {renderReserves()}
-        </div>
-    </div>
-  );
-};
-
-
 export default function LineupView(props: LineupViewProps) {
   const { 
     players, onPlayerSelect, onNavigate, onAddPlayer,
@@ -578,6 +462,38 @@ export default function LineupView(props: LineupViewProps) {
     localStorage.setItem('lineupInfoDismissed', 'true');
   };
 
+  const renderReserves = (
+    reserves: (string | null)[],
+    teamIdentifier: 'team1' | 'team2',
+    onAddPlayer: (position: 'RES', index: number) => void
+  ) => {
+    const reservesCount = getTeamSizes(modality).reserves;
+    const displayReserves = Array(reservesCount).fill(null).map((_, i) => reserves[i] || null);
+  
+    return (
+      <div className="flex flex-wrap justify-center gap-4">
+        {displayReserves.map((playerId, i) => {
+          const player = playerId ? { ...players[playerId], id: playerId } : null;
+          return (
+            <div key={`${teamIdentifier}-res-${i}`}>
+              {player ? (
+                <PlayerCard
+                  player={player}
+                  onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })}
+                  isReserve
+                />
+              ) : canEdit ? (
+                <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
+              ) : (
+                <div className="w-20 h-28" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="pb-32">
         <Dialog open={!!playerActionState} onOpenChange={(open) => !open && setPlayerActionState(null)}>
@@ -647,18 +563,33 @@ export default function LineupView(props: LineupViewProps) {
                        </Button>
                     )}
                 </div>
-                <TeamDisplay
-                    teamIdentifier="team1"
-                    lineup={team1Lineup}
-                    reserves={team1Reserves}
-                    players={players}
-                    formation={formation}
-                    shirtColor={team1ShirtColor}
-                    onPlayerCardClick={handlePlayerCardClick}
-                    onAddPlayer={handleAddPlayerForTeam('team1')}
-                    canEdit={canEdit}
-                    modality={modality}
-                />
+                <div className="space-y-4">
+                  <Pitch modality={modality}>
+                    {formationLayouts[formation]?.positions.map((slot, index) => {
+                      const playerId = team1Lineup[index];
+                      const player = playerId ? { ...players[playerId], id: playerId } : null;
+                      return (
+                        <div key={`team1-grid-${index}`} className="flex items-center justify-center" style={{ gridArea: slot.grid }}>
+                          {player ? (
+                            <PlayerCard
+                              player={player}
+                              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: 'team1' })}
+                              shirtColor={team1ShirtColor}
+                            />
+                          ) : canEdit ? (
+                            <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: 'team1' })} />
+                          ) : (
+                            <div className="w-16 h-24" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </Pitch>
+                  <div className="mt-8">
+                    <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
+                    {renderReserves(team1Reserves, 'team1', (pos, index) => handleAddPlayerForTeam('team1')(pos, index))}
+                  </div>
+                </div>
             </TabsContent>
             
             <TabsContent value="team2" className="mt-4">
@@ -670,18 +601,33 @@ export default function LineupView(props: LineupViewProps) {
                         </Button>
                      )}
                 </div>
-                <TeamDisplay
-                    teamIdentifier="team2"
-                    lineup={team2Lineup}
-                    reserves={team2Reserves}
-                    players={players}
-                    formation={formation}
-                    shirtColor={team2ShirtColor}
-                    onPlayerCardClick={handlePlayerCardClick}
-                    onAddPlayer={handleAddPlayerForTeam('team2')}
-                    canEdit={canEdit}
-                    modality={modality}
-                />
+                 <div className="space-y-4">
+                  <Pitch modality={modality}>
+                    {formationLayouts[formation]?.positions.map((slot, index) => {
+                      const playerId = team2Lineup[index];
+                      const player = playerId ? { ...players[playerId], id: playerId } : null;
+                      return (
+                        <div key={`team2-grid-${index}`} className="flex items-center justify-center" style={{ gridArea: slot.grid }}>
+                          {player ? (
+                            <PlayerCard
+                              player={player}
+                              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: 'team2' })}
+                              shirtColor={team2ShirtColor}
+                            />
+                          ) : canEdit ? (
+                            <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: 'team2' })} />
+                          ) : (
+                            <div className="w-16 h-24" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </Pitch>
+                  <div className="mt-8">
+                    <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
+                    {renderReserves(team2Reserves, 'team2', (pos, index) => handleAddPlayerForTeam('team2')(pos, index))}
+                  </div>
+                </div>
             </TabsContent>
         </Tabs>
         
@@ -728,4 +674,3 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
-
