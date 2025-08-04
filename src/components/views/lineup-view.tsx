@@ -335,7 +335,7 @@ const TeamDisplay = ({
 
   const renderPlayerGrid = () => {
     const layout = formationLayouts[formation]?.positions;
-    if (!layout) return null;
+    if (!layout) return null; // Or return a default layout
 
     return layout.map((slot, index) => {
       const playerId = lineup[index];
@@ -356,14 +356,14 @@ const TeamDisplay = ({
               onClick={() => onAddPlayer(slot.pos, index)}
             />
           ) : (
-            <div className="w-16 h-24" /> // Placeholder for empty slot in view mode
+             <div className="w-16 h-24" /> // Placeholder for empty slot in view mode
           )}
         </div>
       );
     });
   };
-
-  const renderReserves = () => (
+  
+    const renderReserves = () => (
     <div className="flex flex-wrap justify-center gap-4">
         {Array.from({ length: reserves.length }).map((_, i) => {
             const playerId = reserves[i];
@@ -382,7 +382,7 @@ const TeamDisplay = ({
   return (
     <div className="space-y-4">
         <Pitch modality={modality}>
-          {renderPlayerGrid()}
+            {renderPlayerGrid()}
         </Pitch>
         <div className="mt-8">
             <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
