@@ -495,7 +495,7 @@ export default function LineupView(props: LineupViewProps) {
     );
   };
   
-  if (!team1Lineup || !team2Lineup) {
+  if (team1Lineup === null || team2Lineup === null) {
     return (
       <div className="flex items-center justify-center h-screen bg-background text-xl">
         <Loader2 className="mr-2 h-8 w-8 animate-spin" />
