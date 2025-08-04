@@ -97,4 +97,10 @@ export interface League {
     goalieRanking: Record<string, GoalieRanking>;
     modality: 'campo' | 'society' | 'futsal' | null;
     paymentsEnabled: boolean;
+    team1Lineup: (string | null)[];
+    team2Lineup: (string | null)[];
+    team1Reserves: (string | null)[];
+    team2Reserves: (string | null)[];
 }
+
+    

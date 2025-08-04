@@ -163,27 +163,33 @@ export default function AppContainer() {
       users: {
         [user.id]: adminUser,
       },
-      players: initialPlayers, // Start with the initial market
+      players: initialPlayers,
       games: {},
       editorOfTheRound: null,
       scoutEditor: null,
       paymentEditor: null,
       scalersRanking: {},
       goalieRanking: {},
-      modality: null,
+      modality: null, // Set to null to trigger modality selection
       paymentsEnabled: true,
+      team1Lineup: initialTeam1Lineup,
+      team1Reserves: [],
+      team2Lineup: initialTeam2Lineup,
+      team2Reserves: [],
     };
 
     try {
       await setDoc(doc(db, "leagues", newLeagueId), newLeague);
+      
       setAppData(prev => ({
         ...prev,
         leagues: { ...prev.leagues, [newLeagueId]: newLeague },
       }));
-       // Update loggedInUser state to reflect the new admin role
+       
       setLoggedInUser(adminUser);
       setCurrentLeagueId(newLeagueId);
       navigateTo('modality-selection');
+
       toast({ title: 'Liga Criada com Sucesso!', description: 'Você agora é o admin.' });
       return newLeague;
     } catch (error) {
@@ -234,11 +240,21 @@ export default function AppContainer() {
                     setAppData({ leagues: userLeagues });
                     const firstLeagueId = Object.keys(userLeagues)[0];
                     setCurrentLeagueId(firstLeagueId);
-                    const leagueModality = userLeagues[firstLeagueId]?.modality;
-                    if (leagueModality) {
-                        navigateTo('dashboard');
+                    const league = userLeagues[firstLeagueId];
+                    if (league) {
+                        setTeam1Lineup(league.team1Lineup || []);
+                        setTeam1Reserves(league.team1Reserves || []);
+                        setTeam2Lineup(league.team2Lineup || []);
+                        setTeam2Reserves(league.team2Reserves || []);
+
+                        if (league.modality) {
+                          setIsInitialLoadForModality(true); // Treat as initial load
+                          navigateTo('dashboard');
+                        } else {
+                          navigateTo('modality-selection');
+                        }
                     } else {
-                        navigateTo('modality-selection');
+                       navigateTo('welcome');
                     }
                 } else {
                     await handleCreateLeague(userProfile);
@@ -298,9 +314,12 @@ export default function AppContainer() {
     if (isInitialLoadForModality) {
         setIsInitialLoadForModality(false);
         const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
-        setTeam1Lineup(prev => prev.slice(0, newLuSize));
+        
+        const currentLeague = appData.leagues[currentLeagueId!];
+        // Set lineups based on the data fetched from the league
+        setTeam1Lineup((currentLeague?.team1Lineup || []).slice(0, newLuSize));
         setTeam1Reserves(Array(newResSize).fill(null));
-        setTeam2Lineup(prev => prev.slice(0, newLuSize));
+        setTeam2Lineup((currentLeague?.team2Lineup || []).slice(0, newLuSize));
         setTeam2Reserves(Array(newResSize).fill(null));
         return; 
     }
@@ -334,17 +353,19 @@ export default function AppContainer() {
     setTeam2Lineup(prev => adjustLineup(prev));
     setTeam2Reserves(prev => adjustReserves(prev));
 
-  }, [selectedModality, isInitialLoadForModality]); // Reruns when modality or the initial load flag changes.
+  }, [selectedModality, isInitialLoadForModality, appData.leagues, currentLeagueId]);
   
   // Set initial lineup when the component mounts or when league changes
     useEffect(() => {
-        setTeam1Lineup(initialTeam1Lineup);
-        setTeam2Lineup(initialTeam2Lineup);
-        const { reserves: resSize } = getTeamSizes(selectedModality);
-        setTeam1Reserves(Array(resSize).fill(null));
-        setTeam2Reserves(Array(resSize).fill(null));
-        setIsInitialLoadForModality(true); // Reset flag on league change
-    }, [currentLeagueId]);
+        const league = appData.leagues[currentLeagueId!];
+        if (league) {
+            setTeam1Lineup(league.team1Lineup || []);
+            setTeam1Reserves(league.team1Reserves || []);
+            setTeam2Lineup(league.team2Lineup || []);
+            setTeam2Reserves(league.team2Reserves || []);
+            setIsInitialLoadForModality(true); // Reset flag on league change
+        }
+    }, [currentLeagueId, appData.leagues]);
 
   const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
     if (view === 'payments') {
@@ -820,3 +841,5 @@ export default function AppContainer() {
     </div>
   );
 }
+
+    
