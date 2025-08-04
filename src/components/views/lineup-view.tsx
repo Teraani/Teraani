@@ -333,17 +333,15 @@ const TeamDisplay = ({
   modality: Modality | null;
 }) => {
 
-  const renderPlayerGrid = () => {
-    const layout = formationLayouts[formation]?.positions;
-    if (!layout) return null; // Or return a default layout
+  const renderPitchContent = () => {
+    const layout = formationLayouts[formation]?.positions || [];
 
     return layout.map((slot, index) => {
       const playerId = lineup[index];
       const player = playerId ? { ...players[playerId], id: playerId } : null;
-      const gridStyle = { gridArea: slot.grid };
 
       return (
-        <div key={`${teamIdentifier}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
+        <div key={`${teamIdentifier}-grid-${index}`} className="flex items-center justify-center" style={{ gridArea: slot.grid }}>
           {player ? (
             <PlayerCard
               player={player}
@@ -368,13 +366,17 @@ const TeamDisplay = ({
         {Array.from({ length: reserves.length }).map((_, i) => {
             const playerId = reserves[i];
             const player = playerId ? { ...players[playerId], id: playerId } : null;
-            if (player) {
-                return <PlayerCard key={`${teamIdentifier}-res-${player.id}-${i}`} player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />;
-            } else if (canEdit) {
-                return <AddPlayerButton key={`add-${teamIdentifier}-RES-${i}`} onClick={() => onAddPlayer('RES', i)} />;
-            } else {
-                return <div key={`empty-${teamIdentifier}-RES-${i}`} className="w-20 h-28" />;
-            }
+            return (
+              <div key={`${teamIdentifier}-res-${i}`}>
+                {player ? (
+                    <PlayerCard player={player} onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })} isReserve />
+                ) : canEdit ? (
+                    <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
+                ) : (
+                    <div className="w-20 h-28" />
+                )}
+              </div>
+            );
         })}
     </div>
   );
@@ -382,7 +384,7 @@ const TeamDisplay = ({
   return (
     <div className="space-y-4">
         <Pitch modality={modality}>
-            {renderPlayerGrid()}
+            {renderPitchContent()}
         </Pitch>
         <div className="mt-8">
             <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
