@@ -81,7 +81,7 @@ const formationLayouts: FormationLayout = {
       // Midfielders
       { pos: 'MEI', grid: '2 / 3' }, { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '3 / 4' },
       // Defenders
-      { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'ZAG', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 5' },
+      { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'LAT', grid: '4 / 1' }, { pos: 'LAT', grid: '4 / 5' },
       // Goalkeeper
       { pos: 'GOL', grid: '5 / 3' },
     ]
@@ -93,7 +93,7 @@ const formationLayouts: FormationLayout = {
       // Midfielders
       { pos: 'MEI', grid: '3 / 1' }, { pos: 'MEI', grid: '3 / 2' }, { pos: 'MEI', grid: '3 / 4' }, { pos: 'MEI', grid: '3 / 5' },
       // Defenders
-      { pos: 'ZAG', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'ZAG', grid: '4 / 5' },
+      { pos: 'LAT', grid: '4 / 1' }, { pos: 'ZAG', grid: '4 / 2' }, { pos: 'ZAG', grid: '4 / 4' }, { pos: 'LAT', grid: '4 / 5' },
       // Goalkeeper
       { pos: 'GOL', grid: '5 / 3' },
     ]
@@ -335,33 +335,25 @@ const TeamDisplay = ({
 
   const renderPlayerGrid = () => {
     const layout = formationLayouts[formation]?.positions;
-    if (!layout) return null; // Or some fallback UI
+    if (!layout) return null;
 
-    const formationSlots = layout;
-
-    // Ensure the lineup array has enough elements for the formation
-    const lineupWithPlaceholders = [...lineup];
-    while (lineupWithPlaceholders.length < formationSlots.length) {
-      lineupWithPlaceholders.push(null);
-    }
-    
-    return formationSlots.map((slot, index) => {
-      const playerId = lineupWithPlaceholders[index];
+    return layout.map((slot, index) => {
+      const playerId = lineup[index];
       const player = playerId ? { ...players[playerId], id: playerId } : null;
       const gridStyle = { gridArea: slot.grid };
 
       return (
         <div key={`${teamIdentifier}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
           {player ? (
-            <PlayerCard 
-              player={player} 
-              onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: teamIdentifier })} 
-              shirtColor={shirtColor} 
+            <PlayerCard
+              player={player}
+              onPlayerSelect={() => onPlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: teamIdentifier })}
+              shirtColor={shirtColor}
             />
           ) : canEdit ? (
-            <AddPlayerButton 
-              variant="pitch" 
-              onClick={() => onAddPlayer(slot.pos, index)} 
+            <AddPlayerButton
+              variant="pitch"
+              onClick={() => onAddPlayer(slot.pos, index)}
             />
           ) : (
             <div className="w-16 h-24" /> // Placeholder for empty slot in view mode
