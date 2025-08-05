@@ -519,8 +519,6 @@ export default function LineupView(props: LineupViewProps) {
 
     return formationPositions.map((slot, index) => {
         const gridStyle = { gridArea: slot.grid };
-        const playerId = lineup[index];
-        const player = playerId ? { ...players[playerId], id: playerId } : null;
         
         return (
             <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
@@ -631,14 +629,12 @@ export default function LineupView(props: LineupViewProps) {
             </TabsContent>
         </Tabs>
         
-        {canEdit && (
-            <div className="mt-4 flex flex-col gap-2">
-                <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
-            </div>
-        )}
+        <div className="mt-4 flex flex-col gap-2">
+            <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
+        </div>
       </div>
 
-      {canEdit && (
+      
          <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-30">
              <div className="flex justify-around items-center px-2 pb-2">
                 <div className="flex flex-col items-center gap-1">
@@ -664,13 +660,13 @@ export default function LineupView(props: LineupViewProps) {
                     </Button>
                 </div>
             </div>
-            {!lineupsSaved && (
+            
               <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={onSaveLineups}>
                   Salvar Times da Rodada
               </Button>
-            )}
+            
         </div>
-      )}
+      
     </div>
   );
 }
