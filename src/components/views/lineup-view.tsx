@@ -513,11 +513,18 @@ export default function LineupView(props: LineupViewProps) {
         onAddPlayer({ position: pos, index, team: team });
     };
 
-    return formationLayouts[formation]?.positions.map((slot, index) => {
+    const formationPositions = formationLayouts[formation]?.positions;
+
+    if (!formationPositions) return null;
+
+    return formationPositions.map((slot, index) => {
         const gridStyle = { gridArea: slot.grid };
+        const playerId = lineup[index];
+        const player = playerId ? { ...players[playerId], id: playerId } : null;
+        
         return (
             <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
-                <AddPlayerButton variant="pitch" onClick={() => handleAdd(slot.pos, index)} />
+               <AddPlayerButton variant="pitch" onClick={() => handleAdd(slot.pos, index)} />
             </div>
         );
     });
@@ -585,7 +592,7 @@ export default function LineupView(props: LineupViewProps) {
             
             <TabsContent value="team1" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
-                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
+                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={false} />
                     {canEdit && (
                        <Button variant="outline" size="sm" onClick={() => handleClearTeam('team1')} >
                            Limpar Time 1
@@ -605,7 +612,7 @@ export default function LineupView(props: LineupViewProps) {
             
             <TabsContent value="team2" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
-                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
+                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={false} />
                      {canEdit && (
                         <Button variant="outline" size="sm" onClick={() => handleClearTeam('team2')}>
                             Limpar Time 2
