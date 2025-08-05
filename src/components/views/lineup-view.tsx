@@ -576,21 +576,10 @@ export default function LineupView(props: LineupViewProps) {
                 <div className="space-y-4">
                   <Pitch modality={modality}>
                     {formationLayouts[formation]?.positions.map((slot, index) => {
-                      const playerId = team1Lineup[index];
-                      const player = playerId ? { ...players[playerId], id: playerId } : null;
+                      const gridStyle = { gridArea: slot.grid };
                       return (
-                        <div key={`team1-grid-${index}`} className="flex items-center justify-center" style={{ gridArea: slot.grid }}>
-                          {player ? (
-                            <PlayerCard
-                              player={player}
-                              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: 'team1' })}
-                              shirtColor={team1ShirtColor}
-                            />
-                          ) : canEdit ? (
-                            <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: 'team1' })} />
-                          ) : (
-                            <div className="w-16 h-24" />
-                          )}
+                        <div key={`team1-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
+                          <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: 'team1' })} />
                         </div>
                       );
                     })}
@@ -614,23 +603,12 @@ export default function LineupView(props: LineupViewProps) {
                  <div className="space-y-4">
                   <Pitch modality={modality}>
                     {formationLayouts[formation]?.positions.map((slot, index) => {
-                      const playerId = team2Lineup[index];
-                      const player = playerId ? { ...players[playerId], id: playerId } : null;
-                      return (
-                        <div key={`team2-grid-${index}`} className="flex items-center justify-center" style={{ gridArea: slot.grid }}>
-                          {player ? (
-                            <PlayerCard
-                              player={player}
-                              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: 'team2' })}
-                              shirtColor={team2ShirtColor}
-                            />
-                          ) : canEdit ? (
-                            <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: 'team2' })} />
-                          ) : (
-                            <div className="w-16 h-24" />
-                          )}
+                       const gridStyle = { gridArea: slot.grid };
+                       return (
+                        <div key={`team2-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
+                          <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: 'team2' })} />
                         </div>
-                      );
+                       );
                     })}
                   </Pitch>
                   <div className="mt-8">
