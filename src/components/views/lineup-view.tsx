@@ -293,7 +293,7 @@ const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtCo
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={disabled}>
+                <Button variant="outline">
                     Cor: <span className="capitalize ml-2">{color}</span>
                 </Button>
             </DropdownMenuTrigger>
@@ -580,7 +580,8 @@ export default function LineupView(props: LineupViewProps) {
             <TabsContent value="team1" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
                    <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={false} />
-                   <Button variant="outline" size="sm" onClick={() => handleClearTeam('team1')} >
+                   <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} >
+                       <Trash2 className="mr-2 h-4 w-4" />
                        Limpar Time 1
                    </Button>
                 </div>
@@ -598,7 +599,8 @@ export default function LineupView(props: LineupViewProps) {
             <TabsContent value="team2" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
                     <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={false} />
-                    <Button variant="outline" size="sm" onClick={() => handleClearTeam('team2')}>
+                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')}>
+                        <Trash2 className="mr-2 h-4 w-4" />
                         Limpar Time 2
                     </Button>
                 </div>
@@ -646,7 +648,7 @@ export default function LineupView(props: LineupViewProps) {
                 </div>
             </div>
             
-              <Button className="w-full bg-green-600 text-white hover:bg-green-700" onClick={onSaveLineups}>
+              <Button className="w-full bg-green-600 text-white hover:bg-green-700">
                   Salvar Times da Rodada
               </Button>
             
