@@ -509,26 +509,17 @@ export default function LineupView(props: LineupViewProps) {
     team: 'team1' | 'team2', 
     shirtColor: ShirtColor
   ) => {
+    const handleAdd = (pos: Player['pos'], index: number) => {
+        onAddPlayer({ position: pos, index, team: team });
+    };
+
     return formationLayouts[formation]?.positions.map((slot, index) => {
-      const playerId = lineup[index];
-      const player = playerId ? { ...players[playerId], id: playerId } : null;
-      const gridStyle = { gridArea: slot.grid };
-  
-      return (
-        <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
-          {player ? (
-            <PlayerCard
-              player={player}
-              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: team })}
-              shirtColor={shirtColor}
-            />
-          ) : canEdit ? (
-            <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: team })} />
-          ) : (
-            <div className="w-16 h-24" /> // Placeholder for view-only mode
-          )}
-        </div>
-      );
+        const gridStyle = { gridArea: slot.grid };
+        return (
+            <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
+                <AddPlayerButton variant="pitch" onClick={() => handleAdd(slot.pos, index)} />
+            </div>
+        );
     });
   };
 
