@@ -60,7 +60,7 @@ export default function AiSuggestions({ user, players, onApplyLineup }: AiSugges
 
   return (
     <>
-      <Button onClick={handleGetSuggestions} disabled={isLoading} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+      <Button onClick={handleGetSuggestions} disabled={isLoading} className="w-full bg-amber-400 text-black hover:bg-amber-500">
         {isLoading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
