@@ -413,7 +413,9 @@ export default function AppContainer() {
     if (!targetLeagueId) return;
 
     setAppData(prevData => {
-        const newLeague = updater(prevData.leagues[targetLeagueId]);
+        const leagueToUpdate = prevData.leagues[targetLeagueId];
+        if (!leagueToUpdate) return prevData;
+        const newLeague = updater(leagueToUpdate);
         return {
             ...prevData,
             leagues: { ...prevData.leagues, [targetLeagueId]: newLeague }
@@ -452,36 +454,43 @@ export default function AppContainer() {
   };
 
   const handleAddGuestPlayer = (guestData: Omit<Player, 'last_val' | 'games' | 'performanceHistory' | 'value' | 'points'>) => {
-    updateCurrentLeague(league => {
-      const guestName = guestData.name;
-      const guestUserId = `guest_user_${Date.now()}`;
-      const guestPlayerId = `guest_player_${Date.now()}`;
+    if (!currentLeagueId) return;
 
-      const newGuestUser: User = {
-        id: guestUserId,
-        name: guestName,
-        email: `${guestUserId}@example.com`,
-        teamName: `${guestName} FC`,
-        partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
-        role: 'player',
-        avatar: guestData.img || `https://placehold.co/128x128/8E44AD/FFFFFF?text=${guestName.charAt(0)}`,
-        paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
-        playerId: guestPlayerId,
-      };
+    const guestName = guestData.name;
+    const guestUserId = `guest_user_${Date.now()}`;
+    const guestPlayerId = `guest_player_${Date.now()}`;
 
-      const newGuestPlayer: Player = {
-        ...guestData,
-        value: 5.0, points: 0, last_val: 0, games: 0,
-        stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 },
-        performanceHistory: [],
-      };
+    const newGuestUser: User = {
+      id: guestUserId,
+      name: guestName,
+      email: `${guestUserId}@example.com`,
+      teamName: `${guestName} FC`,
+      partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
+      role: 'player',
+      avatar: guestData.img || `https://placehold.co/128x128/8E44AD/FFFFFF?text=${guestName.charAt(0)}`,
+      paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
+      playerId: guestPlayerId,
+    };
 
-      return {
-        ...league,
-        users: { ...league.users, [guestUserId]: newGuestUser },
-        players: { ...league.players, [guestPlayerId]: newGuestPlayer },
-      };
+    const newGuestPlayer: Player = {
+      ...guestData,
+      value: 5.0, points: 0, last_val: 0, games: 0,
+      stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 },
+      performanceHistory: [],
+    };
+    
+    const leagueDocRef = doc(db, "leagues", currentLeagueId);
+    updateDoc(leagueDocRef, {
+        [`users.${guestUserId}`]: newGuestUser,
+        [`players.${guestPlayerId}`]: newGuestPlayer
     });
+
+    updateCurrentLeague(league => ({
+      ...league,
+      users: { ...league.users, [guestUserId]: newGuestUser },
+      players: { ...league.players, [guestPlayerId]: newGuestPlayer },
+    }));
+
     toast({ title: 'Convidado Adicionado!', description: `${guestData.name} foi adicionado à liga e ao mercado.` });
   };
 
@@ -837,3 +846,7 @@ export default function AppContainer() {
     </div>
   );
 }
+
+    
+
+    
