@@ -475,15 +475,7 @@ export default function LineupView(props: LineupViewProps) {
       <div className="flex flex-wrap justify-center gap-4">
         {displayReserves.map((playerId, i) => (
           <div key={`${teamIdentifier}-res-${i}`}>
-            {playerId && players[playerId] ? (
-              <PlayerCard
-                player={{ ...players[playerId], id: playerId }}
-                onPlayerSelect={() => handlePlayerCardClick({ playerId, isReserve: true, index: i, team: teamIdentifier })}
-                isReserve
-              />
-            ) : (
-              <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
-            )}
+             <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
           </div>
         ))}
       </div>
@@ -509,8 +501,7 @@ export default function LineupView(props: LineupViewProps) {
     };
 
     const formationPositions = formationLayouts[formation]?.positions;
-    if (!formationPositions) return null;
-    if (!lineup) return null; // Wait for lineup data
+    if (!formationPositions || !lineup) return null;
 
     return formationPositions.map((slot, index) => {
       const playerId = lineup[index];
