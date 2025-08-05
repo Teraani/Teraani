@@ -504,6 +504,34 @@ export default function LineupView(props: LineupViewProps) {
     );
   }
 
+  const renderPitchContent = (
+    lineup: (string | null)[], 
+    team: 'team1' | 'team2', 
+    shirtColor: ShirtColor
+  ) => {
+    return formationLayouts[formation]?.positions.map((slot, index) => {
+      const playerId = lineup[index];
+      const player = playerId ? { ...players[playerId], id: playerId } : null;
+      const gridStyle = { gridArea: slot.grid };
+  
+      return (
+        <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
+          {player ? (
+            <PlayerCard
+              player={player}
+              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: team })}
+              shirtColor={shirtColor}
+            />
+          ) : canEdit ? (
+            <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: team })} />
+          ) : (
+            <div className="w-16 h-24" /> // Placeholder for view-only mode
+          )}
+        </div>
+      );
+    });
+  };
+
   return (
     <div className="pb-32">
         <Dialog open={!!playerActionState} onOpenChange={(open) => !open && setPlayerActionState(null)}>
@@ -575,14 +603,7 @@ export default function LineupView(props: LineupViewProps) {
                 </div>
                 <div className="space-y-4">
                   <Pitch modality={modality}>
-                    {formationLayouts[formation]?.positions.map((slot, index) => {
-                      const gridStyle = { gridArea: slot.grid };
-                      return (
-                        <div key={`team1-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
-                          <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: 'team1' })} />
-                        </div>
-                      );
-                    })}
+                    {renderPitchContent(team1Lineup, 'team1', team1ShirtColor)}
                   </Pitch>
                   <div className="mt-8">
                     <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
@@ -602,14 +623,7 @@ export default function LineupView(props: LineupViewProps) {
                 </div>
                  <div className="space-y-4">
                   <Pitch modality={modality}>
-                    {formationLayouts[formation]?.positions.map((slot, index) => {
-                       const gridStyle = { gridArea: slot.grid };
-                       return (
-                        <div key={`team2-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
-                          <AddPlayerButton variant="pitch" onClick={() => onAddPlayer({ position: slot.pos, index, team: 'team2' })} />
-                        </div>
-                       );
-                    })}
+                    {renderPitchContent(team2Lineup, 'team2', team2ShirtColor)}
                   </Pitch>
                   <div className="mt-8">
                     <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
