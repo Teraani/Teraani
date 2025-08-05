@@ -473,13 +473,19 @@ export default function LineupView(props: LineupViewProps) {
   
     return (
       <div className="flex flex-wrap justify-center gap-4">
-        {displayReserves.map((playerId, i) => {
-          return (
-            <div key={`${teamIdentifier}-res-${i}`}>
-                <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
-            </div>
-          );
-        })}
+        {displayReserves.map((playerId, i) => (
+          <div key={`${teamIdentifier}-res-${i}`}>
+            {playerId && players[playerId] ? (
+              <PlayerCard
+                player={{ ...players[playerId], id: playerId }}
+                onPlayerSelect={() => handlePlayerCardClick({ playerId, isReserve: true, index: i, team: teamIdentifier })}
+                isReserve
+              />
+            ) : (
+              <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
+            )}
+          </div>
+        ))}
       </div>
     );
   };
@@ -507,13 +513,23 @@ export default function LineupView(props: LineupViewProps) {
     if (!formationPositions) return null;
 
     return formationPositions.map((slot, index) => {
-        const gridStyle = { gridArea: slot.grid };
-        
-        return (
-            <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
-               <AddPlayerButton variant="pitch" onClick={() => handleAdd(slot.pos, index)} />
-            </div>
-        );
+      const playerId = lineup[index];
+      const player = playerId ? { ...players[playerId], id: playerId } : null;
+      const gridStyle = { gridArea: slot.grid };
+
+      return (
+        <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
+          {player ? (
+            <PlayerCard
+              player={player}
+              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: team })}
+              shirtColor={shirtColor}
+            />
+          ) : (
+            <AddPlayerButton variant="pitch" onClick={() => handleAdd(slot.pos, index)} />
+          )}
+        </div>
+      );
     });
   };
 
@@ -657,3 +673,4 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
+
