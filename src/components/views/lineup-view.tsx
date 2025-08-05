@@ -474,20 +474,9 @@ export default function LineupView(props: LineupViewProps) {
     return (
       <div className="flex flex-wrap justify-center gap-4">
         {displayReserves.map((playerId, i) => {
-          const player = playerId ? { ...players[playerId], id: playerId } : null;
           return (
             <div key={`${teamIdentifier}-res-${i}`}>
-              {player ? (
-                <PlayerCard
-                  player={player}
-                  onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: true, index: i, team: teamIdentifier })}
-                  isReserve
-                />
-              ) : canEdit ? (
                 <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
-              ) : (
-                <div className="w-20 h-28" />
-              )}
             </div>
           );
         })}
@@ -670,3 +659,4 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
+
