@@ -207,7 +207,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
         <div className="w-9 h-9" />
       </header>
 
-      <main className={cn("p-4 space-y-4", canEditScouts && "pb-24")}>
+      <main className={cn("p-4 space-y-4", "pb-24")}>
           {showInfoCard && (
             <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -267,7 +267,7 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
               <span>{matchDate}</span>
           </div>
 
-          {canEditScouts && <ScoutControlPanel players={players} team1Lineup={team1Lineup} team2Lineup={team2Lineup} onAddLiveEvent={onAddLiveEvent} />}
+          <ScoutControlPanel players={players} team1Lineup={team1Lineup} team2Lineup={team2Lineup} onAddLiveEvent={onAddLiveEvent} />
 
           <Card>
               <CardHeader>
@@ -299,14 +299,12 @@ export default function LiveView({ onBack, user, players, canEditScouts, liveEve
           </Card>
       </main>
       
-      {canEditScouts && (
-        <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border z-30">
-          <Button className="w-full h-12" onClick={() => setIsFinishConfirmOpen(true)} disabled={liveEvents.length === 0}>
-            <CheckCircle className="mr-2 h-5 w-5" />
-            Finalizar Partida
-          </Button>
-        </div>
-      )}
+      <div className="fixed bottom-20 left-0 right-0 bg-card p-4 border-t border-border z-30">
+        <Button className="w-full h-12" onClick={() => setIsFinishConfirmOpen(true)} disabled={liveEvents.length === 0}>
+          <CheckCircle className="mr-2 h-5 w-5" />
+          Finalizar Partida
+        </Button>
+      </div>
 
     </div>
   );
