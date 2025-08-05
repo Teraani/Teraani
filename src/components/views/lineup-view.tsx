@@ -8,7 +8,7 @@ import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import type { View, AddPlayerSlot, Modality } from '@/components/app-container';
+import type { View, AddPlayerSlot, Modality } from '@/app/page';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '../lineup/add-player-button';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
@@ -293,7 +293,7 @@ const ShirtColorDropdown = ({ color, onColorChange, disabled }: { color: ShirtCo
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline">
+                <Button variant="outline" disabled={disabled}>
                     Cor: <span className="capitalize ml-2">{color}</span>
                 </Button>
             </DropdownMenuTrigger>
@@ -464,18 +464,30 @@ export default function LineupView(props: LineupViewProps) {
 
   const renderReserves = (
     reserves: (string | null)[] | null,
-    teamIdentifier: 'team1' | 'team2',
-    onAddPlayer: (position: 'RES', index: number) => void
+    setReserves: (reserves: (string | null)[]) => void,
+    teamIdentifier: 'team1' | 'team2'
   ) => {
     if (!reserves) return null;
     const reservesCount = getTeamSizes(modality).reserves;
     const displayReserves = Array(reservesCount).fill(null).map((_, i) => reserves[i] || null);
+
+    const onAdd = (index: number) => {
+        onAddPlayer({ position: 'RES', index, team: teamIdentifier });
+    }
   
     return (
       <div className="flex flex-wrap justify-center gap-4">
         {displayReserves.map((playerId, i) => (
           <div key={`${teamIdentifier}-res-${i}`}>
-             <AddPlayerButton onClick={() => onAddPlayer('RES', i)} />
+            {playerId && players[playerId] ? (
+              <PlayerCard
+                player={{ ...players[playerId], id: playerId }}
+                onPlayerSelect={() => handlePlayerCardClick({ playerId, isReserve: true, index: i, team: teamIdentifier })}
+                isReserve
+              />
+            ) : (
+               <AddPlayerButton onClick={() => onAdd(i)} />
+            )}
           </div>
         ))}
       </div>
@@ -492,16 +504,16 @@ export default function LineupView(props: LineupViewProps) {
   }
 
   const renderPitchContent = (
-    lineup: (string | null)[] | null,
+    lineup: (string | null)[],
     team: 'team1' | 'team2',
     shirtColor: ShirtColor
   ) => {
-    const handleAdd = (pos: Player['pos'], index: number) => {
-      onAddPlayer({ position: pos, index, team: team });
-    };
-
     const formationPositions = formationLayouts[formation]?.positions;
-    if (!formationPositions || !lineup) return null;
+    if (!formationPositions) return null;
+  
+    const onAdd = (pos: Player['pos'], index: number) => {
+      onAddPlayer({ position: pos, index, team });
+    };
 
     return formationPositions.map((slot, index) => {
       const playerId = lineup[index];
@@ -513,16 +525,16 @@ export default function LineupView(props: LineupViewProps) {
           {player ? (
             <PlayerCard
               player={player}
-              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index: index, team: team })}
+              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index, team })}
               shirtColor={shirtColor}
             />
           ) : (
-            <AddPlayerButton variant="pitch" onClick={() => handleAdd(slot.pos, index)} />
+            <AddPlayerButton variant="pitch" onClick={() => onAdd(slot.pos, index)} />
           )}
         </div>
       );
     });
-  };
+};
 
   return (
     <div className="pb-32">
@@ -586,10 +598,10 @@ export default function LineupView(props: LineupViewProps) {
             
             <TabsContent value="team1" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
-                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={false} />
+                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} >
                        <Trash2 className="mr-2 h-4 w-4" />
-                       Limpar Time 1
+                       Limpar Time
                    </Button>
                 </div>
                 <div className="space-y-4">
@@ -598,17 +610,17 @@ export default function LineupView(props: LineupViewProps) {
                   </Pitch>
                   <div className="mt-8">
                     <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
-                    {renderReserves(team1Reserves, 'team1', (pos, index) => handleAddPlayerForTeam('team1')(pos, index))}
+                    {renderReserves(team1Reserves, setTeam1Reserves, 'team1')}
                   </div>
                 </div>
             </TabsContent>
             
             <TabsContent value="team2" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
-                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={false} />
+                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
                     <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')}>
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Limpar Time 2
+                        Limpar Time
                     </Button>
                 </div>
                  <div className="space-y-4">
@@ -617,23 +629,24 @@ export default function LineupView(props: LineupViewProps) {
                   </Pitch>
                   <div className="mt-8">
                     <h3 className="text-lg font-bold mb-4 text-center text-foreground">Reservas</h3>
-                    {renderReserves(team2Reserves, 'team2', (pos, index) => handleAddPlayerForTeam('team2')(pos, index))}
+                    {renderReserves(team2Reserves, setTeam2Reserves, 'team2')}
                   </div>
                 </div>
             </TabsContent>
         </Tabs>
         
         <div className="mt-4 flex flex-col gap-2">
-            <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
+          {canEdit && <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />}
         </div>
       </div>
 
       
+        {canEdit && !lineupsSaved && (
          <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-30">
              <div className="flex justify-around items-center px-2 pb-2">
                 <div className="flex flex-col items-center gap-1">
                     <span className="text-xs">Esquema Tático</span>
-                     <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
+                     <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={!canEdit}>
                         <SelectTrigger className="w-[120px] bg-muted border-none h-8">
                             <SelectValue />
                         </SelectTrigger>
@@ -649,17 +662,19 @@ export default function LineupView(props: LineupViewProps) {
                       size="icon" 
                       className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
                       onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')} 
+                      disabled={!canEdit}
                     >
                         <Trash2 className="h-5 w-5 text-red-400" />
                     </Button>
                 </div>
             </div>
             
-              <Button className="w-full bg-green-600 text-white hover:bg-green-700">
-                  Salvar Times da Rodada
-              </Button>
+            <Button onClick={onSaveLineups} className="w-full bg-green-600 text-white hover:bg-green-700" disabled={lineupsSaved}>
+                {lineupsSaved ? "Times Salvos!" : "Salvar Times da Rodada"}
+            </Button>
             
         </div>
+      )}
       
     </div>
   );

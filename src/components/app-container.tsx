@@ -712,16 +712,28 @@ export default function AppContainer() {
 };
 
   const handleAddPlayerToMarket = (newPlayer: Omit<Player, 'last_val' | 'games' | 'performanceHistory'>) => {
-    updateCurrentLeague(league => {
-      const newPlayerId = `p${Object.keys(league.players).length + 1}`;
-      const fullNewPlayer: Player = {
+    if (!currentLeagueId) return;
+    const newPlayerId = `p_${Date.now()}`;
+    const fullNewPlayer: Player = {
         ...newPlayer, last_val: 0, games: 0,
         stats: { wins: 0, losses: 0, draws: 0, goals: 0, assists: 0, yellowCards: 0, redCards: 0, goalsAgainst: 0, goalsFor: 0, goalDifference: 0, performance: 0, points: 0 },
         performanceHistory: [],
-      }
-      return { ...league, players: { ...league.players, [newPlayerId]: fullNewPlayer } };
+    };
+    
+    // Save to Firestore first
+    const leagueDocRef = doc(db, "leagues", currentLeagueId);
+    updateDoc(leagueDocRef, {
+        [`players.${newPlayerId}`]: fullNewPlayer
+    }).then(() => {
+        // Then update local state
+        updateCurrentLeague(league => {
+          return { ...league, players: { ...league.players, [newPlayerId]: fullNewPlayer } };
+        });
+        toast({ title: "Jogador Adicionado!", description: `${newPlayer.name} agora está disponível no mercado.` });
+    }).catch(error => {
+        console.error("Error adding player to market:", error);
+        toast({ title: "Erro ao adicionar jogador", variant: "destructive" });
     });
-    toast({ title: "Jogador Adicionado!", description: `${newPlayer.name} agora está disponível no mercado.` });
   };
 
   const handleRemovePlayerFromMarket = (playerId: string) => {
@@ -734,13 +746,24 @@ export default function AppContainer() {
   };
   
   const handleUpdatePlayerInMarket = (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => {
-    if (!playerId) return;
-    updateCurrentLeague(league => {
-      const newPlayers = { ...league.players };
-      newPlayers[playerId] = { ...newPlayers[playerId], ...updatedData };
-      return { ...league, players: newPlayers };
+    if (!playerId || !currentLeagueId) return;
+
+    // Save to Firestore
+    const leagueDocRef = doc(db, "leagues", currentLeagueId);
+    updateDoc(leagueDocRef, {
+        [`players.${playerId}`]: { ...appData.leagues[currentLeagueId].players[playerId], ...updatedData }
+    }).then(() => {
+        // Update local state on success
+        updateCurrentLeague(league => {
+          const newPlayers = { ...league.players };
+          newPlayers[playerId] = { ...newPlayers[playerId], ...updatedData };
+          return { ...league, players: newPlayers };
+        });
+        toast({ title: "Jogador Atualizado!", description: "Os dados do jogador foram atualizados." });
+    }).catch(error => {
+        console.error("Error updating player in market:", error);
+        toast({ title: "Erro ao atualizar jogador", variant: "destructive" });
     });
-    toast({ title: "Jogador Atualizado!", description: "Os dados do jogador foram atualizados." });
   };
 
   const handleBestElevenVote = (lineup: (BestElevenVote | null)[]) => {
