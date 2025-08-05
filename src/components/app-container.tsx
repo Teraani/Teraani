@@ -483,15 +483,17 @@ export default function AppContainer() {
     updateDoc(leagueDocRef, {
         [`users.${guestUserId}`]: newGuestUser,
         [`players.${guestPlayerId}`]: newGuestPlayer
+    }).then(() => {
+        updateCurrentLeague(league => ({
+            ...league,
+            users: { ...league.users, [guestUserId]: newGuestUser },
+            players: { ...league.players, [guestPlayerId]: newGuestPlayer },
+        }));
+        toast({ title: 'Convidado Adicionado!', description: `${guestData.name} foi adicionado à liga e ao mercado.` });
+    }).catch(error => {
+        console.error("Error adding guest player:", error);
+        toast({ title: "Erro ao adicionar convidado", variant: "destructive" });
     });
-
-    updateCurrentLeague(league => ({
-      ...league,
-      users: { ...league.users, [guestUserId]: newGuestUser },
-      players: { ...league.players, [guestPlayerId]: newGuestPlayer },
-    }));
-
-    toast({ title: 'Convidado Adicionado!', description: `${guestData.name} foi adicionado à liga e ao mercado.` });
   };
 
   const handleRemoveUserFromLeague = (userIdToRemove: string) => {
@@ -573,13 +575,16 @@ export default function AppContainer() {
     updateCurrentLeague(league => ({ ...league, players: { ...league.players, [playerId]: { ...league.players[playerId], img: image } } }));
   };
 
-  const addPlayerToLineup = (playerId: string) => {
-    if (slotToAddPlayer === null) return;
-    
+  const addPlayerToLineup = async (playerId: string) => {
+    if (slotToAddPlayer === null || !currentLeagueId) return;
+
     const { position, index, team } = slotToAddPlayer;
+    const teamKey = team === 'team1' ? 'team1' : 'team2';
+    const arrayKey = position === 'RES' ? `${teamKey}Reserves` : `${teamKey}Lineup`;
     const setLineup = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
     const setReserves = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
 
+    // Update local state first for immediate UI response
     if (position === 'RES') {
       setReserves(prevReserves => {
         if (!prevReserves) return null;
@@ -598,7 +603,32 @@ export default function AppContainer() {
 
     setSlotToAddPlayer(null);
     navigateTo('lineup');
+
+    // Then update Firestore
+    try {
+        const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+        const leagueDocSnap = await getDoc(leagueDocRef);
+        if (leagueDocSnap.exists()) {
+            const leagueData = leagueDocSnap.data() as League;
+            const currentArray = (leagueData[arrayKey] || []) as (string | null)[];
+            const newArray = [...currentArray];
+            if (index >= 0 && index < newArray.length) {
+              newArray[index] = playerId;
+            } else {
+              // Handle cases where the array might be shorter than expected
+              while(newArray.length <= index) { newArray.push(null); }
+              newArray[index] = playerId;
+            }
+            
+            await updateDoc(leagueDocRef, { [arrayKey]: newArray });
+        }
+    } catch (error) {
+        console.error("Error updating lineup in Firestore:", error);
+        toast({ title: "Erro ao salvar", description: "Não foi possível salvar a escalação no servidor.", variant: "destructive" });
+        // Optionally, revert local state here
+    }
   };
+
 
   const goBack = () => navigateTo(previousView);
 
