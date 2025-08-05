@@ -500,17 +500,17 @@ export default function LineupView(props: LineupViewProps) {
   }
 
   const renderPitchContent = (
-    lineup: (string | null)[], 
-    team: 'team1' | 'team2', 
+    lineup: (string | null)[] | null,
+    team: 'team1' | 'team2',
     shirtColor: ShirtColor
   ) => {
     const handleAdd = (pos: Player['pos'], index: number) => {
-        onAddPlayer({ position: pos, index, team: team });
+      onAddPlayer({ position: pos, index, team: team });
     };
 
     const formationPositions = formationLayouts[formation]?.positions;
-
     if (!formationPositions) return null;
+    if (!lineup) return null; // Wait for lineup data
 
     return formationPositions.map((slot, index) => {
       const playerId = lineup[index];
@@ -560,7 +560,7 @@ export default function LineupView(props: LineupViewProps) {
       </header>
 
       <div className="p-4 space-y-4">
-        {canEdit && showInfoCard && (
+        {showInfoCard && (
             <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="flex items-center gap-3">
@@ -673,4 +673,3 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
-
