@@ -580,11 +580,9 @@ export default function LineupView(props: LineupViewProps) {
             <TabsContent value="team1" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
                    <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={false} />
-                    {canEdit && (
-                       <Button variant="outline" size="sm" onClick={() => handleClearTeam('team1')} >
-                           Limpar Time 1
-                       </Button>
-                    )}
+                   <Button variant="outline" size="sm" onClick={() => handleClearTeam('team1')} >
+                       Limpar Time 1
+                   </Button>
                 </div>
                 <div className="space-y-4">
                   <Pitch modality={modality}>
@@ -600,11 +598,9 @@ export default function LineupView(props: LineupViewProps) {
             <TabsContent value="team2" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
                     <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={false} />
-                     {canEdit && (
-                        <Button variant="outline" size="sm" onClick={() => handleClearTeam('team2')}>
-                            Limpar Time 2
-                        </Button>
-                     )}
+                    <Button variant="outline" size="sm" onClick={() => handleClearTeam('team2')}>
+                        Limpar Time 2
+                    </Button>
                 </div>
                  <div className="space-y-4">
                   <Pitch modality={modality}>
@@ -659,4 +655,3 @@ export default function LineupView(props: LineupViewProps) {
     </div>
   );
 }
-
