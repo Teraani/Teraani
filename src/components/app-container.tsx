@@ -609,53 +609,73 @@ export default function AppContainer() {
   };
 
   const addPlayerToLineup = async (playerId: string) => {
-    if (!slotToAddPlayer || !currentLeagueId) return;
+    if (!slotToAddPlayer) return;
   
-    const { position, index, team } = slotToAddPlayer;
-    const arrayKey = position === 'RES' ? `${team}Reserves` as const : `${team}Lineup` as const;
-  
-    // Determine which state and setter to use
+    const { team, isReserve, index } = slotToAddPlayer;
+    const lineupState = team === 'team1' ? team1Lineup : team2Lineup;
+    const reservesState = team === 'team1' ? team1Reserves : team2Reserves;
     const lineupSetter = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
     const reservesSetter = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
-    const stateSetter = position === 'RES' ? reservesSetter : lineupSetter;
   
-    // Update local state first for immediate UI response
-    stateSetter(prev => {
-      // Create a new array to avoid direct mutation
-      const newState = prev ? [...prev] : [];
-      if (index >= 0 && index < newState.length) {
-        newState[index] = playerId;
-      }
-      return newState;
-    });
+    if (isReserve) {
+      const newReserves = [...(reservesState || [])];
+      newReserves[index] = playerId;
+      reservesSetter(newReserves);
+    } else {
+      const newLineup = [...(lineupState || [])];
+      newLineup[index] = playerId;
+      lineupSetter(newLineup);
+    }
   
     setSlotToAddPlayer(null);
     navigateTo('lineup');
   
-    // Then, update Firestore
-    try {
-      const leagueDocRef = doc(db, 'leagues', currentLeagueId);
-      const leagueDocSnap = await getDoc(leagueDocRef);
-      if (leagueDocSnap.exists()) {
-        const leagueData = leagueDocSnap.data() as League;
-        const currentArray = (leagueData[arrayKey] || []) as (string | null)[];
-        const newArray = [...currentArray];
-  
-        while (newArray.length <= index) {
-          newArray.push(null);
+    // Update Firestore in the background
+    if (currentLeagueId) {
+      try {
+        const arrayKey = isReserve ? `${team}Reserves` : `${team}Lineup`;
+        const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+        const newStateArray = isReserve
+          ? team === 'team1' ? team1Reserves : team2Reserves
+          : team === 'team1' ? team1Lineup : team2Lineup;
+        
+        // This is a simplified update, assumes local state is source of truth for this action
+        const finalArray = [...(newStateArray || [])];
+        if (isReserve) {
+           finalArray[index] = playerId;
+        } else {
+           finalArray[index] = playerId;
         }
-        newArray[index] = playerId;
-  
-        await updateDoc(leagueDocRef, { [arrayKey]: newArray });
-        updateCurrentLeague(league => ({ ...league, [arrayKey]: newArray as any }));
+
+        if (team === 'team1' && isReserve) {
+            const newReserves = [...(team1Reserves || [])];
+            newReserves[index] = playerId;
+            await updateDoc(leagueDocRef, { team1Reserves: newReserves });
+            updateCurrentLeague(league => ({ ...league, team1Reserves: newReserves as any}));
+        } else if (team === 'team1' && !isReserve) {
+            const newLineup = [...(team1Lineup || [])];
+            newLineup[index] = playerId;
+            await updateDoc(leagueDocRef, { team1Lineup: newLineup });
+            updateCurrentLeague(league => ({ ...league, team1Lineup: newLineup as any}));
+        } else if (team === 'team2' && isReserve) {
+            const newReserves = [...(team2Reserves || [])];
+            newReserves[index] = playerId;
+            await updateDoc(leagueDocRef, { team2Reserves: newReserves });
+            updateCurrentLeague(league => ({ ...league, team2Reserves: newReserves as any}));
+        } else if (team === 'team2' && !isReserve) {
+            const newLineup = [...(team2Lineup || [])];
+            newLineup[index] = playerId;
+            await updateDoc(leagueDocRef, { team2Lineup: newLineup });
+            updateCurrentLeague(league => ({ ...league, team2Lineup: newLineup as any}));
+        }
+      } catch (error) {
+        console.error("Error updating lineup in Firestore:", error);
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar a escalação no servidor.",
+          variant: "destructive",
+        });
       }
-    } catch (error) {
-      console.error("Error updating lineup in Firestore:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar a escalação no servidor.",
-        variant: "destructive",
-      });
     }
   };
 
