@@ -490,7 +490,10 @@ export default function AppContainer() {
         const updatedLeagueDoc = await getDoc(leagueDocRef);
         if (updatedLeagueDoc.exists()) {
             const updatedLeagueData = updatedLeagueDoc.data() as League;
-            updateCurrentLeague(() => updatedLeagueData); // Replace the entire league data
+            setAppData(prev => ({
+                ...prev,
+                leagues: { ...prev.leagues, [currentLeagueId]: updatedLeagueData },
+            }));
         }
 
         toast({ title: 'Convidado Adicionado!', description: `${guestData.name} foi adicionado à liga e ao mercado.` });
@@ -581,54 +584,40 @@ export default function AppContainer() {
   };
 
   const addPlayerToLineup = async (playerId: string) => {
-    if (slotToAddPlayer === null || !currentLeagueId) return;
+    if (!slotToAddPlayer || !currentLeagueId) return;
   
     const { position, index, team } = slotToAddPlayer;
-    
-    // This is the key that matches the fields in Firestore (e.g., "team1Lineup")
     const arrayKey = position === 'RES' ? `${team}Reserves` as const : `${team}Lineup` as const;
   
-    // Determine which local state setter to use
-    const setLineupState = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
-    const setReservesState = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
-    
-    const stateSetter = position === 'RES' ? setReservesState : setLineupState;
-    const relevantSize = position === 'RES' ? reservesSize : lineupSize;
-
-    // Update local state first for immediate UI response
+    const lineupSetter = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
+    const reservesSetter = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
+    const stateSetter = position === 'RES' ? reservesSetter : lineupSetter;
+  
     stateSetter(prev => {
-        const newArray = prev ? [...prev] : Array(relevantSize).fill(null);
-        if (index >= 0 && index < newArray.length) {
-            newArray[index] = playerId;
-        }
-        return newArray;
+      const newState = prev ? [...prev] : [];
+      if (index >= 0 && index < newState.length) {
+        newState[index] = playerId;
+      }
+      return newState;
     });
   
     setSlotToAddPlayer(null);
     navigateTo('lineup');
   
-    // Then, robustly update Firestore
     try {
       const leagueDocRef = doc(db, 'leagues', currentLeagueId);
       const leagueDocSnap = await getDoc(leagueDocRef);
-      
       if (leagueDocSnap.exists()) {
         const leagueData = leagueDocSnap.data() as League;
-        
-        // Get the current array from the fetched data, or initialize it
         const currentArray = (leagueData[arrayKey] || []) as (string | null)[];
         const newArray = [...currentArray];
-        
-        // Ensure the array is long enough before assigning
+  
         while (newArray.length <= index) {
           newArray.push(null);
         }
         newArray[index] = playerId;
-        
-        // Save the entire updated array back to Firestore
+  
         await updateDoc(leagueDocRef, { [arrayKey]: newArray });
-        
-        // Sync local appData state to prevent stale data issues elsewhere
         updateCurrentLeague(league => ({ ...league, [arrayKey]: newArray as any }));
       }
     } catch (error) {
@@ -638,7 +627,6 @@ export default function AppContainer() {
         description: "Não foi possível salvar a escalação no servidor.",
         variant: "destructive",
       });
-      // Optionally, revert local state here if Firestore update fails
     }
   };
 
@@ -913,3 +901,5 @@ export default function AppContainer() {
 }
 
     
+
+      
