@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -579,41 +580,40 @@ export default function AppContainer() {
     if (slotToAddPlayer === null || !currentLeagueId) return;
   
     const { position, index, team } = slotToAddPlayer;
-    const teamKey = team === 'team1' ? 'team1' : 'team2';
-    const arrayKey = position === 'RES' ? `${teamKey}Reserves` : `${teamKey}Lineup`;
-  
-    // Update local state first for immediate UI response
-    const setLineup = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
-    const setReserves = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
     
-    if (position === 'RES') {
-      setReserves(prev => {
-        if (!prev) return Array(reservesSize).fill(null);
-        const newReserves = [...prev];
-        if (index >= 0 && index < newReserves.length) newReserves[index] = playerId;
-        return newReserves;
-      });
-    } else {
-      setLineup(prev => {
-        if (!prev) return Array(lineupSize).fill(null);
-        const newLineup = [...prev];
-        if (index >= 0 && index < newLineup.length) newLineup[index] = playerId;
-        return newLineup;
-      });
-    }
+    // This is the key that matches the fields in Firestore (e.g., "team1Lineup")
+    const arrayKey = position === 'RES' ? `${team}Reserves` as const : `${team}Lineup` as const;
+  
+    // Determine which local state setter to use
+    const setLineupState = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
+    const setReservesState = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
+    
+    const stateSetter = position === 'RES' ? setReservesState : setLineupState;
+    const relevantSize = position === 'RES' ? reservesSize : lineupSize;
+
+    // Update local state first for immediate UI response
+    stateSetter(prev => {
+        const newArray = prev ? [...prev] : Array(relevantSize).fill(null);
+        if (index >= 0 && index < newArray.length) {
+            newArray[index] = playerId;
+        }
+        return newArray;
+    });
   
     setSlotToAddPlayer(null);
     navigateTo('lineup');
   
-    // Then update Firestore
+    // Then, robustly update Firestore
     try {
       const leagueDocRef = doc(db, 'leagues', currentLeagueId);
       const leagueDocSnap = await getDoc(leagueDocRef);
       
       if (leagueDocSnap.exists()) {
         const leagueData = leagueDocSnap.data() as League;
-        // Important: Create a mutable copy of the correct array from Firestore data
-        const newArray = [...(leagueData[arrayKey as keyof League] || [])] as (string | null)[];
+        
+        // Get the current array from the fetched data, or initialize it
+        const currentArray = (leagueData[arrayKey] || []) as (string | null)[];
+        const newArray = [...currentArray];
         
         // Ensure the array is long enough before assigning
         while (newArray.length <= index) {
@@ -624,8 +624,8 @@ export default function AppContainer() {
         // Save the entire updated array back to Firestore
         await updateDoc(leagueDocRef, { [arrayKey]: newArray });
         
-        // Optional: sync local appData state if needed, though local state is already updated
-        updateCurrentLeague(league => ({ ...league, [arrayKey as keyof League]: newArray as any }));
+        // Sync local appData state to prevent stale data issues elsewhere
+        updateCurrentLeague(league => ({ ...league, [arrayKey]: newArray as any }));
       }
     } catch (error) {
       console.error("Error updating lineup in Firestore:", error);

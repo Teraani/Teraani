@@ -522,7 +522,7 @@ export default function LineupView(props: LineupViewProps) {
 
       return (
         <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
-          {player ? (
+          {player && players[player.id] ? (
             <PlayerCard
               player={player}
               onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index, team })}
@@ -598,7 +598,7 @@ export default function LineupView(props: LineupViewProps) {
             
             <TabsContent value="team1" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
-                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
+                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={false} />
                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} >
                        <Trash2 className="mr-2 h-4 w-4" />
                        Limpar Time
@@ -617,7 +617,7 @@ export default function LineupView(props: LineupViewProps) {
             
             <TabsContent value="team2" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
-                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
+                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={false} />
                     <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Limpar Time
@@ -636,12 +636,11 @@ export default function LineupView(props: LineupViewProps) {
         </Tabs>
         
         <div className="mt-4 flex flex-col gap-2">
-          {canEdit && <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />}
+          <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
         </div>
       </div>
 
       
-        {canEdit && !lineupsSaved && (
          <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-30">
              <div className="flex justify-around items-center px-2 pb-2">
                 <div className="flex flex-col items-center gap-1">
@@ -674,7 +673,6 @@ export default function LineupView(props: LineupViewProps) {
             </Button>
             
         </div>
-      )}
       
     </div>
   );
