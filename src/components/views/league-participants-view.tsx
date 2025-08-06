@@ -358,14 +358,14 @@ export default function LeagueParticipantsView({
                 <div className="flex items-center gap-3">
                   <Avatar>
                     <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="player avatar" />
-                    <AvatarFallback>{user.pos || user.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-semibold text-foreground flex items-center gap-2">
                       {user.name}
                       {user.role === 'admin' && <Crown className="h-4 w-4 text-amber-500" />}
                     </p>
-                    <p className="text-sm text-muted-foreground">{user.teamName}</p>
+                    <p className="text-sm text-muted-foreground">{user.pos || user.teamName}</p>
                   </div>
                 </div>
                  {isLeagueAdmin && user.role !== 'admin' && (
