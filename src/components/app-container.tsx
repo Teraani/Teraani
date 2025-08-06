@@ -141,7 +141,7 @@ export default function AppContainer() {
 
   const handleCreateLeague = async (user: User) => {
     const newLeagueId = `league_${Date.now()}`;
-    const adminUser = { ...user, role: 'admin' as const };
+    const adminUser = { ...user, role: 'admin' as const, joinedAt: new Date().toISOString() };
     
     const newLeague: League = {
       id: newLeagueId,
@@ -206,6 +206,7 @@ export default function AppContainer() {
                         partialScore: 0, totalScore: 0, valuation: 100, lineup: [], reserves: [],
                         role: 'player',
                         paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
+                        joinedAt: new Date().toISOString(),
                     };
                     await setDoc(userDocRef, userProfile);
                 }
@@ -470,6 +471,8 @@ export default function AppContainer() {
       avatar: guestData.img || `https://placehold.co/128x128/8E44AD/FFFFFF?text=${guestName.charAt(0)}`,
       paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
       playerId: guestPlayerId,
+      joinedAt: new Date().toISOString(),
+      pos: guestData.pos,
     };
 
     const newGuestPlayer: Player = {
@@ -612,22 +615,19 @@ export default function AppContainer() {
     const arrayKey = position === 'RES' ? `${team}Reserves` as const : `${team}Lineup` as const;
   
     // Determine which state and setter to use
-    const targetLineup = team === 'team1' ? team1Lineup : team2Lineup;
-    const targetReserves = team === 'team1' ? team1Reserves : team2Reserves;
     const lineupSetter = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
     const reservesSetter = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
-    
-    // Create copies to avoid direct state mutation
-    const newLineup = targetLineup ? [...targetLineup] : [];
-    const newReserves = targetReserves ? [...targetReserves] : [];
+    const stateSetter = position === 'RES' ? reservesSetter : lineupSetter;
   
-    if (position === 'RES') {
-      if (index < newReserves.length) newReserves[index] = playerId;
-      reservesSetter(newReserves);
-    } else {
-      if (index < newLineup.length) newLineup[index] = playerId;
-      lineupSetter(newLineup);
-    }
+    // Update local state first for immediate UI response
+    stateSetter(prev => {
+      // Create a new array to avoid direct mutation
+      const newState = prev ? [...prev] : [];
+      if (index >= 0 && index < newState.length) {
+        newState[index] = playerId;
+      }
+      return newState;
+    });
   
     setSlotToAddPlayer(null);
     navigateTo('lineup');
@@ -647,8 +647,6 @@ export default function AppContainer() {
         newArray[index] = playerId;
   
         await updateDoc(leagueDocRef, { [arrayKey]: newArray });
-        
-        // This is important to keep appData in sync
         updateCurrentLeague(league => ({ ...league, [arrayKey]: newArray as any }));
       }
     } catch (error) {

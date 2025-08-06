@@ -54,6 +54,8 @@ export interface User {
   avatar?: string;
   paymentDueDate: string; // YYYY-MM-DD
   playerId?: string; // Explicit link to a player ID
+  joinedAt?: string; // ISO 8601 date string
+  pos?: Player['pos'];
 }
 
 export interface Ranking {

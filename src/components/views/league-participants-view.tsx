@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const GuestPlayerForm = ({
   onSave,
@@ -154,7 +156,7 @@ const EditUserForm = ({
   onClose: () => void;
 }) => {
   const [name, setName] = useState(user.name);
-  const [teamName, setTeamName] = useState(user.teamName);
+  const [pos, setPos] = useState<Player['pos'] | ''>(user.pos || '');
   const [avatar, setAvatar] = useState(user.avatar || '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,11 +173,11 @@ const EditUserForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !teamName) {
-      alert('Nome e nome do time são obrigatórios.');
+    if (!name || !pos) {
+      alert('Nome e posição são obrigatórios.');
       return;
     }
-    const data: Partial<User> = { name, teamName, avatar };
+    const data: Partial<User> = { name, avatar, pos: pos as Player['pos'] };
     onSave(user.id, data);
     onClose();
   };
@@ -205,9 +207,30 @@ const EditUserForm = ({
           <Label htmlFor="userName">Nome do Jogador</Label>
           <Input id="userName" value={name} onChange={e => setName(e.target.value)} required />
         </div>
+         <div>
+          <Label htmlFor="playerPos">Posição</Label>
+           <Select onValueChange={(v) => setPos(v as Player['pos'])} value={pos} required>
+              <SelectTrigger>
+                  <SelectValue placeholder="Selecione a posição" />
+              </SelectTrigger>
+              <SelectContent>
+                  <SelectItem value="GOL">Goleiro (GOL)</SelectItem>
+                  <SelectItem value="LAT">Lateral (LAT)</SelectItem>
+                  <SelectItem value="ZAG">Zagueiro (ZAG)</SelectItem>
+                  <SelectItem value="MEI">Meio-campo (MEI)</SelectItem>
+                  <SelectItem value="VOL">Volante (VOL)</SelectItem>
+                  <SelectItem value="ATA">Atacante (ATA)</SelectItem>
+              </SelectContent>
+          </Select>
+        </div>
         <div>
-          <Label htmlFor="teamName">Nome do Time</Label>
-          <Input id="teamName" value={teamName} onChange={e => setTeamName(e.target.value)} required />
+          <Label htmlFor="joinedAt">Contratado em</Label>
+          <Input 
+            id="joinedAt" 
+            value={user.joinedAt ? format(new Date(user.joinedAt), 'dd/MM/yyyy') : 'Não registrado'} 
+            disabled 
+            className="bg-muted/50"
+          />
         </div>
         
         <DialogFooter>
