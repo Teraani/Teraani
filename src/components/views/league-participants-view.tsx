@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { League, User, Player } from '@/lib/data';
@@ -143,6 +144,81 @@ const GuestPlayerForm = ({
   );
 }
 
+const EditUserForm = ({
+  user,
+  onSave,
+  onClose,
+}: {
+  user: User;
+  onSave: (userId: string, data: Partial<User>) => void;
+  onClose: () => void;
+}) => {
+  const [name, setName] = useState(user.name);
+  const [teamName, setTeamName] = useState(user.teamName);
+  const [avatar, setAvatar] = useState(user.avatar || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !teamName) {
+      alert('Nome e nome do time são obrigatórios.');
+      return;
+    }
+    const data: Partial<User> = { name, teamName, avatar };
+    onSave(user.id, data);
+    onClose();
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Editar Membro da Liga</DialogTitle>
+        <DialogDescription>
+          Atualize os dados do jogador.
+        </DialogDescription>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex flex-col items-center gap-4">
+           <Avatar className="w-24 h-24">
+              <AvatarImage src={avatar} alt="Avatar" data-ai-hint="player avatar" />
+              <AvatarFallback className="text-4xl">{name.charAt(0)}</AvatarFallback>
+            </Avatar>
+          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="mr-2 h-4 w-4" />
+            Mudar Avatar
+          </Button>
+          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
+        </div>
+
+        <div>
+          <Label htmlFor="userName">Nome do Jogador</Label>
+          <Input id="userName" value={name} onChange={e => setName(e.target.value)} required />
+        </div>
+        <div>
+          <Label htmlFor="teamName">Nome do Time</Label>
+          <Input id="teamName" value={teamName} onChange={e => setTeamName(e.target.value)} required />
+        </div>
+        
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
+          <Button type="submit">Salvar Alterações</Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+};
+
 
 interface LeagueParticipantsViewProps {
   onBack: () => void;
@@ -151,6 +227,7 @@ interface LeagueParticipantsViewProps {
   onInvite: () => void;
   onAddGuest: (guestData: any) => void;
   onRemoveUser: (userId: string) => void;
+  onUpdateUser: (userId: string, data: Partial<User>) => void;
 }
 
 export default function LeagueParticipantsView({ 
@@ -159,11 +236,13 @@ export default function LeagueParticipantsView({
   isLeagueAdmin, 
   onInvite, 
   onAddGuest,
-  onRemoveUser
+  onRemoveUser,
+  onUpdateUser,
 }: LeagueParticipantsViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
   const [userToRemove, setUserToRemove] = useState<User | null>(null);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
 
   const participants = useMemo(() => {
     return Object.values(league.users)
@@ -204,6 +283,16 @@ export default function LeagueParticipantsView({
           onSave={(data) => onAddGuest(data)}
           onClose={() => setIsAddGuestOpen(false)}
         />
+      </Dialog>
+      
+      <Dialog open={!!userToEdit} onOpenChange={(open) => !open && setUserToEdit(null)}>
+        {userToEdit && (
+          <EditUserForm
+            user={userToEdit}
+            onSave={onUpdateUser}
+            onClose={() => setUserToEdit(null)}
+          />
+        )}
       </Dialog>
 
 
@@ -257,9 +346,14 @@ export default function LeagueParticipantsView({
                   </div>
                 </div>
                  {isLeagueAdmin && user.role !== 'admin' && (
-                  <Button variant="ghost" size="icon" onClick={() => setUserToRemove(user)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                     <Button variant="ghost" size="icon" onClick={() => setUserToEdit(user)}>
+                       <Edit className="h-4 w-4 text-muted-foreground" />
+                     </Button>
+                    <Button variant="ghost" size="icon" onClick={() => setUserToRemove(user)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
                 )}
               </div>
             ))}

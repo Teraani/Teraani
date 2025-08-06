@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Player, User, Ranking, GoalieRanking, Game, League, PlayerPerformance } from '@/lib/data';
 import WelcomeView from '@/components/views/welcome-view';
 import DashboardView from '@/components/views/dashboard-view';
@@ -528,6 +528,28 @@ export default function AppContainer() {
     toast({ title: "Usuário Removido", description: `O usuário foi removido da liga.`, variant: "destructive" });
   };
 
+  const handleUpdateUserInLeague = async (userId: string, updatedData: Partial<User>) => {
+    if (!currentLeagueId) return;
+    const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+
+    try {
+        await updateDoc(leagueDocRef, {
+            [`users.${userId}`]: { ...appData.leagues[currentLeagueId].users[userId], ...updatedData }
+        });
+        
+        updateCurrentLeague(league => {
+            const newUsers = { ...league.users };
+            newUsers[userId] = { ...newUsers[userId], ...updatedData };
+            return { ...league, users: newUsers };
+        });
+
+        toast({ title: 'Usuário atualizado com sucesso!' });
+    } catch (error) {
+        console.error('Error updating user in league:', error);
+        toast({ title: 'Erro ao atualizar usuário', variant: 'destructive' });
+    }
+  };
+
   const handleAvatarChange = (userId: string, image: string) => {
     updateCurrentLeague(league => ({ ...league, users: { ...league.users, [userId]: { ...league.users[userId], avatar: image } } }));
   };
@@ -585,57 +607,59 @@ export default function AppContainer() {
 
   const addPlayerToLineup = async (playerId: string) => {
     if (!slotToAddPlayer || !currentLeagueId) return;
-
+  
     const { position, index, team } = slotToAddPlayer;
-    const arrayKey = position === 'RES' ? (`${team}Reserves` as const) : (`${team}Lineup` as const);
-
+    const arrayKey = position === 'RES' ? `${team}Reserves` as const : `${team}Lineup` as const;
+  
+    // Determine which state and setter to use
+    const targetLineup = team === 'team1' ? team1Lineup : team2Lineup;
+    const targetReserves = team === 'team1' ? team1Reserves : team2Reserves;
     const lineupSetter = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
     const reservesSetter = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
-    const stateSetter = position === 'RES' ? reservesSetter : lineupSetter;
-
-    // Update local state first for immediate UI response
-    stateSetter(prev => {
-        // Create a new array to avoid direct mutation
-        const newState = prev ? [...prev] : [];
-        if (index >= 0 && index < newState.length) {
-            newState[index] = playerId;
-        } else if (index >= newState.length) {
-            // Fill with nulls if index is out of bounds
-            while(newState.length < index) newState.push(null);
-            newState.push(playerId);
-        }
-        return newState;
-    });
-
+    
+    // Create copies to avoid direct state mutation
+    const newLineup = targetLineup ? [...targetLineup] : [];
+    const newReserves = targetReserves ? [...targetReserves] : [];
+  
+    if (position === 'RES') {
+      if (index < newReserves.length) newReserves[index] = playerId;
+      reservesSetter(newReserves);
+    } else {
+      if (index < newLineup.length) newLineup[index] = playerId;
+      lineupSetter(newLineup);
+    }
+  
     setSlotToAddPlayer(null);
     navigateTo('lineup');
-
+  
     // Then, update Firestore
     try {
-        const leagueDocRef = doc(db, 'leagues', currentLeagueId);
-        const leagueDocSnap = await getDoc(leagueDocRef);
-        if (leagueDocSnap.exists()) {
-            const leagueData = leagueDocSnap.data() as League;
-            const currentArray = (leagueData[arrayKey] || []) as (string | null)[];
-            const newArray = [...currentArray];
-
-            while (newArray.length <= index) {
-                newArray.push(null);
-            }
-            newArray[index] = playerId;
-
-            await updateDoc(leagueDocRef, { [arrayKey]: newArray });
-            // The local state is already updated, no need to call updateCurrentLeague
+      const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+      const leagueDocSnap = await getDoc(leagueDocRef);
+      if (leagueDocSnap.exists()) {
+        const leagueData = leagueDocSnap.data() as League;
+        const currentArray = (leagueData[arrayKey] || []) as (string | null)[];
+        const newArray = [...currentArray];
+  
+        while (newArray.length <= index) {
+          newArray.push(null);
         }
+        newArray[index] = playerId;
+  
+        await updateDoc(leagueDocRef, { [arrayKey]: newArray });
+        
+        // This is important to keep appData in sync
+        updateCurrentLeague(league => ({ ...league, [arrayKey]: newArray as any }));
+      }
     } catch (error) {
-        console.error("Error updating lineup in Firestore:", error);
-        toast({
-            title: "Erro ao salvar",
-            description: "Não foi possível salvar a escalação no servidor.",
-            variant: "destructive",
-        });
+      console.error("Error updating lineup in Firestore:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar a escalação no servidor.",
+        variant: "destructive",
+      });
     }
-};
+  };
 
 
   const goBack = () => navigateTo(previousView);
@@ -879,10 +903,10 @@ export default function AppContainer() {
         case 'all-users': return <AllUsersView leagues={appData.leagues} onBack={goBack} />;
         case 'all-leagues': return <AllLeaguesView leagues={appData.leagues} onBack={goBack} />;
         case 'leagues': return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={currentUser!} onCreateLeague={() => handleCreateLeague(currentUser)} />;
-        case 'league-participants': return <LeagueParticipantsView onBack={goBack} league={currentLeague} isLeagueAdmin={isLeagueAdmin} onInvite={handleInvite} onAddGuest={handleAddGuestPlayer} onRemoveUser={handleRemoveUserFromLeague} />;
+        case 'league-participants': return <LeagueParticipantsView onBack={goBack} league={currentLeague} isLeagueAdmin={isLeagueAdmin} onInvite={handleInvite} onAddGuest={handleAddGuestPlayer} onRemoveUser={handleRemoveUserFromLeague} onUpdateUser={handleUpdateUserInLeague} />;
         case 'modality-selection': return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} />;
         case 'dashboard': return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;
-        case 'lineup': return <LineupView players={currentLeague!.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} currentUser={currentUser!} canEdit={canEditLineup} team1Lineup={team1Lineup} setTeam1Lineup={setTeam1Lineup} team1Reserves={team1Reserves} setTeam1Reserves={setTeam1Reserves} team2Lineup={team2Lineup} setTeam2Lineup={setTeam2Lineup} team2Reserves={team2Reserves} setTeam2Reserves={setTeam2Reserves} onSaveLineups={handleSaveLineups} lineupsSaved={lineupsSaved} modality={selectedModality} team1ShirtColor={team1ShirtColor} setTeam1ShirtColor={setTeam1ShirtColor} team2ShirtColor={team2ShirtColor} setTeam2ShirtColor={setTeam2ShirtColor} formation={formation} setFormation={setFormation} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} />;
+        case 'lineup': return <LineupView players={currentLeague!.players} onPlayerSelect={onPlayerSelect} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} currentUser={currentUser!} canEdit={canEditLineup} team1Lineup={team1Lineup} setTeam1Lineup={setTeam1Lineup} team1Reserves={team1Reserves} setTeam1Reserves={setTeam1Reserves} team2Lineup={team2Lineup} setTeam2Lineup={setTeam2Lineup} team2Reserves={team2Reserves} setTeam2Reserves={setTeam2Reserves} onSaveLineups={handleSaveLineups} lineupsSaved={lineupsSaved} modality={selectedModality} team1ShirtColor={team1ShirtColor} setTeam1ShirtColor={setTeam1ShirtColor} team2ShirtColor={team2ShirtColor} setTeam2ShirtColor={setTeam2ShirtColor} formation={formation} setFormation={setFormation} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} />;
         case 'player-details': return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
         case 'market': return <MarketView players={currentLeague.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} scaledPlayerIds={allScaledPlayerIds} canEdit={canEditLineup} onAddPlayerToMarket={handleAddPlayerToMarket} onRemovePlayerFromMarket={handleRemovePlayerFromMarket} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} />;
         case 'partial-score': return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
