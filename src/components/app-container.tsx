@@ -613,7 +613,7 @@ export default function AppContainer() {
       if (leagueDocSnap.exists()) {
         const leagueData = leagueDocSnap.data() as League;
         // Important: Create a mutable copy of the correct array from Firestore data
-        const newArray = [...(leagueData[arrayKey] || [])] as (string | null)[];
+        const newArray = [...(leagueData[arrayKey as keyof League] || [])] as (string | null)[];
         
         // Ensure the array is long enough before assigning
         while (newArray.length <= index) {
@@ -625,7 +625,7 @@ export default function AppContainer() {
         await updateDoc(leagueDocRef, { [arrayKey]: newArray });
         
         // Optional: sync local appData state if needed, though local state is already updated
-        updateCurrentLeague(league => ({ ...league, [arrayKey]: newArray }));
+        updateCurrentLeague(league => ({ ...league, [arrayKey as keyof League]: newArray as any }));
       }
     } catch (error) {
       console.error("Error updating lineup in Firestore:", error);
@@ -759,12 +759,12 @@ export default function AppContainer() {
         performanceHistory: [],
     };
     
-    const updatedPlayers = { ...currentLeague!.players, [newPlayerId]: fullNewPlayer };
     const leagueDocRef = doc(db, "leagues", currentLeagueId);
     updateDoc(leagueDocRef, {
-        players: updatedPlayers
+        [`players.${newPlayerId}`]: fullNewPlayer
     }).then(() => {
         updateCurrentLeague(league => {
+          const updatedPlayers = { ...league.players, [newPlayerId]: fullNewPlayer };
           return { ...league, players: updatedPlayers };
         });
         toast({ title: "Jogador Adicionado!", description: `${newPlayer.name} agora está disponível no mercado.` });
