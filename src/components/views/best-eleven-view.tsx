@@ -644,18 +644,14 @@ export default function BestElevenView({ onBack, players, currentUser, allUsers,
                 <Clock className="w-5 h-5" />
                 <span>{votingStatus.message}</span>
             </div>
-             {canManageVoting && !isVotingReleased && !isVotingClosed && (
-              <Button onClick={onReleaseVoting} className="bg-blue-600 hover:bg-blue-700">
+             <Button onClick={onReleaseVoting} className="bg-blue-600 hover:bg-blue-700">
                 <Send className="mr-2 h-4 w-4" />
                 Liberar Votação
               </Button>
-            )}
-             {canManageVoting && isVotingReleased && !isVotingClosed && (
-              <Button onClick={onCloseVoting} variant="destructive" className="bg-red-600 hover:bg-red-700">
+             <Button onClick={onCloseVoting} variant="destructive" className="bg-red-600 hover:bg-red-700">
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Encerrar Votação (Admin)
               </Button>
-            )}
         </div>
       </main>
 
