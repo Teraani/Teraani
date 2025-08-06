@@ -1,6 +1,4 @@
 
-
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -102,45 +100,45 @@ const initialTeam2Lineup = [
 ];
 
 export default function AppContainer() {
-  const [currentView, setCurrentView] = useState<View>('loading');
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
-  const [previousView, setPreviousView] = useState<View>('dashboard');
+  const [currentView, setCurrentView] = useState&lt;View&gt;('loading');
+  const [selectedPlayerId, setSelectedPlayerId] = useState&lt;string | null&gt;(null);
+  const [previousView, setPreviousView] = useState&lt;View&gt;('dashboard');
   const { toast } = useToast();
   
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState&lt;User | null&gt;(null);
 
-  const [appData, setAppData] = useState<{leagues: Record<string, League>}>({ leagues: {} });
-  const [currentLeagueId, setCurrentLeagueId] = useState<string | null>(null);
+  const [appData, setAppData] = useState&lt;{leagues: Record&lt;string, League&gt;}&gt;({ leagues: {} });
+  const [currentLeagueId, setCurrentLeagueId] = useState&lt;string | null&gt;(null);
 
-  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  const [liveEvents, setLiveEvents] = useState&lt;LiveEvent[]&gt;([]);
   const selectedModality = currentLeagueId ? appData.leagues[currentLeagueId]?.modality ?? null : null;
   const [isInitialLoadForModality, setIsInitialLoadForModality] = useState(true);
   
-  const [bestElevenVotes, setBestElevenVotes] = useState<Record<string, (BestElevenVote | null)[]>>({});
-  const [bestElevenSaved, setBestElevenSaved] = useState<Record<string, boolean>>({});
+  const [bestElevenVotes, setBestElevenVotes] = useState&lt;Record&lt;string, (BestElevenVote | null)[]&gt;&gt;({});
+  const [bestElevenSaved, setBestElevenSaved] = useState&lt;Record&lt;string, boolean&gt;&gt;({});
   const [isVotingReleased, setIsVotingReleased] = useState(false);
   const [isVotingClosed, setIsVotingClosed] = useState(false);
   const [isVoteRevelationEnabled, setIsVoteRevelationEnabled] = useState(false);
   
-  const [lastRoundPlayerIds, setLastRoundPlayerIds] = useState<string[]>([]);
+  const [lastRoundPlayerIds, setLastRoundPlayerIds] = useState&lt;string[]&gt;([]);
   
-  const { lineup: lineupSize, reserves: reservesSize } = useMemo(() => getTeamSizes(selectedModality), [selectedModality]);
+  const { lineup: lineupSize, reserves: reservesSize } = useMemo(() =&gt; getTeamSizes(selectedModality), [selectedModality]);
 
   // Start with null to indicate that data is not yet loaded.
-  const [team1Lineup, setTeam1Lineup] = useState<(string | null)[] | null>(null);
-  const [team1Reserves, setTeam1Reserves] = useState<(string | null)[] | null>(null);
-  const [team2Lineup, setTeam2Lineup] = useState<(string | null)[] | null>(null);
-  const [team2Reserves, setTeam2Reserves] = useState<(string | null)[] | null>(null);
+  const [team1Lineup, setTeam1Lineup] = useState&lt;(string | null)[] | null&gt;(null);
+  const [team1Reserves, setTeam1Reserves] = useState&lt;(string | null)[] | null&gt;(null);
+  const [team2Lineup, setTeam2Lineup] = useState&lt;(string | null)[] | null&gt;(null);
+  const [team2Reserves, setTeam2Reserves] = useState&lt;(string | null)[] | null&gt;(null);
 
   const [isPersonalPaymentsView, setIsPersonalPaymentsView] = useState(false);
-  const [team1ShirtColor, setTeam1ShirtColor] = useState<ShirtColor>('amarelo');
-  const [team2ShirtColor, setTeam2ShirtColor] = useState<ShirtColor>('verde');
-  const [formation, setFormation] = useState<Formation>('4-3-3');
+  const [team1ShirtColor, setTeam1ShirtColor] = useState&lt;ShirtColor&gt;('amarelo');
+  const [team2ShirtColor, setTeam2ShirtColor] = useState&lt;ShirtColor&gt;('verde');
+  const [formation, setFormation] = useState&lt;Formation&gt;('4-3-3');
   
   const [lineupsSaved, setLineupsSaved] = useState(false);
-  const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
+  const [slotToAddPlayer, setSlotToAddPlayer] = useState&lt;AddPlayerSlot | null&gt;(null);
 
-  const handleCreateLeague = async (user: User) => {
+  const handleCreateLeague = async (user: User) =&gt; {
     const newLeagueId = `league_${Date.now()}`;
     const adminUser = { ...user, role: 'admin' as const };
     
@@ -169,7 +167,7 @@ export default function AppContainer() {
     try {
       await setDoc(doc(db, "leagues", newLeagueId), newLeague);
       
-      setAppData(prev => ({
+      setAppData(prev =&gt; ({
         ...prev,
         leagues: { ...prev.leagues, [newLeagueId]: newLeague },
       }));
@@ -187,8 +185,8 @@ export default function AppContainer() {
     }
   };
 
-  useEffect(() => {
-    const handleAuth = async (firebaseUser: FirebaseUser | null) => {
+  useEffect(() =&gt; {
+    const handleAuth = async (firebaseUser: FirebaseUser | null) =&gt; {
         try {
             if (firebaseUser) {
                 const userDocRef = doc(db, "users", firebaseUser.uid);
@@ -213,12 +211,12 @@ export default function AppContainer() {
                 setLoggedInUser(userProfile);
 
                 const leaguesSnapshot = await getDocs(collection(db, "leagues"));
-                const userLeagues: Record<string, League> = {};
+                const userLeagues: Record&lt;string, League&gt; = {};
                 let userHasLeagues = false;
 
-                leaguesSnapshot.forEach(leagueDoc => {
+                leaguesSnapshot.forEach(leagueDoc =&gt; {
                     const leagueData = leagueDoc.data() as League;
-                    if (leagueData.users && leagueData.users[userProfile.id]) {
+                    if (leagueData.users &amp;&amp; leagueData.users[userProfile.id]) {
                         userLeagues[leagueDoc.id] = leagueData;
                         userHasLeagues = true;
                     }
@@ -267,16 +265,16 @@ export default function AppContainer() {
     };
 
     getRedirectResult(auth)
-      .then((result) => {
+      .then((result) =&gt; {
         if (result) {
           // This will be handled by the onAuthStateChanged listener
         } else {
           // If no redirect result, check the current auth state
           const unsubscribe = onAuthStateChanged(auth, handleAuth);
-          return () => unsubscribe();
+          return () =&gt; unsubscribe();
         }
       })
-      .catch((error) => {
+      .catch((error) =&gt; {
         console.error("Redirect Result Error:", error);
         toast({
           title: "Erro no Login com Google",
@@ -287,13 +285,13 @@ export default function AppContainer() {
       });
 
     const unsubscribe = onAuthStateChanged(auth, handleAuth);
-    return () => unsubscribe();
+    return () =&gt; unsubscribe();
     
   }, [toast]); // useEffect dependencies
 
 
   // This effect dynamically adjusts team sizes when modality changes
-  useEffect(() => {
+  useEffect(() =&gt; {
     if (!selectedModality) {
         return;
     };
@@ -314,39 +312,39 @@ export default function AppContainer() {
     
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
     
-    const adjustLineup = (currentLineup: (string|null)[] | null) => {
+    const adjustLineup = (currentLineup: (string|null)[] | null) =&gt; {
         if (!currentLineup) return Array(newLuSize).fill(null);
         const newLineup = [...currentLineup];
-        if (newLineup.length > newLuSize) {
+        if (newLineup.length &gt; newLuSize) {
             return newLineup.slice(0, newLuSize);
         }
-        while (newLineup.length < newLuSize) {
+        while (newLineup.length &lt; newLuSize) {
             newLineup.push(null);
         }
         return newLineup;
     };
 
-    const adjustReserves = (currentReserves: (string|null)[] | null) => {
+    const adjustReserves = (currentReserves: (string|null)[] | null) =&gt; {
         if (!currentReserves) return Array(newResSize).fill(null);
          const newReserves = [...currentReserves];
-        if (newReserves.length > newResSize) {
+        if (newReserves.length &gt; newResSize) {
             return newReserves.slice(0, newResSize);
         }
-        while (newReserves.length < newResSize) {
+        while (newReserves.length &lt; newResSize) {
             newReserves.push(null);
         }
         return newReserves;
     }
 
-    setTeam1Lineup(prev => adjustLineup(prev));
-    setTeam1Reserves(prev => adjustReserves(prev));
-    setTeam2Lineup(prev => adjustLineup(prev));
-    setTeam2Reserves(prev => adjustReserves(prev));
+    setTeam1Lineup(prev =&gt; adjustLineup(prev));
+    setTeam1Reserves(prev =&gt; adjustReserves(prev));
+    setTeam2Lineup(prev =&gt; adjustLineup(prev));
+    setTeam2Reserves(prev =&gt; adjustReserves(prev));
 
   }, [selectedModality, isInitialLoadForModality, appData.leagues, currentLeagueId]);
   
   // Set initial lineup when the component mounts or when league changes
-    useEffect(() => {
+    useEffect(() =&gt; {
         const league = appData.leagues[currentLeagueId!];
         if (league) {
             setTeam1Lineup(league.team1Lineup || []);
@@ -362,7 +360,7 @@ export default function AppContainer() {
         }
     }, [currentLeagueId, appData.leagues]);
 
-  const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) => {
+  const navigateTo = (view: View, options?: { isPersonalPayments?: boolean }) =&gt; {
     if (view === 'payments') {
       setIsPersonalPaymentsView(options?.isPersonalPayments || false);
     }
@@ -371,49 +369,49 @@ export default function AppContainer() {
     window.scrollTo(0, 0);
   };
   
-  const handleUpdateLeagueName = (newName: string) => {
+  const handleUpdateLeagueName = (newName: string) =&gt; {
     if(!currentLeagueId) return;
     const leagueDocRef = doc(db, "leagues", currentLeagueId);
     updateDoc(leagueDocRef, { name: newName });
 
-    updateCurrentLeague(league => ({ ...league, name: newName }));
+    updateCurrentLeague(league =&gt; ({ ...league, name: newName }));
     toast({ title: "Nome da Liga Atualizado!" });
   };
 
-  const handleSaveLineups = () => {
+  const handleSaveLineups = () =&gt; {
     setLineupsSaved(true);
     toast({ title: "Times Salvos!", description: "As escalações da rodada foram salvas com sucesso." });
   };
 
-  const handleReleaseVoting = () => {
+  const handleReleaseVoting = () =&gt; {
     setIsVotingReleased(true);
     toast({ title: "Votação Liberada!", description: "Os jogadores agora podem votar na Seleção da Rodada." });
   };
 
-  const handleCloseVoting = () => {
+  const handleCloseVoting = () =&gt; {
     setIsVotingClosed(true);
     toast({ title: "Votação Encerrada Manualmente", description: "O administrador encerrou a votação." });
   };
   
-  const handleToggleVoteRevelation = (enabled: boolean) => {
+  const handleToggleVoteRevelation = (enabled: boolean) =&gt; {
     setIsVoteRevelationEnabled(enabled);
     toast({ title: `Revelação de Votos ${enabled ? 'Ativada' : 'Desativada'}` });
   };
 
   const currentLeague: League | undefined = currentLeagueId ? appData.leagues[currentLeagueId] : undefined;
   
-  const currentUser = useMemo(() => {
+  const currentUser = useMemo(() =&gt; {
     if (!loggedInUser || !currentLeague) return null;
     return currentLeague.users[loggedInUser.id] || loggedInUser;
   }, [currentLeague, loggedInUser]);
 
   const isPaymentsEnabled = currentLeague?.paymentsEnabled ?? true;
   
-  const updateCurrentLeague = (updater: (league: League) => League, leagueIdToUpdate?: string) => {
+  const updateCurrentLeague = (updater: (league: League) =&gt; League, leagueIdToUpdate?: string) =&gt; {
     const targetLeagueId = leagueIdToUpdate || currentLeagueId;
     if (!targetLeagueId) return;
 
-    setAppData(prevData => {
+    setAppData(prevData =&gt; {
         const leagueToUpdate = prevData.leagues[targetLeagueId];
         if (!leagueToUpdate) return prevData;
         const newLeague = updater(leagueToUpdate);
@@ -424,7 +422,7 @@ export default function AppContainer() {
     });
   };
   
-  const handleLeagueChange = (newLeagueId: string) => {
+  const handleLeagueChange = (newLeagueId: string) =&gt; {
     const newLeague = appData.leagues[newLeagueId];
     if (!newLeague) return;
     setCurrentLeagueId(newLeagueId);
@@ -432,7 +430,7 @@ export default function AppContainer() {
     navigateTo('dashboard');
   };
 
-  const handleInvite = async () => {
+  const handleInvite = async () =&gt; {
     if (!currentLeagueId) return;
     const inviteLink = `${window.location.origin}?invite=${currentLeagueId}`;
     const message = `Ei! Use este link para entrar na minha liga no Amistosos FC: ${inviteLink}`;
@@ -454,7 +452,7 @@ export default function AppContainer() {
     }
   };
 
-  const handleAddGuestPlayer = (guestData: Omit<Player, 'last_val' | 'games' | 'performanceHistory' | 'value' | 'points'>) => {
+  const handleAddGuestPlayer = (guestData: Omit&lt;Player, 'last_val' | 'games' | 'performanceHistory' | 'value' | 'points'&gt;) =&gt; {
     if (!currentLeagueId) return;
 
     const guestName = guestData.name;
@@ -484,20 +482,20 @@ export default function AppContainer() {
     updateDoc(leagueDocRef, {
         [`users.${guestUserId}`]: newGuestUser,
         [`players.${guestPlayerId}`]: newGuestPlayer
-    }).then(() => {
-        updateCurrentLeague(league => ({
+    }).then(() =&gt; {
+        updateCurrentLeague(league =&gt; ({
             ...league,
             users: { ...league.users, [guestUserId]: newGuestUser },
             players: { ...league.players, [guestPlayerId]: newGuestPlayer },
         }));
         toast({ title: 'Convidado Adicionado!', description: `${guestData.name} foi adicionado à liga e ao mercado.` });
-    }).catch(error => {
+    }).catch(error =&gt; {
         console.error("Error adding guest player:", error);
         toast({ title: "Erro ao adicionar convidado", variant: "destructive" });
     });
   };
 
-  const handleRemoveUserFromLeague = (userIdToRemove: string) => {
+  const handleRemoveUserFromLeague = (userIdToRemove: string) =&gt; {
     if (!currentLeague) return;
 
     if (userIdToRemove === currentLeague.adminId) {
@@ -505,13 +503,13 @@ export default function AppContainer() {
       return;
     }
 
-    updateCurrentLeague(league => {
+    updateCurrentLeague(league =&gt; {
       const updatedUsers = { ...league.users };
       const userToRemove = updatedUsers[userIdToRemove];
       delete updatedUsers[userIdToRemove];
 
       const updatedPlayers = { ...league.players };
-      if (userToRemove?.playerId && updatedPlayers[userToRemove.playerId]) {
+      if (userToRemove?.playerId &amp;&amp; updatedPlayers[userToRemove.playerId]) {
           delete updatedPlayers[userToRemove.playerId];
       }
       
@@ -521,42 +519,42 @@ export default function AppContainer() {
     toast({ title: "Usuário Removido", description: `O usuário foi removido da liga.`, variant: "destructive" });
   };
 
-  const handleAvatarChange = (userId: string, image: string) => {
-    updateCurrentLeague(league => ({ ...league, users: { ...league.users, [userId]: { ...league.users[userId], avatar: image } } }));
+  const handleAvatarChange = (userId: string, image: string) =&gt; {
+    updateCurrentLeague(league =&gt; ({ ...league, users: { ...league.users, [userId]: { ...league.users[userId], avatar: image } } }));
   };
 
-  const handleUpdateUser = async (userId: string, newName: string) => {
-    updateCurrentLeague(league => ({ ...league, users: { ...league.users, [userId]: { ...league.users[userId], name: newName } } }));
+  const handleUpdateUser = async (userId: string, newName: string) =&gt; {
+    updateCurrentLeague(league =&gt; ({ ...league, users: { ...league.users, [userId]: { ...league.users[userId], name: newName } } }));
     toast({ title: "Perfil Atualizado!", description: "Seu nome foi alterado com sucesso." });
   };
 
-  const canEditLineup = useMemo(() => {
+  const canEditLineup = useMemo(() =&gt; {
     if (!currentUser || !currentLeague) return false;
     return currentUser.role === 'admin' || currentUser.id === currentLeague.editorOfTheRound;
   }, [currentUser, currentLeague]);
 
-  const canManageVoting = useMemo(() => currentUser?.role === 'admin', [currentUser]);
+  const canManageVoting = useMemo(() =&gt; currentUser?.role === 'admin', [currentUser]);
   
-  const canEditScouts = useMemo(() => {
+  const canEditScouts = useMemo(() =&gt; {
     if (!currentUser || !currentLeague) return false;
     return currentUser.role === 'admin' || currentUser.id === currentLeague.scoutEditor;
   }, [currentUser, currentLeague]);
 
-  const canEditPayments = useMemo(() => {
+  const canEditPayments = useMemo(() =&gt; {
     if (!currentUser || !currentLeague) return false;
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
-  const handleModalitySelect = (modality: Modality) => {
+  const handleModalitySelect = (modality: Modality) =&gt; {
     if(!currentLeagueId) return;
     const leagueDocRef = doc(db, "leagues", currentLeagueId);
     updateDoc(leagueDocRef, { modality: modality });
 
-    updateCurrentLeague(league => ({ ...league, modality }));
+    updateCurrentLeague(league =&gt; ({ ...league, modality }));
     navigateTo('dashboard');
   };
 
-  const handleLogout = async (showToast = true) => {
+  const handleLogout = async (showToast = true) =&gt; {
     try {
         await signOut(auth);
         if(showToast) {
@@ -567,16 +565,16 @@ export default function AppContainer() {
     }
   };
 
-  const selectPlayerForDetails = (playerId: string) => {
+  const selectPlayerForDetails = (playerId: string) =&gt; {
     setSelectedPlayerId(playerId);
     navigateTo('player-details');
   };
 
-  const handlePlayerImageChange = (playerId: string, image: string) => {
-    updateCurrentLeague(league => ({ ...league, players: { ...league.players, [playerId]: { ...league.players[playerId], img: image } } }));
+  const handlePlayerImageChange = (playerId: string, image: string) =&gt; {
+    updateCurrentLeague(league =&gt; ({ ...league, players: { ...league.players, [playerId]: { ...league.players[playerId], img: image } } }));
   };
 
-  const addPlayerToLineup = async (playerId: string) => {
+  const addPlayerToLineup = async (playerId: string) =&gt; {
     if (slotToAddPlayer === null || !currentLeagueId) return;
   
     const { position, index, team } = slotToAddPlayer;
@@ -592,9 +590,9 @@ export default function AppContainer() {
     const relevantSize = position === 'RES' ? reservesSize : lineupSize;
 
     // Update local state first for immediate UI response
-    stateSetter(prev => {
+    stateSetter(prev =&gt; {
         const newArray = prev ? [...prev] : Array(relevantSize).fill(null);
-        if (index >= 0 && index < newArray.length) {
+        if (index &gt;= 0 &amp;&amp; index &lt; newArray.length) {
             newArray[index] = playerId;
         }
         return newArray;
@@ -616,7 +614,7 @@ export default function AppContainer() {
         const newArray = [...currentArray];
         
         // Ensure the array is long enough before assigning
-        while (newArray.length <= index) {
+        while (newArray.length &lt;= index) {
           newArray.push(null);
         }
         newArray[index] = playerId;
@@ -625,7 +623,7 @@ export default function AppContainer() {
         await updateDoc(leagueDocRef, { [arrayKey]: newArray });
         
         // Sync local appData state to prevent stale data issues elsewhere
-        updateCurrentLeague(league => ({ ...league, [arrayKey]: newArray as any }));
+        updateCurrentLeague(league =&gt; ({ ...league, [arrayKey]: newArray as any }));
       }
     } catch (error) {
       console.error("Error updating lineup in Firestore:", error);
@@ -639,44 +637,44 @@ export default function AppContainer() {
   };
 
 
-  const goBack = () => navigateTo(previousView);
+  const goBack = () =&gt; navigateTo(previousView);
 
-  const handleOpenMarket = (slot: AddPlayerSlot) => {
+  const handleOpenMarket = (slot: AddPlayerSlot) =&gt; {
     setSlotToAddPlayer(slot);
     navigateTo('market');
   }
   
-  const handleSetEditor = (userId: string | null) => updateCurrentLeague(league => ({ ...league, editorOfTheRound: userId }));
-  const handleSetScoutEditor = (userId: string | null) => updateCurrentLeague(league => ({ ...league, scoutEditor: userId }));
-  const handleSetPaymentEditor = (userId: string | null) => updateCurrentLeague(league => ({ ...league, paymentEditor: userId }));
+  const handleSetEditor = (userId: string | null) =&gt; updateCurrentLeague(league =&gt; ({ ...league, editorOfTheRound: userId }));
+  const handleSetScoutEditor = (userId: string | null) =&gt; updateCurrentLeague(league =&gt; ({ ...league, scoutEditor: userId }));
+  const handleSetPaymentEditor = (userId: string | null) =&gt; updateCurrentLeague(league =&gt; ({ ...league, paymentEditor: userId }));
 
-  const handleUpdateStats = (updatedPlayers: Record<string, Player>, updatedScalers?: Record<string, Ranking>, updatedGoalies?: Record<string, GoalieRanking>) => {
-    updateCurrentLeague(league => ({ ...league, players: updatedPlayers, ...(updatedScalers && { scalersRanking: updatedScalers }), ...(updatedGoalies && { goalieRanking: updatedGoalies }) }));
+  const handleUpdateStats = (updatedPlayers: Record&lt;string, Player&gt;, updatedScalers?: Record&lt;string, Ranking&gt;, updatedGoalies?: Record&lt;string, GoalieRanking&gt;) =&gt; {
+    updateCurrentLeague(league =&gt; ({ ...league, players: updatedPlayers, ...(updatedScalers &amp;&amp; { scalersRanking: updatedScalers }), ...(updatedGoalies &amp;&amp; { goalieRanking: updatedGoalies }) }));
     toast({ title: "Estatísticas Salvas!", description: "Os dados foram atualizados com sucesso." });
   };
 
-  const handleUpdateUserPayments = (updatedUsers: Record<string, User>) => {
-    updateCurrentLeague(league => ({...league, users: updatedUsers }));
+  const handleUpdateUserPayments = (updatedUsers: Record&lt;string, User&gt;) =&gt; {
+    updateCurrentLeague(league =&gt; ({...league, users: updatedUsers }));
     toast({ title: "Pagamentos Salvos!", description: "As datas de vencimento foram atualizadas." });
   };
 
-  const handleAddLiveEvent = (event: Omit<LiveEvent, 'time'>) => {
+  const handleAddLiveEvent = (event: Omit&lt;LiveEvent, 'time'&gt;) =&gt; {
     const newEvent: LiveEvent = { ...event, time: `${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` };
-    setLiveEvents(prevEvents => [newEvent, ...prevEvents]);
+    setLiveEvents(prevEvents =&gt; [newEvent, ...prevEvents]);
   };
 
-  const allScaledPlayerIds = useMemo(() => {
-    const scaledIds = new Set<string>();
-    [...(team1Lineup || []), ...(team1Reserves || []), ...(team2Lineup || []), ...(team2Reserves || [])].forEach(id => {
+  const allScaledPlayerIds = useMemo(() =&gt; {
+    const scaledIds = new Set&lt;string&gt;();
+    [...(team1Lineup || []), ...(team1Reserves || []), ...(team2Lineup || []), ...(team2Reserves || [])].forEach(id =&gt; {
       if (id) scaledIds.add(id);
     });
     return Array.from(scaledIds);
   }, [team1Lineup, team1Reserves, team2Lineup, team2Reserves]);
 
-  const handleFinishMatch = (team1Score: number, team2Score: number, playersOfLastRound: string[]) => {
+  const handleFinishMatch = (team1Score: number, team2Score: number, playersOfLastRound: string[]) =&gt; {
     setLastRoundPlayerIds(playersOfLastRound);
 
-    updateCurrentLeague(league => {
+    updateCurrentLeague(league =&gt; {
         const updatedPlayers = { ...league.players };
         const updatedGames = { ...league.games };
         const roundNumber = Object.keys(updatedGames).length + 1;
@@ -688,14 +686,14 @@ export default function AppContainer() {
             homeTeam: 'Time 1', awayTeam: 'Time 2',
             homeScore: team1Score, awayScore: team2Score,
             status: 'Finalizado',
-            scorers: liveEvents.filter(event => event.event === 'Gol').map(event => ({ player: event.player, team: event.team })),
+            scorers: liveEvents.filter(event =&gt; event.event === 'Gol').map(event =&gt; ({ player: event.player, team: event.team })),
         };
         updatedGames[gameId] = newGame;
 
         const team1PlayerIds = new Set([...(team1Lineup || []), ...(team1Reserves || [])].filter(Boolean));
-        const matchResult = team1Score > team2Score ? 'win' : team2Score > team1Score ? 'loss' : 'draw';
+        const matchResult = team1Score &gt; team2Score ? 'win' : team2Score &gt; team1Score ? 'loss' : (team2Score === team1Score ? 'draw' : '');
 
-        playersOfLastRound.forEach(playerId => {
+        playersOfLastRound.forEach(playerId =&gt; {
             const player = updatedPlayers[playerId];
             if (!player) return;
 
@@ -703,8 +701,8 @@ export default function AppContainer() {
             if (!player.performanceHistory) player.performanceHistory = [];
 
             let roundPoints = 0;
-            const roundGoals = liveEvents.filter(e => e.playerId === playerId && e.event === 'Gol').length;
-            const roundAssists = liveEvents.filter(e => e.playerId === playerId && e.event === 'Assistência').length;
+            const roundGoals = liveEvents.filter(e =&gt; e.playerId === playerId &amp;&amp; e.event === 'Gol').length;
+            const roundAssists = liveEvents.filter(e =&gt; e.playerId === playerId &amp;&amp; e.event === 'Assistência').length;
 
             roundPoints += roundGoals * 5 + roundAssists * 3;
             player.games = (player.games || 0) + 1;
@@ -722,7 +720,7 @@ export default function AppContainer() {
 
             const totalPointsFromResults = (player.stats.wins * 3) + player.stats.draws;
             const totalPossiblePoints = player.games * 3;
-            player.stats.performance = totalPossiblePoints > 0 ? (totalPointsFromResults / totalPossiblePoints) * 100 : 0;
+            player.stats.performance = totalPossiblePoints &gt; 0 ? (totalPointsFromResults / totalPossiblePoints) * 100 : 0;
 
             player.performanceHistory.push({
                 round: roundNumber, points: roundPoints,
@@ -750,7 +748,7 @@ export default function AppContainer() {
     navigateTo('games');
 };
 
-  const handleAddPlayerToMarket = (newPlayer: Omit<Player, 'last_val' | 'games' | 'performanceHistory'>) => {
+  const handleAddPlayerToMarket = (newPlayer: Omit&lt;Player, 'last_val' | 'games' | 'performanceHistory'&gt;) =&gt; {
     if (!currentLeagueId) return;
     const newPlayerId = `p_${Date.now()}`;
     const fullNewPlayer: Player = {
@@ -762,20 +760,20 @@ export default function AppContainer() {
     const leagueDocRef = doc(db, "leagues", currentLeagueId);
     updateDoc(leagueDocRef, {
         [`players.${newPlayerId}`]: fullNewPlayer
-    }).then(() => {
-        updateCurrentLeague(league => {
+    }).then(() =&gt; {
+        updateCurrentLeague(league =&gt; {
           const updatedPlayers = { ...league.players, [newPlayerId]: fullNewPlayer };
           return { ...league, players: updatedPlayers };
         });
         toast({ title: "Jogador Adicionado!", description: `${newPlayer.name} agora está disponível no mercado.` });
-    }).catch(error => {
+    }).catch(error =&gt; {
         console.error("Error adding player to market:", error);
         toast({ title: "Erro ao adicionar jogador", variant: "destructive" });
     });
   };
 
-  const handleRemovePlayerFromMarket = (playerId: string) => {
-    updateCurrentLeague(league => {
+  const handleRemovePlayerFromMarket = (playerId: string) =&gt; {
+    updateCurrentLeague(league =&gt; {
       const newPlayers = { ...league.players };
       delete newPlayers[playerId];
       return { ...league, players: newPlayers };
@@ -783,49 +781,49 @@ export default function AppContainer() {
      toast({ title: "Jogador Removido!", variant: "destructive" });
   };
   
-  const handleUpdatePlayerInMarket = (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => {
+  const handleUpdatePlayerInMarket = (playerId: string, updatedData: Partial&lt;Omit&lt;Player, 'id'&gt;&gt;) =&gt; {
     if (!playerId || !currentLeagueId) return;
 
     // Save to Firestore
     const leagueDocRef = doc(db, "leagues", currentLeagueId);
     updateDoc(leagueDocRef, {
         [`players.${playerId}`]: { ...appData.leagues[currentLeagueId].players[playerId], ...updatedData }
-    }).then(() => {
+    }).then(() =&gt; {
         // Update local state on success
-        updateCurrentLeague(league => {
+        updateCurrentLeague(league =&gt; {
           const newPlayers = { ...league.players };
           newPlayers[playerId] = { ...newPlayers[playerId], ...updatedData };
           return { ...league, players: newPlayers };
         });
         toast({ title: "Jogador Atualizado!", description: "Os dados do jogador foram atualizados." });
-    }).catch(error => {
+    }).catch(error =&gt; {
         console.error("Error updating player in market:", error);
         toast({ title: "Erro ao atualizar jogador", variant: "destructive" });
     });
   };
 
-  const handleBestElevenVote = (lineup: (BestElevenVote | null)[]) => {
+  const handleBestElevenVote = (lineup: (BestElevenVote | null)[]) =&gt; {
     if (!currentUser) return;
-    setBestElevenVotes(prev => ({ ...prev, [currentUser.id]: lineup }));
-    setBestElevenSaved(prev => ({ ...prev, [currentUser.id]: true }));
+    setBestElevenVotes(prev =&gt; ({ ...prev, [currentUser.id]: lineup }));
+    setBestElevenSaved(prev =&gt; ({ ...prev, [currentUser.id]: true }));
     toast({ title: "Seleção Salva!", description: `Sua seleção da rodada foi salva com sucesso.` });
   };
 
-  const handleTogglePayments = (enabled: boolean) => {
-    updateCurrentLeague(league => ({ ...league, paymentsEnabled: enabled }));
+  const handleTogglePayments = (enabled: boolean) =&gt; {
+    updateCurrentLeague(league =&gt; ({ ...league, paymentsEnabled: enabled }));
     toast({ title: `Módulo de Pagamentos ${enabled ? 'Ativado' : 'Desativado'}` });
   };
   
   if (currentView === 'loading') {
-    return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
+    return &lt;div className="flex items-center justify-center h-screen bg-background text-xl"&gt;Carregando...&lt;/div&gt;;
   }
   
   if (!loggedInUser) {
      switch (currentView) {
-        case 'welcome': return <WelcomeView onNavigate={navigateTo} />;
-        case 'register': return <RegisterView onNavigateToLogin={() => navigateTo('login')} />;
-        case 'login': return <LoginView onNavigateToRegister={() => navigateTo('register')} />;
-        default: return <WelcomeView onNavigate={navigateTo} />;
+        case 'welcome': return &lt;WelcomeView onNavigate={navigateTo} /&gt;;
+        case 'register': return &lt;RegisterView onNavigateToLogin={() =&gt; navigateTo('login')} /&gt;;
+        case 'login': return &lt;LoginView onNavigateToRegister={() =&gt; navigateTo('register')} /&gt;;
+        default: return &lt;WelcomeView onNavigate={navigateTo} /&gt;;
       }
   }
 
@@ -852,58 +850,60 @@ export default function AppContainer() {
       case 'league-participants':
       case 'all-users':
       case 'all-leagues':
-        return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando dados da liga...</div>;
+        return &lt;div className="flex items-center justify-center h-screen bg-background text-xl"&gt;Carregando dados da liga...&lt;/div&gt;;
       
       // These views can be shown even without full context.
       case 'leagues': 
-        return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={loggedInUser!} onCreateLeague={() => handleCreateLeague(loggedInUser)} />;
+        return &lt;LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={loggedInUser!} onCreateLeague={() =&gt; handleCreateLeague(loggedInUser)} /&gt;;
       case 'modality-selection':
-        return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={null} isLeagueAdmin={false} />;
+        return &lt;ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={null} isLeagueAdmin={false} /&gt;;
 
       // Fallback to loading for any other case
       default:
-         return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
+         return &lt;div className="flex items-center justify-center h-screen bg-background text-xl"&gt;Carregando...&lt;/div&gt;;
     }
   }
   
   const isLeagueAdmin = currentLeague.adminId === currentUser.id;
   if (!currentLeague.modality) {
-    return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} />;
+    return &lt;ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} /&gt;;
   }
 
-  const selectedPlayer = selectedPlayerId && currentLeague ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
+  const selectedPlayer = selectedPlayerId &amp;&amp; currentLeague ? { ...currentLeague.players[selectedPlayerId], id: selectedPlayerId } : null;
   const showBottomNav = !['welcome', 'register', 'login', 'modality-selection', 'loading'].includes(currentView);
 
-  const renderView = () => {
+  const renderView = () =&gt; {
     switch (currentView) {
-        case 'loading': return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
-        case 'all-users': return <AllUsersView leagues={appData.leagues} onBack={goBack} />;
-        case 'all-leagues': return <AllLeaguesView leagues={appData.leagues} onBack={goBack} />;
-        case 'leagues': return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={currentUser!} onCreateLeague={() => handleCreateLeague(currentUser)} />;
-        case 'league-participants': return <LeagueParticipantsView onBack={goBack} league={currentLeague} isLeagueAdmin={isLeagueAdmin} onInvite={handleInvite} onAddGuest={handleAddGuestPlayer} onRemoveUser={handleRemoveUserFromLeague} />;
-        case 'modality-selection': return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} />;
-        case 'dashboard': return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;
-        case 'lineup': return <LineupView players={currentLeague!.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} currentUser={currentUser!} canEdit={canEditLineup} team1Lineup={team1Lineup} setTeam1Lineup={setTeam1Lineup} team1Reserves={team1Reserves} setTeam1Reserves={setTeam1Reserves} team2Lineup={team2Lineup} setTeam2Lineup={setTeam2Lineup} team2Reserves={team2Reserves} setTeam2Reserves={setTeam2Reserves} onSaveLineups={handleSaveLineups} lineupsSaved={lineupsSaved} modality={selectedModality} team1ShirtColor={team1ShirtColor} setTeam1ShirtColor={setTeam1ShirtColor} team2ShirtColor={team2ShirtColor} setTeam2ShirtColor={setTeam2ShirtColor} formation={formation} setFormation={setFormation} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} />;
-        case 'player-details': return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
-        case 'market': return <MarketView players={currentLeague.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} scaledPlayerIds={allScaledPlayerIds} canEdit={canEditLineup} onAddPlayerToMarket={handleAddPlayerToMarket} onRemovePlayerFromMarket={handleRemovePlayerFromMarket} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} />;
-        case 'partial-score': return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;
-        case 'games': return <GamesView onBack={goBack} gamesData={currentLeague!.games} />;
-        case 'friends-score': return <FriendsScoreView onBack={goBack} user={currentUser!} players={currentLeague!.players} allUsers={currentLeague!.users} />;
-        case 'statistics': return <StatisticsView players={currentLeague!.players} users={currentLeague!.users} onBack={() => navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} scalersRanking={currentLeague!.scalersRanking} goalieRanking={currentLeague!.goalieRanking}/>;
-        case 'admin': return <AdminView onBack={goBack} users={Object.values(currentLeague!.users)} currentUser={currentUser!} editorOfTheRound={currentLeague!.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={currentLeague!.scoutEditor} onSetScoutEditor={handleSetScoutEditor} paymentEditor={currentLeague!.paymentEditor} onSetPaymentEditor={handleSetPaymentEditor} isVoteRevelationEnabled={isVoteRevelationEnabled} onToggleVoteRevelation={handleToggleVoteRevelation} leagueId={currentLeague!.id} isPaymentsEnabled={isPaymentsEnabled} onTogglePayments={handleTogglePayments} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;
-        case 'live': return <LiveView onBack={goBack} user={currentUser!} players={currentLeague!.players} canEditScouts={canEditScouts} liveEvents={liveEvents} onAddLiveEvent={handleAddLiveEvent} onFinishMatch={handleFinishMatch} team1Lineup={team1Lineup!} team2Lineup={team2Lineup!} allScaledPlayerIds={allScaledPlayerIds} />;
-        case 'payments': return <PaymentsView onBack={goBack} currentUser={currentUser!} users={currentLeague!.users} canEdit={canEditPayments && !isPersonalPaymentsView} onSave={handleUpdateUserPayments} />;
-        case 'best-eleven': return <BestElevenView onBack={goBack} players={currentLeague!.players} currentUser={currentUser!} allUsers={Object.values(currentLeague!.users)} allScaledPlayerIds={lastRoundPlayerIds} onVote={handleBestElevenVote} userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined} allVotes={bestElevenVotes} isSaved={currentUser ? bestElevenSaved[currentUser.id] : false} canManageVoting={canManageVoting} isVotingReleased={isVotingReleased} isVotingClosed={isVotingClosed} onReleaseVoting={onReleaseVoting} onCloseVoting={handleCloseVoting} modality={selectedModality} isVoteRevelationEnabled={isVoteRevelationEnabled} formation={formation} />;
-        default: return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
+        case 'loading': return &lt;div className="flex items-center justify-center h-screen bg-background text-xl"&gt;Carregando...&lt;/div&gt;;
+        case 'all-users': return &lt;AllUsersView leagues={appData.leagues} onBack={goBack} /&gt;;
+        case 'all-leagues': return &lt;AllLeaguesView leagues={appData.leagues} onBack={goBack} /&gt;;
+        case 'leagues': return &lt;LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={currentUser!} onCreateLeague={() =&gt; handleCreateLeague(currentUser)} /&gt;;
+        case 'league-participants': return &lt;LeagueParticipantsView onBack={goBack} league={currentLeague} isLeagueAdmin={isLeagueAdmin} onInvite={handleInvite} onAddGuest={handleAddGuestPlayer} onRemoveUser={handleRemoveUserFromLeague} /&gt;;
+        case 'modality-selection': return &lt;ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} /&gt;;
+        case 'dashboard': return &lt;DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() =&gt; handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} /&gt;;
+        case 'lineup': return &lt;LineupView players={currentLeague!.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} currentUser={currentUser!} canEdit={canEditLineup} team1Lineup={team1Lineup} setTeam1Lineup={setTeam1Lineup} team1Reserves={team1Reserves} setTeam1Reserves={setTeam1Reserves} team2Lineup={team2Lineup} setTeam2Lineup={setTeam2Lineup} team2Reserves={team2Reserves} setTeam2Reserves={setTeam2Reserves} onSaveLineups={onSaveLineups} lineupsSaved={lineupsSaved} modality={selectedModality} team1ShirtColor={team1ShirtColor} setTeam1ShirtColor={setTeam1ShirtColor} team2ShirtColor={team2ShirtColor} setTeam2ShirtColor={setTeam2ShirtColor} formation={formation} setFormation={setFormation} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} /&gt;;
+        case 'player-details': return selectedPlayer &amp;&amp; currentLeague ? &lt;PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /&gt; : &lt;DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() =&gt; handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/&gt;;
+        case 'market': return &lt;MarketView players={currentLeague.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} scaledPlayerIds={allScaledPlayerIds} canEdit={canEditLineup} onAddPlayerToMarket={handleAddPlayerToMarket} onRemovePlayerFromMarket={handleRemovePlayerFromMarket} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} /&gt;;
+        case 'partial-score': return &lt;PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} /&gt;;
+        case 'games': return &lt;GamesView onBack={goBack} gamesData={currentLeague!.games} /&gt;;
+        case 'friends-score': return &lt;FriendsScoreView onBack={goBack} user={currentUser!} players={currentLeague!.players} allUsers={currentLeague!.users} /&gt;;
+        case 'statistics': return &lt;StatisticsView players={currentLeague!.players} users={currentLeague!.users} onBack={() =&gt; navigateTo('dashboard')} onPlayerSelect={selectPlayerForDetails} canEditScouts={canEditScouts} onSave={handleUpdateStats} scalersRanking={currentLeague!.scalersRanking} goalieRanking={currentLeague!.goalieRanking}/&gt;;
+        case 'admin': return &lt;AdminView onBack={goBack} users={Object.values(currentLeague!.users)} currentUser={currentUser!} editorOfTheRound={currentLeague!.editorOfTheRound} onSetEditor={handleSetEditor} scoutEditor={currentLeague!.scoutEditor} onSetScoutEditor={handleSetScoutEditor} paymentEditor={currentLeague!.paymentEditor} onSetPaymentEditor={handleSetPaymentEditor} isVoteRevelationEnabled={isVoteRevelationEnabled} onToggleVoteRevelation={handleToggleVoteRevelation} leagueId={currentLeague!.id} isPaymentsEnabled={isPaymentsEnabled} onTogglePayments={handleTogglePayments} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} /&gt;;
+        case 'live': return &lt;LiveView onBack={goBack} user={currentUser!} players={currentLeague!.players} canEditScouts={canEditScouts} liveEvents={liveEvents} onAddLiveEvent={handleAddLiveEvent} onFinishMatch={handleFinishMatch} team1Lineup={team1Lineup!} team2Lineup={team2Lineup!} allScaledPlayerIds={allScaledPlayerIds} /&gt;;
+        case 'payments': return &lt;PaymentsView onBack={goBack} currentUser={currentUser!} users={currentLeague!.users} canEdit={canEditPayments &amp;&amp; !isPersonalPaymentsView} onSave={handleUpdateUserPayments} /&gt;;
+        case 'best-eleven': return &lt;BestElevenView onBack={goBack} players={currentLeague!.players} currentUser={currentUser!} allUsers={Object.values(currentLeague!.users)} allScaledPlayerIds={lastRoundPlayerIds} onVote={handleBestElevenVote} userLineup={currentUser ? bestElevenVotes[currentUser.id] : undefined} allVotes={bestElevenVotes} isSaved={currentUser ? bestElevenSaved[currentUser.id] : false} canManageVoting={canManageVoting} isVotingReleased={isVotingReleased} isVotingClosed={isVotingClosed} onReleaseVoting={handleReleaseVoting} onCloseVoting={handleCloseVoting} modality={selectedModality} isVoteRevelationEnabled={isVoteRevelationEnabled} formation={formation} /&gt;;
+        default: return &lt;DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() =&gt; handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/&gt;;
     }
   }
 
   return (
-    <div>
-      <main className={cn(showBottomNav && "pb-20")}>
+    &lt;div&gt;
+      &lt;main className={cn(showBottomNav &amp;&amp; "pb-20")}&gt;
         {renderView()}
-      </main>
-      {showBottomNav && currentUser && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={isPaymentsEnabled} />}
-    </div>
+      &lt;/main&gt;
+      {showBottomNav &amp;&amp; currentUser &amp;&amp; &lt;BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={isPaymentsEnabled} /&gt;}
+    &lt;/div&gt;
   );
 }
+
+    
