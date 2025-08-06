@@ -32,6 +32,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const GuestPlayerForm = ({
   onSave,
@@ -266,6 +267,7 @@ export default function LeagueParticipantsView({
   const [isAddGuestOpen, setIsAddGuestOpen] = useState(false);
   const [userToRemove, setUserToRemove] = useState<User | null>(null);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const participants = useMemo(() => {
     return Object.values(league.users)
@@ -284,8 +286,13 @@ export default function LeagueParticipantsView({
     }
   }
 
+  const handleSearchClick = () => {
+    searchInputRef.current?.focus();
+    searchInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
-    <div>
+    <div className='relative'>
        <AlertDialog open={!!userToRemove} onOpenChange={(open) => !open && setUserToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -327,10 +334,12 @@ export default function LeagueParticipantsView({
         <div className="w-9 h-9" />
       </header>
 
-      <main className="p-4 space-y-4">
+      <main className="p-4 space-y-4 pb-20">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
+            ref={searchInputRef}
+            id="member-search"
             placeholder="Buscar membro..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -351,7 +360,10 @@ export default function LeagueParticipantsView({
           </div>
         )}
 
-        <ScrollArea className="h-[calc(100vh-240px)]">
+        <ScrollArea className={cn(
+          "h-[calc(100vh-240px)]",
+          isLeagueAdmin && "h-[calc(100vh-290px)]"
+        )}>
           <div className="space-y-3 pr-2">
             {participants.map((user) => (
               <div key={user.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
@@ -383,6 +395,18 @@ export default function LeagueParticipantsView({
           </div>
         </ScrollArea>
       </main>
+
+       {participants.length > 8 && (
+        <Button
+          variant="secondary"
+          size="icon"
+          className="fixed bottom-24 right-4 h-14 w-14 rounded-full shadow-lg"
+          onClick={handleSearchClick}
+        >
+          <Search className="h-6 w-6" />
+          <span className="sr-only">Buscar Membro</span>
+        </Button>
+      )}
     </div>
   );
 }
