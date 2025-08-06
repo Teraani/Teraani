@@ -230,10 +230,11 @@ export default function AppContainer() {
                     setCurrentLeagueId(firstLeagueId);
                     const league = userLeagues[firstLeagueId];
                     if (league) {
-                        setTeam1Lineup(league.team1Lineup || []);
-                        setTeam1Reserves(league.team1Reserves || []);
-                        setTeam2Lineup(league.team2Lineup || []);
-                        setTeam2Reserves(league.team2Reserves || []);
+                        // Create independent copies to avoid shared references
+                        setTeam1Lineup(league.team1Lineup ? [...league.team1Lineup] : []);
+                        setTeam1Reserves(league.team1Reserves ? [...league.team1Reserves] : []);
+                        setTeam2Lineup(league.team2Lineup ? [...league.team2Lineup] : []);
+                        setTeam2Reserves(league.team2Reserves ? [...league.team2Reserves] : []);
 
                         if (league.modality) {
                           setIsInitialLoadForModality(true); // Treat as initial load
@@ -298,50 +299,30 @@ export default function AppContainer() {
         return;
     };
     
-    // Protect initial lineups from being cleared on first modality selection
+    // On first load with a modality, set sizes but don't clear lineups
     if (isInitialLoadForModality) {
         setIsInitialLoadForModality(false);
         const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
         
         const currentLeague = appData.leagues[currentLeagueId!];
-        // Set lineups based on the data fetched from the league
-        setTeam1Lineup((currentLeague?.team1Lineup || []).slice(0, newLuSize));
+        
+        // Ensure lineups are copied and adjusted, not just referenced
+        const newTeam1Lineup = [...(currentLeague?.team1Lineup || [])];
+        const newTeam2Lineup = [...(currentLeague?.team2Lineup || [])];
+
+        setTeam1Lineup(newTeam1Lineup.slice(0, newLuSize));
         setTeam1Reserves(Array(newResSize).fill(null));
-        setTeam2Lineup((currentLeague?.team2Lineup || []).slice(0, newLuSize));
+        setTeam2Lineup(newTeam2Lineup.slice(0, newLuSize));
         setTeam2Reserves(Array(newResSize).fill(null));
         return; 
     }
     
+    // When modality is changed by user, clear all lineups and set new sizes
     const { lineup: newLuSize, reserves: newResSize } = getTeamSizes(selectedModality);
-    
-    const adjustLineup = (currentLineup: (string|null)[] | null) => {
-        if (!currentLineup) return Array(newLuSize).fill(null);
-        const newLineup = [...currentLineup];
-        if (newLineup.length > newLuSize) {
-            return newLineup.slice(0, newLuSize);
-        }
-        while (newLineup.length < newLuSize) {
-            newLineup.push(null);
-        }
-        return newLineup;
-    };
-
-    const adjustReserves = (currentReserves: (string|null)[] | null) => {
-        if (!currentReserves) return Array(newResSize).fill(null);
-         const newReserves = [...currentReserves];
-        if (newReserves.length > newResSize) {
-            return newReserves.slice(0, newResSize);
-        }
-        while (newReserves.length < newResSize) {
-            newReserves.push(null);
-        }
-        return newReserves;
-    }
-
-    setTeam1Lineup(prev => adjustLineup(prev));
-    setTeam1Reserves(prev => adjustReserves(prev));
-    setTeam2Lineup(prev => adjustLineup(prev));
-    setTeam2Reserves(prev => adjustReserves(prev));
+    setTeam1Lineup(Array(newLuSize).fill(null));
+    setTeam1Reserves(Array(newResSize).fill(null));
+    setTeam2Lineup(Array(newLuSize).fill(null));
+    setTeam2Reserves(Array(newResSize).fill(null));
 
   }, [selectedModality, isInitialLoadForModality, appData.leagues, currentLeagueId]);
   
@@ -349,10 +330,11 @@ export default function AppContainer() {
     useEffect(() => {
         const league = appData.leagues[currentLeagueId!];
         if (league) {
-            setTeam1Lineup(league.team1Lineup || []);
-            setTeam1Reserves(league.team1Reserves || []);
-            setTeam2Lineup(league.team2Lineup || []);
-            setTeam2Reserves(league.team2Reserves || []);
+            // Create independent copies to avoid shared state references
+            setTeam1Lineup(league.team1Lineup ? [...league.team1Lineup] : []);
+            setTeam1Reserves(league.team1Reserves ? [...league.team1Reserves] : []);
+            setTeam2Lineup(league.team2Lineup ? [...league.team2Lineup] : []);
+            setTeam2Reserves(league.team2Reserves ? [...league.team2Reserves] : []);
             setIsInitialLoadForModality(true); // Reset flag on league change
         } else {
              setTeam1Lineup(null);
@@ -609,73 +591,41 @@ export default function AppContainer() {
   };
 
   const addPlayerToLineup = async (playerId: string) => {
-    if (!slotToAddPlayer) return;
+    if (!slotToAddPlayer || !currentLeagueId) return;
   
-    const { team, isReserve, index } = slotToAddPlayer;
+    const { team, index, position } = slotToAddPlayer;
+    const isReserve = position === 'RES';
+  
     const lineupState = team === 'team1' ? team1Lineup : team2Lineup;
     const reservesState = team === 'team1' ? team1Reserves : team2Reserves;
     const lineupSetter = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
     const reservesSetter = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
+    const stateSetter = isReserve ? reservesSetter : lineupSetter;
+    const stateToUpdate = isReserve ? reservesState : lineupState;
   
-    if (isReserve) {
-      const newReserves = [...(reservesState || [])];
-      newReserves[index] = playerId;
-      reservesSetter(newReserves);
-    } else {
-      const newLineup = [...(lineupState || [])];
-      newLineup[index] = playerId;
-      lineupSetter(newLineup);
+    // Update local state first for immediate UI response
+    const newState = stateToUpdate ? [...stateToUpdate] : [];
+    if (index >= 0) {
+      newState[index] = playerId;
+      stateSetter(newState);
     }
   
     setSlotToAddPlayer(null);
     navigateTo('lineup');
   
     // Update Firestore in the background
-    if (currentLeagueId) {
-      try {
-        const arrayKey = isReserve ? `${team}Reserves` : `${team}Lineup`;
-        const leagueDocRef = doc(db, 'leagues', currentLeagueId);
-        const newStateArray = isReserve
-          ? team === 'team1' ? team1Reserves : team2Reserves
-          : team === 'team1' ? team1Lineup : team2Lineup;
-        
-        // This is a simplified update, assumes local state is source of truth for this action
-        const finalArray = [...(newStateArray || [])];
-        if (isReserve) {
-           finalArray[index] = playerId;
-        } else {
-           finalArray[index] = playerId;
-        }
-
-        if (team === 'team1' && isReserve) {
-            const newReserves = [...(team1Reserves || [])];
-            newReserves[index] = playerId;
-            await updateDoc(leagueDocRef, { team1Reserves: newReserves });
-            updateCurrentLeague(league => ({ ...league, team1Reserves: newReserves as any}));
-        } else if (team === 'team1' && !isReserve) {
-            const newLineup = [...(team1Lineup || [])];
-            newLineup[index] = playerId;
-            await updateDoc(leagueDocRef, { team1Lineup: newLineup });
-            updateCurrentLeague(league => ({ ...league, team1Lineup: newLineup as any}));
-        } else if (team === 'team2' && isReserve) {
-            const newReserves = [...(team2Reserves || [])];
-            newReserves[index] = playerId;
-            await updateDoc(leagueDocRef, { team2Reserves: newReserves });
-            updateCurrentLeague(league => ({ ...league, team2Reserves: newReserves as any}));
-        } else if (team === 'team2' && !isReserve) {
-            const newLineup = [...(team2Lineup || [])];
-            newLineup[index] = playerId;
-            await updateDoc(leagueDocRef, { team2Lineup: newLineup });
-            updateCurrentLeague(league => ({ ...league, team2Lineup: newLineup as any}));
-        }
-      } catch (error) {
-        console.error("Error updating lineup in Firestore:", error);
-        toast({
-          title: "Erro ao salvar",
-          description: "Não foi possível salvar a escalação no servidor.",
-          variant: "destructive",
-        });
-      }
+    try {
+      const arrayKey = isReserve ? `${team}Reserves` : `${team}Lineup`;
+      const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+      await updateDoc(leagueDocRef, { [arrayKey]: newState });
+      updateCurrentLeague(league => ({ ...league, [arrayKey]: newState as any }));
+    } catch (error) {
+      console.error("Error updating lineup in Firestore:", error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar a escalação no servidor.",
+        variant: "destructive",
+      });
     }
   };
 
