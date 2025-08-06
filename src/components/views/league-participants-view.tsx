@@ -358,7 +358,7 @@ export default function LeagueParticipantsView({
                 <div className="flex items-center gap-3">
                   <Avatar>
                     <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="player avatar" />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{user.pos || user.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-semibold text-foreground flex items-center gap-2">
