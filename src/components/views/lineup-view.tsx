@@ -651,7 +651,7 @@ export default function LineupView(props: LineupViewProps) {
              <div className="flex justify-around items-center px-2 pb-2">
                 <div className="flex flex-col items-center gap-1">
                     <span className="text-xs">Esquema Tático</span>
-                     <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={!canEdit}>
+                     <Select value={formation} onValueChange={(value: Formation) => setFormation(value)}>
                         <SelectTrigger className="w-[120px] bg-muted border-none h-8">
                             <SelectValue />
                         </SelectTrigger>
@@ -666,16 +666,15 @@ export default function LineupView(props: LineupViewProps) {
                       variant="ghost" 
                       size="icon" 
                       className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
-                      onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')} 
-                      disabled={!canEdit}
+                      onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')}
                     >
                         <Trash2 className="h-5 w-5 text-red-400" />
                     </Button>
                 </div>
             </div>
             
-            <Button onClick={onSaveLineups} className="w-full bg-green-600 text-white hover:bg-green-700" disabled={lineupsSaved}>
-                {lineupsSaved ? "Times Salvos!" : "Salvar Times da Rodada"}
+            <Button onClick={onSaveLineups} className="w-full bg-green-600 text-white hover:bg-green-700">
+                Salvar Times da Rodada
             </Button>
             
         </div>
