@@ -370,6 +370,21 @@ export default function AppContainer() {
     window.scrollTo(0, 0);
   };
   
+  const updateCurrentLeague = (updater: (league: League) => League, leagueIdToUpdate?: string) => {
+    const targetLeagueId = leagueIdToUpdate || currentLeagueId;
+    if (!targetLeagueId) return;
+
+    setAppData(prevData => {
+        const leagueToUpdate = prevData.leagues[targetLeagueId];
+        if (!leagueToUpdate) return prevData;
+        const newLeague = updater(leagueToUpdate);
+        return {
+            ...prevData,
+            leagues: { ...prevData.leagues, [targetLeagueId]: newLeague }
+        };
+    });
+  };
+
   const handleUpdateLeagueName = (newName: string) => {
     if(!currentLeagueId) return;
     const leagueDocRef = doc(db, "leagues", currentLeagueId);
@@ -407,21 +422,6 @@ export default function AppContainer() {
   }, [currentLeague, loggedInUser]);
 
   const isPaymentsEnabled = currentLeague?.paymentsEnabled ?? true;
-  
-  const updateCurrentLeague = (updater: (league: League) => League, leagueIdToUpdate?: string) => {
-    const targetLeagueId = leagueIdToUpdate || currentLeagueId;
-    if (!targetLeagueId) return;
-
-    setAppData(prevData => {
-        const leagueToUpdate = prevData.leagues[targetLeagueId];
-        if (!leagueToUpdate) return prevData;
-        const newLeague = updater(leagueToUpdate);
-        return {
-            ...prevData,
-            leagues: { ...prevData.leagues, [targetLeagueId]: newLeague }
-        };
-    });
-  };
   
   const handleLeagueChange = (newLeagueId: string) => {
     const newLeague = appData.leagues[newLeagueId];
@@ -485,7 +485,7 @@ export default function AppContainer() {
             [`users.${guestUserId}`]: newGuestUser,
             [`players.${guestPlayerId}`]: newGuestPlayer
         });
-
+        
         // This is crucial: force a re-read from Firestore or update local state properly
         const updatedLeagueDoc = await getDoc(leagueDocRef);
         if (updatedLeagueDoc.exists()) {
@@ -585,50 +585,57 @@ export default function AppContainer() {
 
   const addPlayerToLineup = async (playerId: string) => {
     if (!slotToAddPlayer || !currentLeagueId) return;
-  
+
     const { position, index, team } = slotToAddPlayer;
-    const arrayKey = position === 'RES' ? `${team}Reserves` as const : `${team}Lineup` as const;
-  
+    const arrayKey = position === 'RES' ? (`${team}Reserves` as const) : (`${team}Lineup` as const);
+
     const lineupSetter = team === 'team1' ? setTeam1Lineup : setTeam2Lineup;
     const reservesSetter = team === 'team1' ? setTeam1Reserves : setTeam2Reserves;
     const stateSetter = position === 'RES' ? reservesSetter : lineupSetter;
-  
+
+    // Update local state first for immediate UI response
     stateSetter(prev => {
-      const newState = prev ? [...prev] : [];
-      if (index >= 0 && index < newState.length) {
-        newState[index] = playerId;
-      }
-      return newState;
+        // Create a new array to avoid direct mutation
+        const newState = prev ? [...prev] : [];
+        if (index >= 0 && index < newState.length) {
+            newState[index] = playerId;
+        } else if (index >= newState.length) {
+            // Fill with nulls if index is out of bounds
+            while(newState.length < index) newState.push(null);
+            newState.push(playerId);
+        }
+        return newState;
     });
-  
+
     setSlotToAddPlayer(null);
     navigateTo('lineup');
-  
+
+    // Then, update Firestore
     try {
-      const leagueDocRef = doc(db, 'leagues', currentLeagueId);
-      const leagueDocSnap = await getDoc(leagueDocRef);
-      if (leagueDocSnap.exists()) {
-        const leagueData = leagueDocSnap.data() as League;
-        const currentArray = (leagueData[arrayKey] || []) as (string | null)[];
-        const newArray = [...currentArray];
-  
-        while (newArray.length <= index) {
-          newArray.push(null);
+        const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+        const leagueDocSnap = await getDoc(leagueDocRef);
+        if (leagueDocSnap.exists()) {
+            const leagueData = leagueDocSnap.data() as League;
+            const currentArray = (leagueData[arrayKey] || []) as (string | null)[];
+            const newArray = [...currentArray];
+
+            while (newArray.length <= index) {
+                newArray.push(null);
+            }
+            newArray[index] = playerId;
+
+            await updateDoc(leagueDocRef, { [arrayKey]: newArray });
+            // The local state is already updated, no need to call updateCurrentLeague
         }
-        newArray[index] = playerId;
-  
-        await updateDoc(leagueDocRef, { [arrayKey]: newArray });
-        updateCurrentLeague(league => ({ ...league, [arrayKey]: newArray as any }));
-      }
     } catch (error) {
-      console.error("Error updating lineup in Firestore:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar a escalação no servidor.",
-        variant: "destructive",
-      });
+        console.error("Error updating lineup in Firestore:", error);
+        toast({
+            title: "Erro ao salvar",
+            description: "Não foi possível salvar a escalação no servidor.",
+            variant: "destructive",
+        });
     }
-  };
+};
 
 
   const goBack = () => navigateTo(previousView);

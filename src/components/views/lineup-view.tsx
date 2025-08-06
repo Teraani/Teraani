@@ -517,15 +517,21 @@ export default function LineupView(props: LineupViewProps) {
 
     return formationPositions.map((slot, index) => {
       const playerId = lineup[index];
-      const player = playerId ? { ...players[playerId], id: playerId } : null;
+      const player = playerId ? players[playerId] : null;
+
+      // Defensive check to ensure player data is available before rendering
+      if (playerId && !player) {
+          return null; // or a loading placeholder
+      }
+
       const gridStyle = { gridArea: slot.grid };
 
       return (
         <div key={`${team}-grid-${index}`} className="flex items-center justify-center" style={gridStyle}>
-          {player && players[player.id] ? (
+          {player ? (
             <PlayerCard
-              player={player}
-              onPlayerSelect={() => handlePlayerCardClick({ playerId: player.id, isReserve: false, index, team })}
+              player={{...player, id: playerId!}}
+              onPlayerSelect={() => handlePlayerCardClick({ playerId: playerId!, isReserve: false, index, team })}
               shirtColor={shirtColor}
             />
           ) : (
