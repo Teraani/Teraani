@@ -245,11 +245,12 @@ export default function AppContainer() {
           if (userDocSnap.exists()) {
             userProfile = userDocSnap.data() as User;
           } else {
+            const name = firebaseUser.displayName;
             userProfile = {
               id: firebaseUser.uid,
-              name: firebaseUser.displayName || 'Novo Jogador',
+              name: name || 'Novo Jogador',
               email: firebaseUser.email!,
-              teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
+              teamName: `${name?.split(' ')[0] || 'Novo'} FC`,
               partialScore: 0,
               totalScore: 0,
               valuation: 100,
@@ -320,7 +321,8 @@ export default function AppContainer() {
         // If 'result' is null, it means we are not coming from a redirect.
         // In this case, we set up the regular auth state listener.
         if (!result) {
-          onAuthStateChanged(auth, handleAuth);
+          const unsubscribe = onAuthStateChanged(auth, handleAuth);
+          return unsubscribe;
         }
       })
       .catch(error => {
@@ -575,13 +577,15 @@ export default function AppContainer() {
     const leagueDocRef = doc(db, 'leagues', currentLeagueId);
 
     try {
+        const userToUpdate = appData.leagues[currentLeagueId].users[userId];
+        const finalUserData = { ...userToUpdate, ...updatedData };
         await updateDoc(leagueDocRef, {
-            [`users.${userId}`]: { ...appData.leagues[currentLeagueId].users[userId], ...updatedData }
+            [`users.${userId}`]: finalUserData
         });
         
         updateCurrentLeague(league => {
             const newUsers = { ...league.users };
-            newUsers[userId] = { ...newUsers[userId], ...updatedData };
+            newUsers[userId] = finalUserData;
             return { ...league, users: newUsers };
         });
 
@@ -597,8 +601,28 @@ export default function AppContainer() {
   };
 
   const handleUpdateUser = async (userId: string, newName: string) => {
-    updateCurrentLeague(league => ({ ...league, users: { ...league.users, [userId]: { ...league.users[userId], name: newName } } }));
-    toast({ title: "Perfil Atualizado!", description: "Seu nome foi alterado com sucesso." });
+    if (!currentLeagueId || !loggedInUser) return;
+    const userDocRef = doc(db, 'users', loggedInUser.id);
+    const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+
+    try {
+        await updateDoc(userDocRef, { name: newName });
+        await updateDoc(leagueDocRef, { [`users.${userId}.name`]: newName });
+    
+        updateCurrentLeague(league => ({
+            ...league,
+            users: {
+                ...league.users,
+                [userId]: { ...league.users[userId], name: newName }
+            }
+        }));
+
+        setLoggedInUser(prev => prev ? { ...prev, name: newName } : null);
+        toast({ title: "Perfil Atualizado!", description: "Seu nome foi alterado com sucesso." });
+    } catch (error) {
+        console.error("Error updating user name:", error);
+        toast({ title: "Erro ao Atualizar", description: "Não foi possível atualizar seu nome.", variant: "destructive" });
+    }
   };
 
   const canEditLineup = useMemo(() => {
