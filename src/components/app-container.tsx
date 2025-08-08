@@ -40,6 +40,7 @@ import { doc, getDoc, setDoc, getDocs, collection, writeBatch, updateDoc } from 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users' | 'all-leagues';
 export type Position = Player['pos'] | null;
 export type Modality = 'campo' | 'society' | 'futsal';
+export type LineupTab = 'team1' | 'team2';
 
 export interface AddPlayerSlot {
   position: Player['pos'] | 'RES'; // 'RES' for reserve
@@ -138,6 +139,7 @@ export default function AppContainer() {
   
   const [lineupsSaved, setLineupsSaved] = useState(false);
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
+  const [activeLineupTab, setActiveLineupTab] = useState<LineupTab>('team1');
 
   const handleCreateLeague = async (user: User) => {
     const newLeagueId = `league_${Date.now()}`;
@@ -606,6 +608,8 @@ export default function AppContainer() {
 
     const { team, index, position } = slotToAddPlayer;
     const isReserve = position === 'RES';
+    
+    setActiveLineupTab(team); // Set the active tab to the team being edited
 
     if (team === 'team1') {
       if (isReserve) {
@@ -890,7 +894,7 @@ export default function AppContainer() {
         case 'league-participants': return <LeagueParticipantsView onBack={goBack} league={currentLeague} isLeagueAdmin={isLeagueAdmin} onInvite={handleInvite} onAddGuest={handleAddGuestPlayer} onRemoveUser={handleRemoveUserFromLeague} onUpdateUser={handleUpdateUserInLeague} />;
         case 'modality-selection': return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} />;
         case 'dashboard': return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;
-        case 'lineup': return <LineupView players={currentLeague!.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} currentUser={currentUser!} canEdit={canEditLineup} team1Lineup={team1Lineup} setTeam1Lineup={setTeam1Lineup} team1Reserves={team1Reserves} setTeam1Reserves={setTeam1Reserves} team2Lineup={team2Lineup} setTeam2Lineup={setTeam2Lineup} team2Reserves={team2Reserves} setTeam2Reserves={setTeam2Reserves} onSaveLineups={handleSaveLineups} lineupsSaved={lineupsSaved} modality={selectedModality} team1ShirtColor={team1ShirtColor} setTeam1ShirtColor={setTeam1ShirtColor} team2ShirtColor={team2ShirtColor} setTeam2ShirtColor={setTeam2ShirtColor} formation={formation} setFormation={setFormation} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} />;
+        case 'lineup': return <LineupView players={currentLeague!.players} onPlayerSelect={selectPlayerForDetails} onNavigate={navigateTo} onAddPlayer={handleOpenMarket} currentUser={currentUser!} canEdit={canEditLineup} team1Lineup={team1Lineup} setTeam1Lineup={setTeam1Lineup} team1Reserves={team1Reserves} setTeam1Reserves={setTeam1Reserves} team2Lineup={team2Lineup} setTeam2Lineup={setTeam2Lineup} team2Reserves={team2Reserves} setTeam2Reserves={setTeam2Reserves} onSaveLineups={handleSaveLineups} lineupsSaved={lineupsSaved} modality={selectedModality} team1ShirtColor={team1ShirtColor} setTeam1ShirtColor={setTeam1ShirtColor} team2ShirtColor={team2ShirtColor} setTeam2ShirtColor={setTeam2ShirtColor} formation={formation} setFormation={setFormation} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} activeTab={activeLineupTab} setActiveTab={setActiveLineupTab} />;
         case 'player-details': return selectedPlayer && currentLeague ? <PlayerDetailsView player={selectedPlayer} games={currentLeague.games} onBack={goBack} onImageChange={handlePlayerImageChange} /> : <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName}/>;
         case 'market': return <MarketView players={currentLeague.players} onPlayerSelect={addPlayerToLineup} onBack={goBack} position={slotToAddPlayer?.position ?? null} scaledPlayerIds={allScaledPlayerIds} canEdit={canEditLineup} onAddPlayerToMarket={handleAddPlayerToMarket} onRemovePlayerFromMarket={handleRemovePlayerFromMarket} onUpdatePlayerInMarket={handleUpdatePlayerInMarket} />;
         case 'partial-score': return <PartialScoreView players={currentLeague!.players} users={currentLeague!.users} onBack={goBack} onPlayerSelect={selectPlayerForDetails} />;

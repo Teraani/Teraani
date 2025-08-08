@@ -8,7 +8,7 @@ import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import type { View, AddPlayerSlot, Modality } from '@/app/page';
+import type { View, AddPlayerSlot, Modality, LineupTab } from '@/app/page';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '../lineup/add-player-button';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
@@ -55,6 +55,8 @@ export interface LineupViewProps {
   formation: Formation;
   setFormation: (formation: Formation) => void;
   onUpdatePlayerInMarket: (playerId: string, updatedData: Partial<Omit<Player, 'id'>>) => void;
+  activeTab: LineupTab;
+  setActiveTab: (tab: LineupTab) => void;
 }
 
 
@@ -317,7 +319,8 @@ export default function LineupView(props: LineupViewProps) {
     team2Lineup, setTeam2Lineup, team2Reserves, setTeam2Reserves,
     onSaveLineups, lineupsSaved, modality,
     team1ShirtColor, setTeam1ShirtColor, team2ShirtColor, setTeam2ShirtColor,
-    formation, setFormation, onUpdatePlayerInMarket
+    formation, setFormation, onUpdatePlayerInMarket,
+    activeTab, setActiveTab
   } = props;
     
   const availableFormations = useMemo(() => getFormationsForModality(modality), [modality]);
@@ -328,7 +331,6 @@ export default function LineupView(props: LineupViewProps) {
     }
   }, [availableFormations, formation, setFormation]);
 
-  const [activeTab, setActiveTab] = useState('team1');
   const { toast } = useToast();
   const [playerActionState, setPlayerActionState] = useState<PlayerActionState | null>(null);
   const [showInfoCard, setShowInfoCard] = useState(false);
@@ -596,7 +598,7 @@ export default function LineupView(props: LineupViewProps) {
             </Card>
         )}
       
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as LineupTab)} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="team1">Time 1</TabsTrigger>
                 <TabsTrigger value="team2">Time 2</TabsTrigger>
