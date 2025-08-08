@@ -221,89 +221,78 @@ export default function AppContainer() {
     };
 
     const handleAuth = async (firebaseUser: FirebaseUser | null) => {
-      try {
+    try {
         if (firebaseUser) {
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          let userDocSnap = await getDoc(userDocRef);
-          let userProfile: User;
+            const userDocRef = doc(db, 'users', firebaseUser.uid);
+            let userDocSnap = await getDoc(userDocRef);
+            let userProfile: User;
 
-          if (userDocSnap.exists()) {
-            userProfile = userDocSnap.data() as User;
-          } else {
-            userProfile = {
-              id: firebaseUser.uid,
-              name: firebaseUser.displayName || 'Novo Jogador',
-              email: firebaseUser.email!,
-              teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
-              partialScore: 0,
-              totalScore: 0,
-              valuation: 100,
-              lineup: [],
-              reserves: [],
-              role: 'player',
-              paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
-              joinedAt: new Date().toISOString(),
-            };
-            await setDoc(userDocRef, userProfile);
-          }
-
-          setLoggedInUser(userProfile);
-
-          // Process invite link first
-          const joinedLeagueId = await processInvite(userProfile);
-
-          const leaguesSnapshot = await getDocs(collection(db, 'leagues'));
-          const userLeagues: Record<string, League> = {};
-          let userHasLeagues = false;
-
-          leaguesSnapshot.forEach(leagueDoc => {
-            const leagueData = leagueDoc.data() as League;
-            if (leagueData.users && leagueData.users[userProfile.id]) {
-              userLeagues[leagueDoc.id] = leagueData;
-              userHasLeagues = true;
-            }
-          });
-
-          if (userHasLeagues) {
-            setAppData({ leagues: userLeagues });
-            // Prioritize the newly joined league, otherwise the first one
-            const leagueToSet = joinedLeagueId && userLeagues[joinedLeagueId] ? joinedLeagueId : Object.keys(userLeagues)[0];
-            setCurrentLeagueId(leagueToSet);
-            const league = userLeagues[leagueToSet];
-
-            if (league) {
-              setTeam1Lineup(league.team1Lineup ? [...league.team1Lineup] : []);
-              setTeam1Reserves(league.team1Reserves ? [...league.team1Reserves] : []);
-              setTeam2Lineup(league.team2Lineup ? [...league.team2Lineup] : []);
-              setTeam2Reserves(league.team2Reserves ? [...league.team2Reserves] : []);
-
-              if (league.modality) {
-                setIsInitialLoadForModality(true);
-                navigateTo('dashboard');
-              } else {
-                navigateTo('modality-selection');
-              }
+            if (userDocSnap.exists()) {
+                userProfile = userDocSnap.data() as User;
             } else {
-              navigateTo('welcome');
+                userProfile = {
+                    id: firebaseUser.uid,
+                    name: firebaseUser.displayName || 'Novo Jogador',
+                    email: firebaseUser.email!,
+                    teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
+                    partialScore: 0,
+                    totalScore: 0,
+                    valuation: 100,
+                    lineup: [],
+                    reserves: [],
+                    role: 'player',
+                    paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
+                    joinedAt: new Date().toISOString(),
+                };
+                await setDoc(userDocRef, userProfile);
             }
-          } else {
-            navigateTo('leagues');
-          }
+
+            setLoggedInUser(userProfile);
+
+            // Process invite link first
+            const joinedLeagueId = await processInvite(userProfile);
+
+            const leaguesSnapshot = await getDocs(collection(db, 'leagues'));
+            const userLeagues: Record<string, League> = {};
+            let userHasLeagues = false;
+
+            leaguesSnapshot.forEach(leagueDoc => {
+                const leagueData = leagueDoc.data() as League;
+                if (leagueData.users && leagueData.users[userProfile.id]) {
+                    userLeagues[leagueDoc.id] = leagueData;
+                    userHasLeagues = true;
+                }
+            });
+
+            if (userHasLeagues) {
+                 setAppData({ leagues: userLeagues });
+                const leagueToSet = joinedLeagueId || Object.keys(userLeagues)[0];
+                setCurrentLeagueId(leagueToSet);
+
+                if (userLeagues[leagueToSet]?.modality) {
+                    navigateTo('dashboard');
+                } else {
+                    navigateTo('modality-selection');
+                }
+            } else {
+                navigateTo('leagues');
+            }
         } else {
-          setLoggedInUser(null);
-          setCurrentLeagueId(null);
-          setAppData({ leagues: {} });
-          navigateTo('welcome');
+            setLoggedInUser(null);
+            setCurrentLeagueId(null);
+            setAppData({ leagues: {} });
+            navigateTo('welcome');
         }
-      } catch (error: any) {
+    } catch (error: any) {
         console.error('Auth state change error:', error);
         toast({ title: 'Erro de Conexão', description: 'Não foi possível conectar ao banco de dados.', variant: 'destructive' });
         setLoggedInUser(null);
         setCurrentLeagueId(null);
         setAppData({ leagues: {} });
         navigateTo('welcome');
-      }
-    };
+    }
+};
+
 
     getRedirectResult(auth)
       .then(result => {
@@ -638,36 +627,36 @@ export default function AppContainer() {
 
   const addPlayerToLineup = (playerId: string) => {
     if (!slotToAddPlayer) return;
-    
+
     const { team, index, position } = slotToAddPlayer;
     const isReserve = position === 'RES';
     setActiveLineupTab(team);
-    
+
     if (team === 'team1') {
-      const newLineup = [...(team1Lineup || [])];
-      const newReserves = [...(team1Reserves || [])];
-      if (isReserve) {
-        newReserves[index] = playerId;
-        setTeam1Reserves(newReserves);
-      } else {
-        newLineup[index] = playerId;
-        setTeam1Lineup(newLineup);
-      }
+        const newLineup = [...(team1Lineup || [])];
+        const newReserves = [...(team1Reserves || [])];
+        if (isReserve) {
+            newReserves[index] = playerId;
+            setTeam1Reserves(newReserves);
+        } else {
+            newLineup[index] = playerId;
+            setTeam1Lineup(newLineup);
+        }
     } else { // team === 'team2'
-      const newLineup = [...(team2Lineup || [])];
-      const newReserves = [...(team2Reserves || [])];
-      if (isReserve) {
-        newReserves[index] = playerId;
-        setTeam2Reserves(newReserves);
-      } else {
-        newLineup[index] = playerId;
-        setTeam2Lineup(newLineup);
-      }
+        const newLineup = [...(team2Lineup || [])];
+        const newReserves = [...(team2Reserves || [])];
+        if (isReserve) {
+            newReserves[index] = playerId;
+            setTeam2Reserves(newReserves);
+        } else {
+            newLineup[index] = playerId;
+            setTeam2Lineup(newLineup);
+        }
     }
-    
+
     setSlotToAddPlayer(null);
     navigateTo('lineup');
-  };
+};
 
 
   const goBack = () => navigateTo(previousView);
