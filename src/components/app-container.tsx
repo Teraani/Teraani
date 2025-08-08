@@ -437,7 +437,18 @@ export default function AppContainer() {
   };
 
   const handleAddGuestPlayer = async (guestData: Omit<Player, 'last_val' | 'games' | 'performanceHistory' | 'value' | 'points'>) => {
-    if (!currentLeagueId) return;
+    if (!currentLeagueId || !currentLeague) return;
+
+    // Check for duplicate player name
+    const existingPlayer = Object.values(currentLeague.players).find(p => p.name.toLowerCase() === guestData.name.toLowerCase());
+    if (existingPlayer) {
+        toast({
+            title: "Jogador já existe",
+            description: `Um jogador com o nome "${guestData.name}" já está no mercado.`,
+            variant: "destructive",
+        });
+        return;
+    }
 
     const guestName = guestData.name;
     const guestUserId = `guest_user_${Date.now()}`;
@@ -590,49 +601,36 @@ export default function AppContainer() {
     updateCurrentLeague(league => ({ ...league, players: { ...league.players, [playerId]: { ...league.players[playerId], img: image } } }));
   };
 
-  const addPlayerToLineup = async (playerId: string) => {
-    if (!slotToAddPlayer || !currentLeagueId) return;
-  
+  const addPlayerToLineup = (playerId: string) => {
+    if (!slotToAddPlayer || !team1Lineup || !team2Lineup || !team1Reserves || !team2Reserves) return;
+
     const { team, index, position } = slotToAddPlayer;
     const isReserve = position === 'RES';
-    const arrayKey = isReserve ? `${team}Reserves` as const : `${team}Lineup` as const;
-  
-    let newState: (string | null)[] = [];
-  
+
     if (team === 'team1') {
-      const currentTeam = isReserve ? team1Reserves : team1Lineup;
-      const setter = isReserve ? setTeam1Reserves : setTeam1Lineup;
-      
-      const newTeam = [...(currentTeam || [])];
-      newTeam[index] = playerId;
-      setter(newTeam);
-      newState = newTeam;
-  
+      if (isReserve) {
+        const newReserves = [...team1Reserves];
+        newReserves[index] = playerId;
+        setTeam1Reserves(newReserves);
+      } else {
+        const newLineup = [...team1Lineup];
+        newLineup[index] = playerId;
+        setTeam1Lineup(newLineup);
+      }
     } else { // team === 'team2'
-      const currentTeam = isReserve ? team2Reserves : team2Lineup;
-      const setter = isReserve ? setTeam2Reserves : setTeam2Lineup;
-      
-      const newTeam = [...(currentTeam || [])];
-      newTeam[index] = playerId;
-      setter(newTeam);
-      newState = newTeam;
+      if (isReserve) {
+        const newReserves = [...team2Reserves];
+        newReserves[index] = playerId;
+        setTeam2Reserves(newReserves);
+      } else {
+        const newLineup = [...team2Lineup];
+        newLineup[index] = playerId;
+        setTeam2Lineup(newLineup);
+      }
     }
-  
+
     setSlotToAddPlayer(null);
     navigateTo('lineup');
-  
-    // Update Firestore in the background
-    try {
-      const leagueDocRef = doc(db, 'leagues', currentLeagueId);
-      await updateDoc(leagueDocRef, { [arrayKey]: newState });
-    } catch (error) {
-      console.error("Error updating lineup in Firestore:", error);
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar a escalação no servidor.",
-        variant: "destructive",
-      });
-    }
   };
 
 
@@ -748,7 +746,19 @@ export default function AppContainer() {
 };
 
   const handleAddPlayerToMarket = (newPlayer: Omit<Player, 'last_val' | 'games' | 'performanceHistory'>) => {
-    if (!currentLeagueId) return;
+    if (!currentLeagueId || !currentLeague) return;
+
+     // Check for duplicate player name
+    const existingPlayer = Object.values(currentLeague.players).find(p => p.name.toLowerCase() === newPlayer.name.toLowerCase());
+    if (existingPlayer) {
+        toast({
+            title: "Jogador já existe",
+            description: `Um jogador com o nome "${newPlayer.name}" já está no mercado.`,
+            variant: "destructive",
+        });
+        return;
+    }
+
     const newPlayerId = `p_${Date.now()}`;
     const fullNewPlayer: Player = {
         ...newPlayer, last_val: 0, games: 0,
