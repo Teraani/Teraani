@@ -441,8 +441,11 @@ export default function AppContainer() {
   const currentLeague: League | undefined = currentLeagueId ? appData.leagues[currentLeagueId] : undefined;
   
   const currentUser = useMemo(() => {
-    if (!loggedInUser || !currentLeague) return null;
-    return currentLeague.users[loggedInUser.id] || loggedInUser;
+    if (!loggedInUser || !currentLeague || !currentLeague.users[loggedInUser.id]) {
+        return null;
+    }
+    // Always return the user object from within the league context
+    return currentLeague.users[loggedInUser.id];
   }, [currentLeague, loggedInUser]);
 
   const isPaymentsEnabled = currentLeague?.paymentsEnabled ?? true;
