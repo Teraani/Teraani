@@ -35,7 +35,7 @@ import AllLeaguesView from '@/components/views/all-leagues-view';
 import { auth, db } from '@/lib/firebase-config';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection, writeBatch, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, getDocs, collection, writeBatch, updateDoc, deleteField } from "firebase/firestore";
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users' | 'all-leagues';
 export type Position = Player['pos'] | null;
@@ -548,28 +548,44 @@ export default function AppContainer() {
   };
 
 
-  const handleRemoveUserFromLeague = (userIdToRemove: string) => {
-    if (!currentLeague) return;
+  const handleRemoveUserFromLeague = async (userIdToRemove: string) => {
+    if (!currentLeagueId || !currentLeague) return;
 
     if (userIdToRemove === currentLeague.adminId) {
       toast({ title: "Ação não permitida", description: "O administrador não pode se remover da própria liga.", variant: "destructive" });
       return;
     }
+    
+    const userToRemove = currentLeague.users[userIdToRemove];
+    const updates: { [key: string]: any } = {};
+    updates[`users.${userIdToRemove}`] = deleteField();
+    if (userToRemove?.playerId) {
+      updates[`players.${userToRemove.playerId}`] = deleteField();
+    }
 
-    updateCurrentLeague(league => {
-      const updatedUsers = { ...league.users };
-      const userToRemove = updatedUsers[userIdToRemove];
-      delete updatedUsers[userIdToRemove];
+    try {
+        const leagueDocRef = doc(db, 'leagues', currentLeagueId);
+        await updateDoc(leagueDocRef, updates);
 
-      const updatedPlayers = { ...league.players };
-      if (userToRemove?.playerId && updatedPlayers[userToRemove.playerId]) {
-          delete updatedPlayers[userToRemove.playerId];
-      }
-      
-      return { ...league, users: updatedUsers, players: updatedPlayers };
-    });
+        // Update local state AFTER successful Firestore update
+        updateCurrentLeague(league => {
+            const updatedUsers = { ...league.users };
+            delete updatedUsers[userIdToRemove];
 
-    toast({ title: "Usuário Removido", description: `O usuário foi removido da liga.`, variant: "destructive" });
+            const updatedPlayers = { ...league.players };
+            if (userToRemove?.playerId && updatedPlayers[userToRemove.playerId]) {
+                delete updatedPlayers[userToRemove.playerId];
+            }
+            
+            return { ...league, users: updatedUsers, players: updatedPlayers };
+        });
+
+        toast({ title: "Usuário Removido", description: `${userToRemove.name} foi removido da liga com sucesso.`, variant: "destructive" });
+
+    } catch (error) {
+        console.error("Error removing user from league:", error);
+        toast({ title: "Erro ao Remover", description: "Não foi possível remover o usuário do banco de dados.", variant: "destructive" });
+    }
   };
 
   const handleUpdateUserInLeague = async (userId: string, updatedData: Partial<User>) => {
