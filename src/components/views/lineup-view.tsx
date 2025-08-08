@@ -381,6 +381,7 @@ export default function LineupView(props: LineupViewProps) {
   };
   
   const handleClearTeam = (team: 'team1' | 'team2') => {
+    if (!canEdit) return;
     if (team === 'team1' && team1Lineup && team1Reserves) {
         setTeam1Lineup(Array(team1Lineup.length).fill(null));
         setTeam1Reserves(Array(team1Reserves.length).fill(null));
@@ -393,6 +394,7 @@ export default function LineupView(props: LineupViewProps) {
   
 
   const handleClearReserves = (team: 'team1' | 'team2') => {
+     if (!canEdit) return;
     if (team === 'team1' && team1Reserves) {
       setTeam1Reserves(Array(team1Reserves.length).fill(null));
     } else if (team2Reserves) {
@@ -401,6 +403,7 @@ export default function LineupView(props: LineupViewProps) {
   };
 
   const handleAddPlayerForTeam = (team: 'team1' | 'team2') => (position: Player['pos'] | 'RES', index: number) => {
+    if (!canEdit) return;
     onAddPlayer({ position, index, team });
   };
   
@@ -474,8 +477,10 @@ export default function LineupView(props: LineupViewProps) {
     const displayReserves = Array(reservesCount).fill(null).map((_, i) => reserves[i] || null);
 
     const onAdd = (index: number) => {
+      if (canEdit) {
         onAddPlayer({ position: 'RES', index, team: teamIdentifier });
-    }
+      }
+    };
   
     return (
       <div className="flex flex-wrap justify-center gap-4">
@@ -514,7 +519,9 @@ export default function LineupView(props: LineupViewProps) {
     if (!formationPositions) return null;
   
     const onAdd = (pos: Player['pos'], index: number) => {
-      onAddPlayer({ position: pos, index, team });
+      if (canEdit) {
+        onAddPlayer({ position: pos, index, team });
+      }
     };
 
     return formationPositions.map((slot, index) => {
@@ -590,7 +597,9 @@ export default function LineupView(props: LineupViewProps) {
                  <CardFooter>
                     <Button 
                         className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" 
-                        onClick={() => { handleClearTeam('team1'); handleClearTeam('team2'); }}>
+                        onClick={() => { handleClearTeam('team1'); handleClearTeam('team2'); }}
+                        disabled={!canEdit}
+                        >
                         <Trash2 className="mr-2 h-4 w-4"/>
                         Limpar Times
                     </Button>
@@ -606,8 +615,8 @@ export default function LineupView(props: LineupViewProps) {
             
             <TabsContent value="team1" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
-                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={false} />
-                   <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} >
+                   <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
+                   <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} disabled={!canEdit} >
                        <Trash2 className="mr-2 h-4 w-4" />
                        Limpar Time
                    </Button>
@@ -625,8 +634,8 @@ export default function LineupView(props: LineupViewProps) {
             
             <TabsContent value="team2" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
-                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={false} />
-                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')}>
+                    <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
+                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')} disabled={!canEdit}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Limpar Time
                     </Button>
@@ -643,44 +652,47 @@ export default function LineupView(props: LineupViewProps) {
             </TabsContent>
         </Tabs>
         
-        <div className="mt-4 flex flex-col gap-2">
-          <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
-        </div>
+        {canEdit && (
+            <div className="mt-4 flex flex-col gap-2">
+                <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
+            </div>
+        )}
       </div>
 
       
-         <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-30">
-             <div className="flex justify-around items-center px-2 pb-2">
-                <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs">Esquema Tático</span>
-                     <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={lineupsSaved}>
-                        <SelectTrigger className="w-[120px] bg-muted border-none h-8">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {availableFormations.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+         {canEdit && (
+            <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-30">
+                <div className="flex justify-around items-center px-2 pb-2">
+                    <div className="flex flex-col items-center gap-1">
+                        <span className="text-xs">Esquema Tático</span>
+                        <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={lineupsSaved || !canEdit}>
+                            <SelectTrigger className="w-[120px] bg-muted border-none h-8">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableFormations.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                        <span className="text-xs">Limpar Reservas</span>
+                        <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
+                        onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')}
+                        disabled={lineupsSaved || !canEdit}
+                        >
+                            <Trash2 className="h-5 w-5 text-red-400" />
+                        </Button>
+                    </div>
                 </div>
-                <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs">Limpar Reservas</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
-                      onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')}
-                      disabled={lineupsSaved}
-                    >
-                        <Trash2 className="h-5 w-5 text-red-400" />
-                    </Button>
-                </div>
+                
+                <Button onClick={onSaveLineups} className="w-full bg-green-600 text-white hover:bg-green-700" disabled={lineupsSaved}>
+                    {lineupsSaved ? 'Times Salvos!' : 'Salvar Times da Rodada'}
+                </Button>
             </div>
-            
-            <Button onClick={onSaveLineups} className="w-full bg-green-600 text-white hover:bg-green-700">
-                Salvar Times da Rodada
-            </Button>
-            
-        </div>
+         )}
       
     </div>
   );
