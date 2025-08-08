@@ -11,7 +11,7 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { Logo } from '../logo';
 import { auth } from '@/lib/firebase-config';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, sendPasswordResetEmail } from "firebase/auth";
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -67,6 +67,41 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
         setIsLoading(false);
     }
   }
+
+  const handlePasswordReset = async () => {
+    const email = form.getValues("email");
+    if (!email) {
+        form.setError("email", { type: "manual", message: "Por favor, insira seu e-mail para redefinir a senha." });
+        return;
+    }
+    
+    // Validate email format before sending
+    const emailSchema = z.string().email();
+    const validation = emailSchema.safeParse(email);
+    if (!validation.success) {
+         form.setError("email", { type: "manual", message: "Por favor, insira um e-mail válido." });
+         return;
+    }
+
+
+    setIsLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: "E-mail de redefinição enviado",
+        description: "Verifique sua caixa de entrada (e spam) para o link de redefinição de senha.",
+      });
+    } catch (error: any) {
+      console.error("Password reset error:", error);
+       toast({
+        title: "Erro ao Enviar E-mail",
+        description: "Não foi possível enviar o e-mail de redefinição. Verifique o e-mail digitado e tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+        setIsLoading(false);
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
@@ -124,6 +159,18 @@ export default function LoginView({ onNavigateToRegister }: LoginViewProps) {
                   </FormItem>
                 )}
               />
+               <div className="text-right">
+                    <Button
+                        type="button"
+                        variant="link"
+                        onClick={handlePasswordReset}
+                        className="text-sm font-semibold text-white p-0 h-auto"
+                        disabled={isLoading || isGoogleLoading}
+                    >
+                        Esqueceu sua senha?
+                    </Button>
+                </div>
+
               <Button type="submit" className="w-full bg-white text-primary hover:bg-gray-200 h-12 text-lg font-bold rounded-xl shadow-lg" disabled={isLoading || isGoogleLoading}>
                 {isLoading ? (
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
