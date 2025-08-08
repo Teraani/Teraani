@@ -22,7 +22,7 @@ const navItems: { view: View, icon: React.ElementType, label: string, isPro?: bo
 export default function BottomNav({ currentView, onNavigate, canViewPayments }: BottomNavProps) {
   const allNavItems = [...navItems];
   if (canViewPayments) {
-      allNavItems.push({ view: 'payments', icon: DollarSign, label: 'Pagamentos', isPro: true });
+      allNavItems.push({ view: 'payments', icon: DollarSign, label: 'Pagamentos' });
   }
 
   return (

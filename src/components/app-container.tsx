@@ -203,25 +203,29 @@ export default function AppContainer() {
         if (leagueDocSnap.exists()) {
           const leagueData = leagueDocSnap.data() as League;
           if (!leagueData.users[user.id]) {
-            const userWithRole = { ...user, role: 'player' as const, joinedAt: new Date().toISOString() };
+            const userWithRole = { 
+              ...user, 
+              role: 'player' as const, 
+              joinedAt: new Date().toISOString(),
+              editorOfTheRound: null,
+              scoutEditor: null,
+              paymentEditor: null,
+            };
             await updateDoc(leagueDocRef, {
               [`users.${user.id}`]: userWithRole,
             });
             toast({ title: 'Bem-vindo!', description: `Você entrou na liga ${leagueData.name}!` });
             
-            // This is a critical update
-            // Manually add the league to the local state to ensure it's available immediately
             setAppData(prev => ({
               ...prev,
               leagues: { ...prev.leagues, [inviteId]: { ...leagueData, users: { ...leagueData.users, [user.id]: userWithRole } } },
             }));
 
-            // Clean the URL
             window.history.replaceState({}, document.title, window.location.pathname);
-            return inviteId; // Return the joined league ID
+            return inviteId;
           } else {
              window.history.replaceState({}, document.title, window.location.pathname);
-             return inviteId; // User is already in the league
+             return inviteId;
           }
         } else {
           toast({ title: 'Erro no Convite', description: 'O link de convite é inválido ou a liga não existe mais.', variant: 'destructive' });
@@ -265,10 +269,8 @@ export default function AppContainer() {
   
           setLoggedInUser(userProfile);
   
-          // Process invite link first and get the ID of the league they just joined
           const joinedLeagueId = await processInvite(userProfile);
   
-          // Then, fetch all leagues this user is a part of
           const leaguesSnapshot = await getDocs(collection(db, 'leagues'));
           const userLeagues: Record<string, League> = {};
           let userHasLeagues = false;
@@ -283,7 +285,6 @@ export default function AppContainer() {
   
           if (userHasLeagues) {
             setAppData({ leagues: userLeagues });
-            // Prioritize the league they just joined via invite
             const leagueToSet = joinedLeagueId || Object.keys(userLeagues)[0];
             setCurrentLeagueId(leagueToSet);
   
@@ -293,7 +294,6 @@ export default function AppContainer() {
               navigateTo('modality-selection');
             }
           } else {
-            // User has no leagues, not even the one from the invite (edge case)
             navigateTo('leagues');
           }
         } else {
@@ -312,14 +312,8 @@ export default function AppContainer() {
       }
     };
   
-    // This logic ensures that getRedirectResult is handled before onAuthStateChanged runs.
     getRedirectResult(auth)
       .then(result => {
-        // If 'result' is not null, a redirect has just completed.
-        // The onAuthStateChanged will fire shortly with the user object.
-        // We let onAuthStateChanged handle the user logic.
-        // If 'result' is null, it means we are not coming from a redirect.
-        // In this case, we set up the regular auth state listener.
         if (!result) {
           const unsubscribe = onAuthStateChanged(auth, handleAuth);
           return unsubscribe;
@@ -332,7 +326,6 @@ export default function AppContainer() {
           description: 'Não foi possível completar o login. Tente novamente.',
           variant: 'destructive',
         });
-        // Ensure we still try to set up the app in a logged-out state.
         handleAuth(null);
       });
   
@@ -658,6 +651,11 @@ export default function AppContainer() {
     return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
   }, [currentUser, currentLeague]);
   
+  const canViewPayments = useMemo(() => {
+    if (!currentUser || !currentLeague || !currentLeague.paymentsEnabled) return false;
+    return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
+  }, [currentUser, currentLeague]);
+
   const handleModalitySelect = (modality: Modality) => {
     if(!currentLeagueId) return;
     const leagueDocRef = doc(db, "leagues", currentLeagueId);
@@ -997,7 +995,7 @@ export default function AppContainer() {
       <main className={cn(showBottomNav && "pb-20")}>
         {renderView()}
       </main>
-      {showBottomNav && currentUser && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={isPaymentsEnabled} />}
+      {showBottomNav && currentUser && <BottomNav currentView={currentView} onNavigate={navigateTo} canViewPayments={canViewPayments} />}
     </div>
   );
 }
