@@ -190,116 +190,138 @@ export default function AppContainer() {
 
   useEffect(() => {
     const processInvite = async (user: User) => {
-      if (typeof window === 'undefined') return;
+      if (typeof window === 'undefined') return null;
       const urlParams = new URLSearchParams(window.location.search);
       const inviteId = urlParams.get('invite');
+  
+      if (!inviteId) return null;
+  
+      try {
+        const leagueDocRef = doc(db, 'leagues', inviteId);
+        const leagueDocSnap = await getDoc(leagueDocRef);
+  
+        if (leagueDocSnap.exists()) {
+          const leagueData = leagueDocSnap.data() as League;
+          if (!leagueData.users[user.id]) {
+            const userWithRole = { ...user, role: 'player' as const, joinedAt: new Date().toISOString() };
+            await updateDoc(leagueDocRef, {
+              [`users.${user.id}`]: userWithRole,
+            });
+            toast({ title: 'Bem-vindo!', description: `Você entrou na liga ${leagueData.name}!` });
+            
+            // This is a critical update
+            // Manually add the league to the local state to ensure it's available immediately
+            setAppData(prev => ({
+              ...prev,
+              leagues: { ...prev.leagues, [inviteId]: { ...leagueData, users: { ...leagueData.users, [user.id]: userWithRole } } },
+            }));
 
-      if (!inviteId) return;
-
-      const leagueDocRef = doc(db, 'leagues', inviteId);
-      const leagueDocSnap = await getDoc(leagueDocRef);
-
-      if (leagueDocSnap.exists()) {
-        const leagueData = leagueDocSnap.data() as League;
-        if (!leagueData.users[user.id]) {
-          const userWithRole = { ...user, role: 'player' as const, joinedAt: new Date().toISOString() };
-          await updateDoc(leagueDocRef, {
-            [`users.${user.id}`]: userWithRole,
-          });
-          toast({ title: 'Bem-vindo!', description: `Você entrou na liga ${leagueData.name}!` });
-          
-          // Clean the URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-          return inviteId; // Return the joined league ID
+            // Clean the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return inviteId; // Return the joined league ID
+          } else {
+             window.history.replaceState({}, document.title, window.location.pathname);
+             return inviteId; // User is already in the league
+          }
+        } else {
+          toast({ title: 'Erro no Convite', description: 'O link de convite é inválido ou a liga não existe mais.', variant: 'destructive' });
         }
-      } else {
-        toast({ title: 'Erro no Convite', description: 'O link de convite é inválido ou a liga não existe mais.', variant: 'destructive' });
+      } catch (error) {
+         console.error("Error processing invite:", error);
+         toast({ title: 'Erro no Convite', description: 'Ocorreu um problema ao processar o convite.', variant: 'destructive' });
       }
        // Clean the URL even if invite fails
       window.history.replaceState({}, document.title, window.location.pathname);
       return null;
     };
-
+  
     const handleAuth = async (firebaseUser: FirebaseUser | null) => {
-    try {
+      try {
         if (firebaseUser) {
-            const userDocRef = doc(db, 'users', firebaseUser.uid);
-            let userDocSnap = await getDoc(userDocRef);
-            let userProfile: User;
-
-            if (userDocSnap.exists()) {
-                userProfile = userDocSnap.data() as User;
-            } else {
-                userProfile = {
-                    id: firebaseUser.uid,
-                    name: firebaseUser.displayName || 'Novo Jogador',
-                    email: firebaseUser.email!,
-                    teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
-                    partialScore: 0,
-                    totalScore: 0,
-                    valuation: 100,
-                    lineup: [],
-                    reserves: [],
-                    role: 'player',
-                    paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
-                    joinedAt: new Date().toISOString(),
-                };
-                await setDoc(userDocRef, userProfile);
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          let userDocSnap = await getDoc(userDocRef);
+          let userProfile: User;
+  
+          if (userDocSnap.exists()) {
+            userProfile = userDocSnap.data() as User;
+          } else {
+            userProfile = {
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || 'Novo Jogador',
+              email: firebaseUser.email!,
+              teamName: `${firebaseUser.displayName?.split(' ')[0] || 'Novo'} FC`,
+              partialScore: 0,
+              totalScore: 0,
+              valuation: 100,
+              lineup: [],
+              reserves: [],
+              role: 'player',
+              paymentDueDate: format(new Date(), 'yyyy-MM-dd'),
+              joinedAt: new Date().toISOString(),
+            };
+            await setDoc(userDocRef, userProfile);
+          }
+  
+          setLoggedInUser(userProfile);
+  
+          // Process invite link first and get the ID of the league they just joined
+          const joinedLeagueId = await processInvite(userProfile);
+  
+          // Then, fetch all leagues this user is a part of
+          const leaguesSnapshot = await getDocs(collection(db, 'leagues'));
+          const userLeagues: Record<string, League> = {};
+          let userHasLeagues = false;
+  
+          leaguesSnapshot.forEach(leagueDoc => {
+            const leagueData = leagueDoc.data() as League;
+            if (leagueData.users && leagueData.users[userProfile.id]) {
+              userLeagues[leagueDoc.id] = leagueData;
+              userHasLeagues = true;
             }
-
-            setLoggedInUser(userProfile);
-
-            // Process invite link first
-            const joinedLeagueId = await processInvite(userProfile);
-
-            const leaguesSnapshot = await getDocs(collection(db, 'leagues'));
-            const userLeagues: Record<string, League> = {};
-            let userHasLeagues = false;
-
-            leaguesSnapshot.forEach(leagueDoc => {
-                const leagueData = leagueDoc.data() as League;
-                if (leagueData.users && leagueData.users[userProfile.id]) {
-                    userLeagues[leagueDoc.id] = leagueData;
-                    userHasLeagues = true;
-                }
-            });
-
-            if (userHasLeagues) {
-                 setAppData({ leagues: userLeagues });
-                const leagueToSet = joinedLeagueId || Object.keys(userLeagues)[0];
-                setCurrentLeagueId(leagueToSet);
-
-                if (userLeagues[leagueToSet]?.modality) {
-                    navigateTo('dashboard');
-                } else {
-                    navigateTo('modality-selection');
-                }
+          });
+  
+          if (userHasLeagues) {
+            setAppData({ leagues: userLeagues });
+            // Prioritize the league they just joined via invite
+            const leagueToSet = joinedLeagueId || Object.keys(userLeagues)[0];
+            setCurrentLeagueId(leagueToSet);
+  
+            if (userLeagues[leagueToSet]?.modality) {
+              navigateTo('dashboard');
             } else {
-                navigateTo('leagues');
+              navigateTo('modality-selection');
             }
+          } else {
+            // User has no leagues, not even the one from the invite (edge case)
+            navigateTo('leagues');
+          }
         } else {
-            setLoggedInUser(null);
-            setCurrentLeagueId(null);
-            setAppData({ leagues: {} });
-            navigateTo('welcome');
+          setLoggedInUser(null);
+          setCurrentLeagueId(null);
+          setAppData({ leagues: {} });
+          navigateTo('welcome');
         }
-    } catch (error: any) {
+      } catch (error: any) {
         console.error('Auth state change error:', error);
         toast({ title: 'Erro de Conexão', description: 'Não foi possível conectar ao banco de dados.', variant: 'destructive' });
         setLoggedInUser(null);
         setCurrentLeagueId(null);
         setAppData({ leagues: {} });
         navigateTo('welcome');
-    }
-};
-
-
+      }
+    };
+  
+    // This logic ensures that getRedirectResult is handled before onAuthStateChanged runs.
     getRedirectResult(auth)
       .then(result => {
+        // If 'result' is not null, a redirect has just completed.
+        // The onAuthStateChanged will fire shortly with the user object.
+        // We let onAuthStateChanged handle the user logic.
+        // If 'result' is null, it means we are not coming from a redirect.
+        // In this case, we set up the regular auth state listener.
         if (!result) {
           onAuthStateChanged(auth, handleAuth);
         }
-        // If there is a result, onAuthStateChanged will handle it.
       })
       .catch(error => {
         console.error('Redirect Result Error:', error);
@@ -308,13 +330,13 @@ export default function AppContainer() {
           description: 'Não foi possível completar o login. Tente novamente.',
           variant: 'destructive',
         });
+        // Ensure we still try to set up the app in a logged-out state.
         handleAuth(null);
       });
-      
+  
     const unsubscribe = onAuthStateChanged(auth, handleAuth);
     return () => unsubscribe();
-    
-  }, [toast]); // useEffect dependencies
+  }, [toast]);
 
 
   // This effect dynamically adjusts team sizes when modality changes
