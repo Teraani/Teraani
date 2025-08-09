@@ -383,11 +383,11 @@ export default function LineupView(props: LineupViewProps) {
   const handleClearTeam = (team: 'team1' | 'team2') => {
     if (!canEdit) return;
     if (team === 'team1' && team1Lineup && team1Reserves) {
-        setTeam1Lineup(Array(team1Lineup.length).fill(null));
-        setTeam1Reserves(Array(team1Reserves.length).fill(null));
-    } else if (team2Lineup && team2Reserves){
-        setTeam2Lineup(Array(team2Lineup.length).fill(null));
-        setTeam2Reserves(Array(team2Reserves.length).fill(null));
+      setTeam1Lineup(Array(team1Lineup.length).fill(null));
+      setTeam1Reserves(Array(team1Reserves.length).fill(null));
+    } else if (team === 'team2' && team2Lineup && team2Reserves) {
+      setTeam2Lineup(Array(team2Lineup.length).fill(null));
+      setTeam2Reserves(Array(team2Reserves.length).fill(null));
     }
     toast({ title: `Time ${team === 'team1' ? 1 : 2} limpo!` });
   };
@@ -607,7 +607,7 @@ export default function LineupView(props: LineupViewProps) {
             <TabsContent value="team1" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
                    <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
-                   <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} >
+                   <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} disabled={!canEdit}>
                        <Trash2 className="mr-2 h-4 w-4" />
                        Limpar Time
                    </Button>
@@ -626,7 +626,7 @@ export default function LineupView(props: LineupViewProps) {
             <TabsContent value="team2" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
                     <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
-                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')}>
+                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')} disabled={!canEdit}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Limpar Time
                     </Button>
