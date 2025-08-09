@@ -487,7 +487,10 @@ export default function LineupView(props: LineupViewProps) {
                 isReserve
               />
             ) : (
-               <AddPlayerButton onClick={() => handleAddPlayerForTeam(teamIdentifier)('RES', i)} />
+               <AddPlayerButton
+                  onClick={() => handleAddPlayerForTeam(teamIdentifier)('RES', i)}
+                  disabled={!canEdit}
+                />
             )}
           </div>
         ))}
@@ -536,7 +539,11 @@ export default function LineupView(props: LineupViewProps) {
               shirtColor={shirtColor}
             />
           ) : (
-            <AddPlayerButton variant="pitch" onClick={() => handleAddPlayerForTeam(team)(slot.pos, index)} />
+            <AddPlayerButton
+              variant="pitch"
+              onClick={() => handleAddPlayerForTeam(team)(slot.pos, index)}
+              disabled={!canEdit}
+            />
           )}
         </div>
       );
