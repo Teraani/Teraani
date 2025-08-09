@@ -475,12 +475,6 @@ export default function LineupView(props: LineupViewProps) {
     if (!reserves) return null;
     const reservesCount = getTeamSizes(modality).reserves;
     const displayReserves = Array(reservesCount).fill(null).map((_, i) => reserves[i] || null);
-
-    const onAdd = (index: number) => {
-      if (canEdit) {
-        onAddPlayer({ position: 'RES', index, team: teamIdentifier });
-      }
-    };
   
     return (
       <div className="flex flex-wrap justify-center gap-4">
@@ -493,7 +487,7 @@ export default function LineupView(props: LineupViewProps) {
                 isReserve
               />
             ) : (
-               <AddPlayerButton onClick={() => onAdd(i)} />
+               <AddPlayerButton onClick={() => handleAddPlayerForTeam(teamIdentifier)('RES', i)} />
             )}
           </div>
         ))}
@@ -519,9 +513,7 @@ export default function LineupView(props: LineupViewProps) {
     if (!formationPositions) return null;
   
     const onAdd = (pos: Player['pos'], index: number) => {
-      if (canEdit) {
-        onAddPlayer({ position: pos, index, team });
-      }
+      onAddPlayer({ position: pos, index, team });
     };
 
     return formationPositions.map((slot, index) => {
@@ -544,7 +536,7 @@ export default function LineupView(props: LineupViewProps) {
               shirtColor={shirtColor}
             />
           ) : (
-            <AddPlayerButton variant="pitch" onClick={() => onAdd(slot.pos, index)} />
+            <AddPlayerButton variant="pitch" onClick={() => handleAddPlayerForTeam(team)(slot.pos, index)} />
           )}
         </div>
       );
@@ -598,7 +590,6 @@ export default function LineupView(props: LineupViewProps) {
                     <Button 
                         className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" 
                         onClick={() => { handleClearTeam('team1'); handleClearTeam('team2'); }}
-                        disabled={!canEdit}
                         >
                         <Trash2 className="mr-2 h-4 w-4"/>
                         Limpar Times
@@ -616,7 +607,7 @@ export default function LineupView(props: LineupViewProps) {
             <TabsContent value="team1" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
                    <ShirtColorDropdown color={team1ShirtColor} onColorChange={setTeam1ShirtColor} disabled={!canEdit} />
-                   <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} disabled={!canEdit} >
+                   <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team1')} >
                        <Trash2 className="mr-2 h-4 w-4" />
                        Limpar Time
                    </Button>
@@ -635,7 +626,7 @@ export default function LineupView(props: LineupViewProps) {
             <TabsContent value="team2" className="mt-4">
                 <div className="flex justify-between items-center mb-4">
                     <ShirtColorDropdown color={team2ShirtColor} onColorChange={setTeam2ShirtColor} disabled={!canEdit} />
-                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')} disabled={!canEdit}>
+                    <Button variant="destructive" size="sm" onClick={() => handleClearTeam('team2')}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Limpar Time
                     </Button>
