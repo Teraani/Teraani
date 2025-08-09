@@ -397,7 +397,7 @@ export default function LineupView(props: LineupViewProps) {
      if (!canEdit) return;
     if (team === 'team1' && team1Reserves) {
       setTeam1Reserves(Array(team1Reserves.length).fill(null));
-    } else if (team2Reserves) {
+    } else if (team === 'team2' && team2Reserves) {
       setTeam2Reserves(Array(team2Reserves.length).fill(null));
     }
   };
@@ -597,6 +597,7 @@ export default function LineupView(props: LineupViewProps) {
                     <Button 
                         className="w-full bg-blue-500/20 text-blue-700 hover:bg-blue-500/30" 
                         onClick={() => { handleClearTeam('team1'); handleClearTeam('team2'); }}
+                        disabled={!canEdit}
                         >
                         <Trash2 className="mr-2 h-4 w-4"/>
                         Limpar Times
@@ -651,47 +652,41 @@ export default function LineupView(props: LineupViewProps) {
         </Tabs>
         
         {canEdit && (
-            <div className="mt-4 flex flex-col gap-2">
-                <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
-            </div>
+          <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-30">
+              <div className="flex justify-around items-center px-2 pb-2">
+                  <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs">Esquema Tático</span>
+                      <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={lineupsSaved || !canEdit}>
+                          <SelectTrigger className="w-[120px] bg-muted border-none h-8">
+                              <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {availableFormations.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                  </div>
+                   <AiSuggestions user={currentUser} players={players} onApplyLineup={handleApplyAiSuggestions} />
+                  <div className="flex flex-col items-center gap-1">
+                      <span className="text-xs">Limpar Reservas</span>
+                      <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
+                      onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')}
+                      disabled={lineupsSaved || !canEdit}
+                      >
+                          <Trash2 className="h-5 w-5 text-red-400" />
+                      </Button>
+                  </div>
+              </div>
+              
+              <Button onClick={onSaveLineups} className="w-full bg-green-600 text-white hover:bg-green-700" disabled={lineupsSaved}>
+                  {lineupsSaved ? 'Times Salvos!' : 'Salvar Times da Rodada'}
+              </Button>
+          </div>
         )}
+      
       </div>
-
-      
-         {canEdit && (
-            <div className="fixed bottom-20 left-0 right-0 bg-card p-2 border-t border-border shadow-lg z-30">
-                <div className="flex justify-around items-center px-2 pb-2">
-                    <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs">Esquema Tático</span>
-                        <Select value={formation} onValueChange={(value: Formation) => setFormation(value)} disabled={lineupsSaved || !canEdit}>
-                            <SelectTrigger className="w-[120px] bg-muted border-none h-8">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableFormations.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs">Limpar Reservas</span>
-                        <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 bg-muted hover:bg-accent rounded-full" 
-                        onClick={() => handleClearReserves(activeTab as 'team1' | 'team2')}
-                        disabled={lineupsSaved || !canEdit}
-                        >
-                            <Trash2 className="h-5 w-5 text-red-400" />
-                        </Button>
-                    </div>
-                </div>
-                
-                <Button onClick={onSaveLineups} className="w-full bg-green-600 text-white hover:bg-green-700" disabled={lineupsSaved}>
-                    {lineupsSaved ? 'Times Salvos!' : 'Salvar Times da Rodada'}
-                </Button>
-            </div>
-         )}
-      
     </div>
   );
 }
