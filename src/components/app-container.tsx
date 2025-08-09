@@ -141,6 +141,35 @@ export default function AppContainer() {
   const [slotToAddPlayer, setSlotToAddPlayer] = useState<AddPlayerSlot | null>(null);
   const [activeLineupTab, setActiveLineupTab] = useState<LineupTab>('team1');
 
+  const currentLeague: League | undefined = currentLeagueId ? appData.leagues[currentLeagueId] : undefined;
+  
+  const currentUser = useMemo(() => {
+    if (!loggedInUser || !currentLeague) return null;
+    return currentLeague.users[loggedInUser.id] || null;
+  }, [currentLeague, loggedInUser]);
+
+  const canEditLineup = useMemo(() => {
+    if (!currentUser) return false;
+    return currentUser.role === 'admin' || currentUser.id === currentLeague?.editorOfTheRound;
+  }, [currentUser, currentLeague]);
+
+  const canManageVoting = useMemo(() => currentUser?.role === 'admin', [currentUser]);
+  
+  const canEditScouts = useMemo(() => {
+    if (!currentUser || !currentLeague) return false;
+    return currentUser.role === 'admin' || currentUser.id === currentLeague.scoutEditor;
+  }, [currentUser, currentLeague]);
+
+  const canEditPayments = useMemo(() => {
+    if (!currentUser || !currentLeague) return false;
+    return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
+  }, [currentUser, currentLeague]);
+  
+  const canViewPayments = useMemo(() => {
+    if (!currentUser || !currentLeague || !currentLeague.paymentsEnabled) return false;
+    return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
+  }, [currentUser, currentLeague]);
+
   const handleCreateLeague = async (user: User) => {
     const newLeagueId = `league_${Date.now()}`;
     const adminUser = { ...user, role: 'admin' as const, joinedAt: new Date().toISOString() };
@@ -203,22 +232,19 @@ export default function AppContainer() {
         if (leagueDocSnap.exists()) {
           const leagueData = leagueDocSnap.data() as League;
           if (!leagueData.users[user.id]) {
-            const userWithRole = { 
+            const newUserInLeague: User = { 
               ...user, 
               role: 'player' as const, 
               joinedAt: new Date().toISOString(),
-              editorOfTheRound: null,
-              scoutEditor: null,
-              paymentEditor: null,
             };
             await updateDoc(leagueDocRef, {
-              [`users.${user.id}`]: userWithRole,
+              [`users.${user.id}`]: newUserInLeague,
             });
             toast({ title: 'Bem-vindo!', description: `Você entrou na liga ${leagueData.name}!` });
             
             setAppData(prev => ({
               ...prev,
-              leagues: { ...prev.leagues, [inviteId]: { ...leagueData, users: { ...leagueData.users, [user.id]: userWithRole } } },
+              leagues: { ...prev.leagues, [inviteId]: { ...leagueData, users: { ...leagueData.users, [user.id]: newUserInLeague } } },
             }));
 
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -438,13 +464,6 @@ export default function AppContainer() {
     toast({ title: `Revelação de Votos ${enabled ? 'Ativada' : 'Desativada'}` });
   };
 
-  const currentLeague: League | undefined = currentLeagueId ? appData.leagues[currentLeagueId] : undefined;
-  
-  const currentUser = useMemo(() => {
-    if (!loggedInUser || !currentLeague) return null;
-    return currentLeague.users[loggedInUser.id] || null;
-  }, [currentLeague, loggedInUser]);
-
   const isPaymentsEnabled = currentLeague?.paymentsEnabled ?? true;
   
   const handleLeagueChange = (newLeagueId: string) => {
@@ -633,28 +652,6 @@ export default function AppContainer() {
         toast({ title: "Erro ao Atualizar", description: "Não foi possível atualizar seu nome.", variant: "destructive" });
     }
   };
-
-  const canEditLineup = useMemo(() => {
-    if (!currentUser) return false;
-    return currentUser.role === 'admin' || currentUser.id === currentLeague?.editorOfTheRound;
-  }, [currentUser, currentLeague]);
-
-  const canManageVoting = useMemo(() => currentUser?.role === 'admin', [currentUser]);
-  
-  const canEditScouts = useMemo(() => {
-    if (!currentUser || !currentLeague) return false;
-    return currentUser.role === 'admin' || currentUser.id === currentLeague.scoutEditor;
-  }, [currentUser, currentLeague]);
-
-  const canEditPayments = useMemo(() => {
-    if (!currentUser || !currentLeague) return false;
-    return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
-  }, [currentUser, currentLeague]);
-  
-  const canViewPayments = useMemo(() => {
-    if (!currentUser || !currentLeague || !currentLeague.paymentsEnabled) return false;
-    return currentUser.role === 'admin' || currentUser.id === currentLeague.paymentEditor;
-  }, [currentUser, currentLeague]);
 
   const handleModalitySelect = (modality: Modality) => {
     if(!currentLeagueId) return;
