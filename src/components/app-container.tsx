@@ -35,7 +35,7 @@ import AllLeaguesView from '@/components/views/all-leagues-view';
 import { auth, db } from '@/lib/firebase-config';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
-import { doc, getDoc, setDoc, getDocs, collection, writeBatch, updateDoc, deleteField } from "firebase/firestore";
+import { doc, getDoc, setDoc, getDocs, collection, writeBatch, updateDoc, deleteField, deleteDoc } from "firebase/firestore";
 
 export type View = 'welcome' | 'register' | 'login' | 'modality-selection' | 'dashboard' | 'lineup' | 'player-details' | 'leagues' | 'partial-score' | 'games' | 'market' | 'friends-score' | 'statistics' | 'admin' | 'live' | 'payments' | 'best-eleven' | 'loading' | 'league-participants' | 'all-users' | 'all-leagues';
 export type Position = Player['pos'] | null;
@@ -214,6 +214,41 @@ export default function AppContainer() {
       console.error("Error creating league:", error);
       toast({ title: 'Erro ao Criar Liga', variant: 'destructive' });
       return null;
+    }
+  };
+
+  const handleDeleteLeague = async (leagueId: string) => {
+    const leagueToDelete = appData.leagues[leagueId];
+    if (!leagueToDelete || leagueToDelete.adminId !== loggedInUser?.id) {
+      toast({ title: 'Ação não permitida', description: 'Apenas o administrador pode excluir a liga.', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, "leagues", leagueId));
+
+      setAppData(prev => {
+        const newLeagues = { ...prev.leagues };
+        delete newLeagues[leagueId];
+        return { leagues: newLeagues };
+      });
+
+      toast({ title: 'Liga Excluída', description: `A liga "${leagueToDelete.name}" foi removida com sucesso.`, variant: 'destructive' });
+
+      // If the deleted league was the current one, switch to another or go to leagues view
+      if (currentLeagueId === leagueId) {
+        const remainingLeagues = Object.keys(appData.leagues).filter(id => id !== leagueId);
+        if (remainingLeagues.length > 0) {
+          setCurrentLeagueId(remainingLeagues[0]);
+          navigateTo('dashboard');
+        } else {
+          setCurrentLeagueId(null);
+          navigateTo('leagues');
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting league:", error);
+      toast({ title: 'Erro ao Excluir', description: 'Não foi possível remover a liga.', variant: 'destructive' });
     }
   };
 
@@ -945,7 +980,7 @@ export default function AppContainer() {
       
       // These views can be shown even without full context.
       case 'leagues': 
-        return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={loggedInUser!} onCreateLeague={() => handleCreateLeague(loggedInUser)} />;
+        return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={loggedInUser!} onCreateLeague={() => handleCreateLeague(loggedInUser)} onDeleteLeague={handleDeleteLeague} />;
       case 'modality-selection':
         return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={null} isLeagueAdmin={false} />;
 
@@ -968,7 +1003,7 @@ export default function AppContainer() {
         case 'loading': return <div className="flex items-center justify-center h-screen bg-background text-xl">Carregando...</div>;
         case 'all-users': return <AllUsersView leagues={appData.leagues} onBack={goBack} />;
         case 'all-leagues': return <AllLeaguesView leagues={appData.leagues} onBack={goBack} />;
-        case 'leagues': return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={currentUser!} onCreateLeague={() => handleCreateLeague(currentUser)} />;
+        case 'leagues': return <LeaguesView onBack={goBack} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} currentUser={currentUser!} onCreateLeague={() => handleCreateLeague(currentUser)} onDeleteLeague={handleDeleteLeague} />;
         case 'league-participants': return <LeagueParticipantsView onBack={goBack} league={currentLeague} isLeagueAdmin={isLeagueAdmin} onInvite={handleInvite} onAddGuest={handleAddGuestPlayer} onRemoveUser={handleRemoveUserFromLeague} onUpdateUser={handleUpdateUserInLeague} />;
         case 'modality-selection': return <ModalitySelectionView onModalitySelect={handleModalitySelect} selectedModality={selectedModality} isLeagueAdmin={isLeagueAdmin} />;
         case 'dashboard': return <DashboardView user={currentUser!} allUsers={currentLeague!.users} players={currentLeague!.players} onNavigate={navigateTo} onPlayerSelect={selectPlayerForDetails} onAvatarChange={handleAvatarChange} onUpdateUser={handleUpdateUser} leagues={appData.leagues} currentLeagueId={currentLeagueId!} onLeagueChange={handleLeagueChange} isPaymentsEnabled={isPaymentsEnabled} onLogout={() => handleLogout()} leagueName={currentLeague.name} onUpdateLeagueName={handleUpdateLeagueName} />;

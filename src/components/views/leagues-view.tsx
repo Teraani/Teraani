@@ -2,14 +2,25 @@
 
 "use client";
 
+import { useState } from 'react';
 import type { View } from '@/app/page';
 import type { League, User } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Check, PlusCircle, Trophy } from 'lucide-react';
+import { ArrowLeft, Check, PlusCircle, Trophy, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface LeaguesViewProps {
   onBack: () => void;
@@ -18,6 +29,7 @@ interface LeaguesViewProps {
   onLeagueChange: (leagueId: string) => void;
   currentUser: User;
   onCreateLeague: () => void;
+  onDeleteLeague: (leagueId: string) => void;
 }
 
 export default function LeaguesView({
@@ -27,8 +39,10 @@ export default function LeaguesView({
   onLeagueChange,
   currentUser,
   onCreateLeague,
+  onDeleteLeague,
 }: LeaguesViewProps) {
   const { toast } = useToast();
+  const [leagueToDelete, setLeagueToDelete] = useState<League | null>(null);
 
   const userLeagues = Object.values(leagues).filter(league => league.users[currentUser.id]);
 
@@ -40,25 +54,32 @@ export default function LeaguesView({
     }
   };
   
-  const handleInvite = async (leagueId: string) => {
-    const inviteLink = `${window.location.origin}?invite=${leagueId}`;
-    try {
-      await navigator.clipboard.writeText(inviteLink);
-      toast({
-        title: 'Link de Convite Copiado!',
-        description: 'O link foi copiado. Compartilhe com seus amigos!',
-      });
-    } catch (err) {
-      toast({
-        title: 'Erro ao Copiar',
-        description: 'Não foi possível copiar o link.',
-        variant: 'destructive',
-      });
+  const handleConfirmDelete = () => {
+    if (leagueToDelete) {
+      onDeleteLeague(leagueToDelete.id);
+      setLeagueToDelete(null);
     }
   };
 
   return (
     <div>
+      <AlertDialog open={!!leagueToDelete} onOpenChange={(open) => !open && setLeagueToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Liga "{leagueToDelete?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Todos os dados da liga, incluindo jogadores, jogos e estatísticas, serão permanentemente excluídos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
+              Sim, Excluir Liga
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
@@ -83,10 +104,12 @@ export default function LeaguesView({
                         {userLeagues.map((league) => (
                             <div
                                 key={league.id}
-                                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted"
-                                onClick={() => handleSelectLeague(league.id)}
+                                className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                             >
-                                <div className="flex items-center gap-3">
+                                <div 
+                                  className="flex items-center gap-3 flex-grow cursor-pointer"
+                                  onClick={() => handleSelectLeague(league.id)}
+                                >
                                     <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
                                         <Trophy className="w-6 h-6 text-primary" />
                                     </div>
@@ -95,9 +118,24 @@ export default function LeaguesView({
                                         <p className="text-sm text-muted-foreground">{Object.keys(league.users).length} membros</p>
                                     </div>
                                 </div>
-                                {currentLeagueId === league.id && (
-                                    <Check className="h-5 w-5 text-primary" />
-                                )}
+                                <div className="flex items-center">
+                                  {currentLeagueId === league.id && (
+                                      <Check className="h-5 w-5 text-primary mr-2" />
+                                  )}
+                                  {league.adminId === currentUser.id && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="text-destructive hover:bg-destructive/10 h-8 w-8"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setLeagueToDelete(league);
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
                             </div>
                         ))}
                          {userLeagues.length === 0 && (
