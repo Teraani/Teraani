@@ -6,7 +6,7 @@ import { Clock, Trash2, LogOut, Users, Settings, Wand2, Share2, Loader2, UserX, 
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import type { View, AddPlayerSlot, Modality, LineupTab } from '@/app/page';
+import type { View, AddPlayerSlot, Modality, LineupTab } from '@/components/app-container';
 import { cn } from '@/lib/utils';
 import AddPlayerButton from '../lineup/add-player-button';
 import AiSuggestions from '@/components/lineup/ai-suggestions';
@@ -219,7 +219,7 @@ const PlayerEditorDialog = ({
             </Avatar>
           ) : (
             <Avatar className="w-24 h-24">
-              <AvatarFallback className="text-4xl bg-muted"><UserPlus /></AvatarFallback>
+              <AvatarFallback className="text-4xl bg-muted"><Users /></AvatarFallback>
             </Avatar>
           )}
           <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
@@ -352,27 +352,26 @@ export default function LineupView(props: LineupViewProps) {
 
     const { team, isReserve, index } = playerActionState;
 
-    const lineupSetters = {
-      team1: { lineup: setTeam1Lineup, reserves: setTeam1Reserves },
-      team2: { lineup: setTeam2Lineup, reserves: setTeam2Reserves },
-    };
-    
-    const lineups = {
-        team1: { lineup: team1Lineup, reserves: team1Reserves },
-        team2: { lineup: team2Lineup, reserves: team2Reserves },
-    }
-
-    const { lineup, reserves } = lineups[team];
-    const { lineup: setLineup, reserves: setReserves } = lineupSetters[team];
-
-    if (isReserve) {
-        const newReserves = [...reserves];
-        newReserves[index] = null;
-        setReserves(newReserves);
+    if (team === 'team1') {
+        if (isReserve) {
+            const newReserves = [...team1Reserves];
+            newReserves[index] = null;
+            setTeam1Reserves(newReserves);
+        } else {
+            const newLineup = [...team1Lineup];
+            newLineup[index] = null;
+            setTeam1Lineup(newLineup);
+        }
     } else {
-        const newLineup = [...lineup];
-        newLineup[index] = null;
-        setLineup(newLineup);
+        if (isReserve) {
+            const newReserves = [...team2Reserves];
+            newReserves[index] = null;
+            setTeam2Reserves(newReserves);
+        } else {
+            const newLineup = [...team2Lineup];
+            newLineup[index] = null;
+            setTeam2Lineup(newLineup);
+        }
     }
     
     setPlayerActionState(null);
@@ -513,18 +512,9 @@ export default function LineupView(props: LineupViewProps) {
     const formationPositions = formationLayouts[formation]?.positions;
     if (!formationPositions) return null;
   
-    const onAdd = (pos: Player['pos'], index: number) => {
-      onAddPlayer({ position: pos, index, team });
-    };
-
     return formationPositions.map((slot, index) => {
       const playerId = lineup[index];
       const player = playerId ? players[playerId] : null;
-
-      // Defensive check to ensure player data is available before rendering
-      if (playerId && !player) {
-          return null; // or a loading placeholder
-      }
 
       const gridStyle = { gridArea: slot.grid };
 

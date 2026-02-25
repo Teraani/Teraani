@@ -1,7 +1,7 @@
 {
   "name": "Amistosos FC",
-  "short_name": "AmistososFC",
-  "description": "Gerencie seus jogos de futebol com amigos.",
+  "short_name": "Amistosos FC",
+  "description": "Gerencie seus jogos amistosos de futebol com facilidade.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#057F3A",

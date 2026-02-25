@@ -1,8 +1,6 @@
-
-
 "use client";
 
-import type { View } from '@/app/page';
+import type { View } from '@/components/app-container';
 import type { Player, User, League } from '@/lib/data';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -109,7 +107,7 @@ function EditProfileDialog({ user, leagueName, isLeagueAdmin, onUpdateUser, onUp
     if (name.trim() && name.trim() !== user.name) {
       onUpdateUser(user.id, name.trim());
     }
-     if (isLeagueAdmin && newLeagueName.trim() && newLeagueName.trim() !== leagueName) {
+    if (isLeagueAdmin && newLeagueName.trim() && newLeagueName.trim() !== leagueName) {
       onUpdateLeagueName(newLeagueName.trim());
     }
     setIsOpen(false);
@@ -169,8 +167,6 @@ function EditProfileDialog({ user, leagueName, isLeagueAdmin, onUpdateUser, onUp
 
 
 function PlayerSummary({ user, players, onNavigate }: { user: User, players: Record<string, Player>, onNavigate: (view: View, options?: { isPersonalPayments?: boolean }) => void }) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
     const { totalGames, totalPoints, performancePercentage } = useMemo(() => {
         const userAsPlayer = Object.values(players).find(p => p.name.toLowerCase().includes(user.name.split(' ')[0].toLowerCase()));
         
@@ -268,21 +264,13 @@ function ConnectSection() {
 
 
 export default function DashboardView({ user, allUsers, players, onNavigate, onPlayerSelect, onAvatarChange, onUpdateUser, leagues, currentLeagueId, onLeagueChange, isPaymentsEnabled, onLogout, leagueName, onUpdateLeagueName }: DashboardViewProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const sortedUsers = useMemo(() => {
-    return Object.values(allUsers)
-      .filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allUsers, searchTerm]);
-  
   const currentLeague = leagues[currentLeagueId];
-  const isLeagueAdmin = currentLeague.adminId === user.id;
+  const isLeagueAdmin = currentLeague?.adminId === user.id;
   const isSuperAdmin = user.email === 'jason.teraani@gmail.com';
-
 
   return (
     <div>
-      <header className="bg-primary text-primary-foreground p-4 shadow-sm flex items-center justify-between">
+      <header className="bg-primary text-primary-foreground p-4 shadow-sm flex items-center justify-between sticky top-0 z-50">
          <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-white/20 p-0">
@@ -373,11 +361,11 @@ export default function DashboardView({ user, allUsers, players, onNavigate, onP
             <CardContent className="p-4 flex items-center justify-between">
                 <div>
                     <p className="text-sm text-muted-foreground">Liga Atual</p>
-                    <h3 className="text-lg font-bold">{currentLeague.name}</h3>
+                    <h3 className="text-lg font-bold">{currentLeague?.name || 'Carregando...'}</h3>
                 </div>
                 <div className="flex items-center text-muted-foreground">
                     <Users className="mr-2 h-5 w-5" />
-                    <span className="font-bold">{Object.keys(currentLeague.users).length}</span>
+                    <span className="font-bold">{currentLeague ? Object.keys(currentLeague.users).length : 0}</span>
                     <ChevronRight className="h-5 w-5 ml-2" />
                 </div>
             </CardContent>
