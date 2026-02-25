@@ -1,21 +1,21 @@
-
-// Choose a cache name
-const cacheName = 'cache-v1';
-// List the files to precache
-const precacheResources = ['/', '/index.html', '/styles.css', '/main.js'];
+const CACHE_NAME = 'amistosos-fc-v1';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/manifest.json'
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(cacheName).then((cache) => {
-      return cache.addAll(precacheResources);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
 });
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request);
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
     })
   );
 });
