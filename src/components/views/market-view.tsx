@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useMemo, useRef } from 'react';
@@ -261,7 +259,7 @@ export default function MarketView({ players, onPlayerSelect, onBack, position, 
         />
        </Dialog>
 
-      <header className="bg-card p-4 shadow-md flex items-center sticky top-0 z-20">
+      <header className="bg-card p-4 shadow-md flex items-center sticky top-0 z-50">
          <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
         </Button>

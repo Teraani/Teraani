@@ -1,5 +1,3 @@
-
-
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Player, User } from '@/lib/data';
 import Pitch from '@/components/lineup/pitch';
@@ -566,7 +564,7 @@ export default function LineupView(props: LineupViewProps) {
         </Dialog>
 
 
-      <header className="bg-card p-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
+      <header className="bg-card p-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
         <div className="flex-1">
             <Button variant="ghost" className="text-foreground" onClick={handleShare}>
                 <Share2 className="w-5 h-5" />

@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -153,7 +151,7 @@ export default function AdminView({
   
   return (
     <div>
-      <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-20">
+      <header className="bg-card p-4 shadow-sm flex items-center sticky top-0 z-50">
         <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent">
           <ArrowLeft className="h-6 w-6" />
         </Button>
