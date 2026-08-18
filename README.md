@@ -91,7 +91,6 @@ Minha atuação combina **análise técnica, dados e visão de negócio** para i
 * Jira
 * Scrum
 * Kanban
-* ITIL
 
 ## 🚀 Atualmente estudando
 
