@@ -129,6 +129,9 @@ Neste perfil compartilho projetos, estudos e experimentos relacionados a:
 Aberto a conexões, troca de conhecimento e oportunidades relacionadas a:
 
 **Sistemas • Dados • Automação • Integrações • Tecnologia para negócios**
+<div data-importer="socials" align="left">
+  <img src="https://raw.githubusercontent.com/maurodesouza/profile-readme-generator/master/src/assets/icons/social/linkedin/default.svg" width="52" height="40" alt="linkedin logo"  />
+</div>
 
 ---
 
