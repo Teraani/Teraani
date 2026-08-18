@@ -22,8 +22,6 @@ Minha atuação combina **análise técnica, dados e visão de negócio** para i
 
 ## 🧰 Tecnologias e ferramentas
 
-<h2 data-importer="text" align="left">Stacks</h2>
-
 ###
 
 <div data-importer="techs" align="left">
